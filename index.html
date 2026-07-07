@@ -389,15 +389,20 @@
         <div class="field"><label>วันหมดประกัน</label><input type="date" id="f_warrantyDate"></div>
         <div class="field"><label>อายุการใช้งานโดยประมาณ (ปี)</label><input type="number" id="f_lifeYears" min="1" placeholder="สำหรับคำนวณค่าเสื่อมราคา"></div>
 
-        <div class="field"><label>เกณฑ์รอบบำรุงรักษา</label>
-          <select id="f_cycleBasis"><option value="date">ตามวันที่</option><option value="hours">ตามชั่วโมงทำงาน</option></select>
+        <div class="field"><label>รอบบำรุงรักษา</label>
+          <select id="f_cycle">
+            <option value="">ไม่ระบุ</option>
+            <option value="30">ทุก 1 เดือน</option>
+            <option value="90">ทุก 3 เดือน</option>
+            <option value="120">ทุก 4 เดือน</option>
+            <option value="180">ทุก 6 เดือน</option>
+            <option value="365">ทุก 1 ปี</option>
+            <option value="__other__">อื่นๆ (ค่าเดิม)</option>
+          </select>
         </div>
-        <div class="field cond" id="wrap_cycleDate" data-basis="date"><label>รอบบำรุงรักษา (วัน)</label><input type="number" id="f_cycle" min="1" placeholder="เช่น 90"></div>
-        <div class="field cond" id="wrap_cycleHours" data-basis="hours"><label>รอบบำรุงรักษา (ชั่วโมง)</label><input type="number" id="f_cycleHours" min="1" placeholder="เช่น 500"></div>
+        <div class="field"><label>เกณฑ์รอบบำรุงรักษา</label><input id="f_cycleBasis" placeholder="เช่น ตรวจสอบทุกครั้งที่ใช้งานครบ 500 ชม. หรือครบกำหนดตามปฏิทิน แล้วแต่ถึงก่อน"></div>
 
-        <div class="field cond show" id="wrap_lastMaint" data-basis="date"><label>วันบำรุงรักษาล่าสุด</label><input type="date" id="f_lastMaint"></div>
-        <div class="field cond" id="wrap_lastMaintHours" data-basis="hours"><label>ชั่วโมงเมื่อบำรุงรักษาล่าสุด</label><input type="number" id="f_lastMaintHours" min="0"></div>
-        <div class="field cond" id="wrap_opHours" data-basis="hours"><label>ชั่วโมงทำงานสะสมปัจจุบัน</label><input type="number" id="f_opHours" min="0"></div>
+        <div class="field"><label>วันบำรุงรักษาล่าสุด</label><input type="date" id="f_lastMaint"></div>
 
         <div class="field full"><label>หมายเหตุ</label><textarea id="f_notes"></textarea></div>
       </div>
@@ -587,12 +592,6 @@
 
   function getDueInfo(m){
     if(m.status === 'retired') return {overdue:false, soon:false, text:'—'};
-    if(m.cycleBasis === 'hours'){
-      const nextHours = (Number(m.lastMaintHours)||0) + (Number(m.cycleHours)||0);
-      const remaining = nextHours - (Number(m.opHours)||0);
-      const threshold = Math.min(20, (Number(m.cycleHours)||0)*0.15);
-      return {overdue: remaining <= 0, soon: remaining>0 && remaining<=threshold, text: (remaining<=0? 'เลยกำหนด ':'อีก ')+Math.abs(Math.round(remaining))+' ชม.'};
-    }
     if(!m.nextMaint) return {overdue:false, soon:false, text:'—'};
     const d = daysBetween(todayStr(), m.nextMaint);
     return {overdue: d<0, soon: d>=0 && d<=DUE_SOON_DAYS, text: fmtDate(m.nextMaint)+(d<0?' (เลยกำหนด)': d<=DUE_SOON_DAYS? ' (อีก '+d+' วัน)':'')};
@@ -635,7 +634,7 @@
     const base = todayStr();
     return [
       {id:'m1', code:'MCH-001', name:'เครื่องปั๊มลม (Air Compressor)', type:'เครื่องกล', brand:'Hitachi', model:'OSP-37M5AN', serial:'HTC-8834211', location:'โรงงาน A ชั้น 1', supplier:'บจก. อุตสาหกรรมไทย', owner:'สมชาย ใจดี', purchaseDate:'2022-03-15', price:185000, warrantyDate:'2025-03-15', lifeYears:10, cycleBasis:'date', cycle:90, lastMaint:addDays(base,-40), nextMaint:addDays(addDays(base,-40),90), status:'run', notes:'ตรวจสอบแรงดันทุกสัปดาห์'},
-      {id:'m2', code:'MCH-002', name:'รถโฟล์คลิฟท์ไฟฟ้า', type:'ยานพาหนะ', brand:'Toyota', model:'8FBE20', serial:'TYT-2201199', location:'คลังสินค้า B', supplier:'โตโยต้า ฟอร์คลิฟท์', owner:'วิชัย พูนทรัพย์', purchaseDate:'2021-07-01', price:620000, warrantyDate:'2024-07-01', lifeYears:8, cycleBasis:'hours', cycleHours:500, lastMaintHours:1200, opHours:1550, status:'maint', notes:'เปลี่ยนแบตเตอรี่รอบหน้า'},
+      {id:'m2', code:'MCH-002', name:'รถโฟล์คลิฟท์ไฟฟ้า', type:'ยานพาหนะ', brand:'Toyota', model:'8FBE20', serial:'TYT-2201199', location:'คลังสินค้า B', supplier:'โตโยต้า ฟอร์คลิฟท์', owner:'วิชัย พูนทรัพย์', purchaseDate:'2021-07-01', price:620000, warrantyDate:'2024-07-01', lifeYears:8, cycleBasis:'ตรวจสอบทุกครั้งที่ใช้งานครบ 500 ชม. หรือครบกำหนดตามปฏิทิน แล้วแต่ถึงก่อน', cycle:90, lastMaint:addDays(base,-70), nextMaint:addDays(addDays(base,-70),90), status:'maint', notes:'เปลี่ยนแบตเตอรี่รอบหน้า'},
       {id:'m3', code:'MCH-003', name:'เครื่อง CNC กัดโลหะ', type:'เครื่องจักรกลซีเอ็นซี', brand:'FANUC', model:'Robodrill α-D21', serial:'FNC-77102A', location:'โรงงาน A ชั้น 2', supplier:'FANUC Thailand', owner:'ประยุทธ์ ช่างเทค', purchaseDate:'2023-01-10', price:2450000, warrantyDate:'2026-01-10', lifeYears:12, cycleBasis:'date', cycle:30, lastMaint:addDays(base,-10), nextMaint:addDays(addDays(base,-10),30), status:'run', notes:'สปินเดิลใหม่ ต้องเช็คน้ำมันหล่อเย็น'},
       {id:'m4', code:'MCH-004', name:'สายพานลำเลียง เก่า', type:'เครื่องกล', brand:'Local Make', model:'-', serial:'-', location:'โรงงาน C', supplier:'-', owner:'-', purchaseDate:'2015-05-20', price:95000, warrantyDate:'', lifeYears:15, cycleBasis:'date', cycle:180, lastMaint:addDays(base,-400), nextMaint:addDays(addDays(base,-400),180), status:'retired', notes:'ปลดระวางแล้ว รอจำหน่าย'}
     ];
@@ -850,13 +849,7 @@
 
   // ===== FORM MODAL =====
   let tempPhotoData = null, removePhoto = false;
-  function toggleCycleFields(){
-    const basis = $('f_cycleBasis').value;
-    document.querySelectorAll('.cond').forEach(el=>{
-      el.classList.toggle('show', el.dataset.basis === basis);
-    });
-  }
-  $('f_cycleBasis').addEventListener('change', toggleCycleFields);
+  const CYCLE_PRESETS = [30,90,120,180,365];
 
   $('f_photo').addEventListener('change', async e=>{
     const file = e.target.files[0]; if(!file) return;
@@ -883,19 +876,21 @@
     $('f_price').value = machine ? machine.price ?? '' : '';
     $('f_warrantyDate').value = machine ? machine.warrantyDate||'' : '';
     $('f_lifeYears').value = machine ? machine.lifeYears ?? '' : '';
-    $('f_cycleBasis').value = machine ? (machine.cycleBasis||'date') : 'date';
-    $('f_cycle').value = machine ? machine.cycle ?? '' : '';
-    $('f_cycleHours').value = machine ? machine.cycleHours ?? '' : '';
+    $('f_cycleBasis').value = machine ? (machine.cycleBasis||'') : '';
+    if(machine && machine.cycle && !CYCLE_PRESETS.includes(Number(machine.cycle))){
+      $('f_cycle').value = '__other__';
+      $('f_cycle').dataset.otherValue = machine.cycle;
+    } else {
+      $('f_cycle').value = machine && machine.cycle ? String(machine.cycle) : '';
+      $('f_cycle').dataset.otherValue = '';
+    }
     $('f_lastMaint').value = machine ? machine.lastMaint||'' : '';
-    $('f_lastMaintHours').value = machine ? machine.lastMaintHours ?? '' : '';
-    $('f_opHours').value = machine ? machine.opHours ?? '' : '';
     $('f_notes').value = machine ? machine.notes||'' : '';
     $('f_photo').value = '';
     tempPhotoData = null; removePhoto = false;
     const existingPhoto = machine ? photoCache[machine.id] : null;
     if(existingPhoto){ $('f_photoPreview').src = existingPhoto; $('f_photoPreview').style.display=''; $('f_photoPlaceholder').style.display='none'; }
     else { $('f_photoPreview').style.display='none'; $('f_photoPlaceholder').style.display='flex'; }
-    toggleCycleFields();
     $('formOverlay').classList.add('show');
     $('f_code').focus();
   }
@@ -909,9 +904,10 @@
     const dupe = machines.find(m=>m.code.toLowerCase()===code.toLowerCase() && m.id!==id);
     if(dupe){ toast('รหัสเครื่องจักรนี้มีอยู่แล้ว'); return; }
 
-    const basis = $('f_cycleBasis').value;
+    const cycleSel = $('f_cycle').value;
+    const cycleValue = cycleSel==='__other__' ? (Number($('f_cycle').dataset.otherValue)||null) : (cycleSel?Number(cycleSel):null);
     let nextMaint = '';
-    if(basis==='date' && $('f_lastMaint').value && $('f_cycle').value) nextMaint = addDays($('f_lastMaint').value, $('f_cycle').value);
+    if($('f_lastMaint').value && cycleValue) nextMaint = addDays($('f_lastMaint').value, cycleValue);
 
     const data = {
       id, code, name, type:$('f_type').value.trim(), status:$('f_status').value,
@@ -919,9 +915,8 @@
       location:$('f_location').value.trim(), supplier:$('f_supplier').value.trim(), owner:$('f_owner').value.trim(), ownerEmail:$('f_ownerEmail').value.trim(),
       purchaseDate:$('f_purchaseDate').value, price:$('f_price').value?Number($('f_price').value):null,
       warrantyDate:$('f_warrantyDate').value, lifeYears:$('f_lifeYears').value?Number($('f_lifeYears').value):null,
-      cycleBasis:basis, cycle:$('f_cycle').value?Number($('f_cycle').value):null, cycleHours:$('f_cycleHours').value?Number($('f_cycleHours').value):null,
-      lastMaint:$('f_lastMaint').value, nextMaint, lastMaintHours:$('f_lastMaintHours').value?Number($('f_lastMaintHours').value):null,
-      opHours:$('f_opHours').value?Number($('f_opHours').value):null, notes:$('f_notes').value.trim()
+      cycleBasis:$('f_cycleBasis').value.trim(), cycle:cycleValue,
+      lastMaint:$('f_lastMaint').value, nextMaint, notes:$('f_notes').value.trim()
     };
 
     const idx = machines.findIndex(m=>m.id===id);
@@ -966,7 +961,8 @@
       <div class="detail-item"><div class="k">วันที่จัดซื้อ</div><div class="v">${fmtDate(m.purchaseDate)}</div></div>
       <div class="detail-item"><div class="k">ราคาจัดซื้อ</div><div class="v">${fmtMoney(m.price)}</div></div>
       <div class="detail-item"><div class="k">วันหมดประกัน</div><div class="v">${fmtDate(m.warrantyDate)}</div></div>
-      <div class="detail-item"><div class="k">เกณฑ์บำรุงรักษา</div><div class="v">${m.cycleBasis==='hours'?'ตามชั่วโมงทำงาน ('+ (m.cycleHours||'—') +' ชม.)':'ตามวันที่ ('+(m.cycle||'—')+' วัน)'}</div></div>
+      <div class="detail-item"><div class="k">รอบบำรุงรักษา</div><div class="v">${m.cycle?('ทุก '+m.cycle+' วัน'):'—'}</div></div>
+      <div class="detail-item"><div class="k">เกณฑ์รอบบำรุงรักษา</div><div class="v">${escapeHtml(m.cycleBasis||'—')}</div></div>
       <div class="detail-item"><div class="k">กำหนดบำรุงรักษาถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
       <div class="detail-item" style="grid-column:1/-1;"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(m.notes||'—')}</div></div>`;
 
@@ -1337,7 +1333,7 @@
     }
 
     const m = machines.find(x=>x.id===currentDetailId);
-    if(m && (!m.lastMaint || date >= m.lastMaint) && m.cycleBasis!=='hours'){ m.lastMaint = date; if(m.cycle) m.nextMaint = addDays(date, m.cycle); await saveMachines(); }
+    if(m && (!m.lastMaint || date >= m.lastMaint)){ m.lastMaint = date; if(m.cycle) m.nextMaint = addDays(date, m.cycle); await saveMachines(); }
 
     $('m_desc').value=''; $('m_cost').value=''; $('m_tech').value=''; tempPartRows=[];
     renderAll(); renderPartsPage(); renderLowStockAlerts();
@@ -1467,7 +1463,7 @@
     return out + line;
   }
   $('icsBtn').addEventListener('click', ()=>{
-    const active = machines.filter(m => m.status !== 'retired' && m.cycleBasis !== 'hours' && m.nextMaint);
+    const active = machines.filter(m => m.status !== 'retired' && m.nextMaint);
     if(active.length === 0){ toast('ไม่มีเครื่องจักรที่มีกำหนดบำรุงรักษาแบบวันที่ให้ส่งออก'); return; }
     const now = new Date();
     const stamp = now.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
@@ -1580,7 +1576,7 @@
       machines.push({
         id:'m_'+Date.now()+'_'+i, code, name:r[1]||code, type:r[2]||'', status:STATUS_REVERSE[r[3]]||'run',
         brand:r[4]||'', model:r[5]||'', serial:r[6]||'', location:r[7]||'', supplier:r[8]||'', owner:r[9]||'', ownerEmail:r[10]||'',
-        purchaseDate:r[11]||'', price:r[12]?Number(r[12]):null, warrantyDate:r[13]||'', cycleBasis:'date', cycle:r[14]?Number(r[14]):null,
+        purchaseDate:r[11]||'', price:r[12]?Number(r[12]):null, warrantyDate:r[13]||'', cycleBasis:'', cycle:r[14]?Number(r[14]):null,
         lastMaint:r[15]||'', nextMaint:r[16]||'', notes:r[17]||''
       });
       imported++;

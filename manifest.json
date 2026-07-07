@@ -1,0 +1,17 @@
+{
+  "name": "ระบบจัดการเครื่องจักร",
+  "short_name": "เครื่องจักร",
+  "description": "ระบบจัดการเก็บข้อมูลเครื่องจักร บำรุงรักษา อะไหล่ และแจ้งเตือน PM",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#12161b",
+  "theme_color": "#12161b",
+  "lang": "th",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

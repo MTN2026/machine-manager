@@ -40,6 +40,16 @@
  * จากนี้ไป ทุกครั้งที่มีการเพิ่ม/แก้ไข/ลบเครื่องจักร หรือบันทึกงานบำรุงรักษาในแอป
  * ข้อมูลจะถูกส่งไปอัปเดตในชีต "Machines" นี้โดยอัตโนมัติ ไม่ต้อง export/import CSV เองอีกต่อไป
  *
+ * ==========================================================
+ * ข้อมูลคลังอะไหล่ (Parts) และประวัติเบิก-จ่าย (PartsTransactions)
+ * ==========================================================
+ * ปุ่ม "🔄 ซิงก์ Google Sheet" เดียวกันนี้จะส่งข้อมูลคลังอะไหล่และประวัติเบิก-จ่ายมาด้วยโดยอัตโนมัติ
+ * ไม่ต้องตั้งค่าเพิ่มเติมใดๆ — สคริปต์จะสร้างชีต "Parts" และ "PartsTransactions" ให้เองในการซิงก์ครั้งแรก
+ * และ checkAndNotify() ที่รันทุกวันจะรวมแจ้งเตือนอะไหล่ใกล้/หมดสต๊อก และใกล้/หมดอายุ เข้าไปในอีเมลสรุปเดียวกันด้วย
+ *
+ * หมายเหตุ: ที่จัดเก็บ ผู้จำหน่าย มูลค่าคลัง ฯลฯ ที่ Detailed กว่านี้ยังคงดูได้ในแอปโดยตรง
+ * ชีต Parts เก็บไว้เพื่อให้สคริปต์นี้อ่านไปแจ้งเตือน ไม่ได้ออกแบบมาให้แก้ไขข้อมูลในชีตแล้วสะท้อนกลับไปที่แอป
+ *
  * หมายเหตุ: ถ้าคุณแก้ไขโค้ดสคริปต์นี้ใหม่ในภายหลัง ต้องกด Deploy > Manage deployments
  * > แก้ไข (ไอคอนดินสอ) > เลือกเวอร์ชันใหม่ > Deploy อีกครั้ง เพื่อให้ลิงก์เดิมใช้โค้ดล่าสุด
  *
@@ -51,8 +61,11 @@
 
 const CONFIG = {
   SHEET_NAME: 'Machines',      // ชื่อชีตที่เก็บข้อมูลเครื่องจักร
+  PARTS_SHEET_NAME: 'Parts',              // ชื่อชีตที่เก็บข้อมูลอะไหล่ในคลัง
+  PARTS_TX_SHEET_NAME: 'PartsTransactions', // ชื่อชีตที่เก็บประวัติการเบิก-จ่ายอะไหล่
   NOTIFY_EMAIL: 'you@example.com', // อีเมลหลักที่จะรับสรุปการแจ้งเตือนทุกวัน (แก้เป็นของคุณ)
   DAYS_AHEAD: 7,                // แจ้งเตือนล่วงหน้ากี่วันก่อนถึงกำหนด
+  LOW_STOCK_DAYS_AHEAD: 30,      // แจ้งเตือนอะไหล่ใกล้หมดอายุกี่วันล่วงหน้า
   RUN_HOUR: 7                   // ชั่วโมงที่จะให้รันทุกวัน (0-23)
 };
 
@@ -113,6 +126,42 @@ function daysUntil_(date) {
  * ฟังก์ชันหลัก: ตรวจสอบกำหนดบำรุงรักษาทั้งหมด และส่งอีเมลสรุป
  * จะรันทุกวันอัตโนมัติผ่าน trigger ที่ตั้งไว้ใน setupTrigger()
  */
+/**
+ * อ่านข้อมูลอะไหล่จากชีต "Parts" (ถ้ามี) เพื่อตรวจสอบอะไหล่ใกล้/หมดสต๊อก และใกล้/หมดอายุ
+ */
+function getPartsAlerts_() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.PARTS_SHEET_NAME);
+  if (!sheet) return { lowStock: [], expiring: [] };
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { lowStock: [], expiring: [] };
+
+  const headers = data[0];
+  const idx = (name) => headers.indexOf(name);
+  const col = {
+    code: idx('รหัส'), name: idx('ชื่ออะไหล่'), qty: idx('คงเหลือ'), min: idx('ขั้นต่ำ'),
+    unit: idx('หน่วย'), expiry: idx('วันหมดอายุ')
+  };
+  if (col.name === -1 || col.qty === -1) return { lowStock: [], expiring: [] };
+
+  const lowStock = [], expiring = [];
+  data.slice(1).forEach(r => {
+    if (!r[col.name]) return;
+    const qty = Number(r[col.qty]) || 0;
+    const min = col.min >= 0 ? (Number(r[col.min]) || 0) : 0;
+    const part = { code: r[col.code] || '', name: r[col.name], qty: qty, unit: col.unit >= 0 ? r[col.unit] : '' };
+    if (qty <= min) lowStock.push(part);
+
+    if (col.expiry >= 0 && r[col.expiry]) {
+      const d = parseDate_(r[col.expiry]);
+      if (d) {
+        const days = daysUntil_(d);
+        if (days <= CONFIG.LOW_STOCK_DAYS_AHEAD) expiring.push(Object.assign({}, part, { days: days }));
+      }
+    }
+  });
+  return { lowStock, expiring };
+}
+
 function checkAndNotify() {
   const machines = getMachines_();
   const overdue = [], soon = [];
@@ -126,13 +175,15 @@ function checkAndNotify() {
     else if (days <= CONFIG.DAYS_AHEAD) soon.push(Object.assign({}, m, { days: days }));
   });
 
-  if (overdue.length === 0 && soon.length === 0) {
+  const partsAlerts = getPartsAlerts_();
+
+  if (overdue.length === 0 && soon.length === 0 && partsAlerts.lowStock.length === 0 && partsAlerts.expiring.length === 0) {
     Logger.log('ไม่มีรายการที่ต้องแจ้งเตือนวันนี้');
     return;
   }
 
   let html = '<div style="font-family:sans-serif;">';
-  html += '<h2>สรุปการแจ้งเตือนบำรุงรักษาเครื่องจักร (' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy') + ')</h2>';
+  html += '<h2>สรุปการแจ้งเตือนเครื่องจักรและอะไหล่ (' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy') + ')</h2>';
 
   if (overdue.length) {
     html += '<h3 style="color:#c0392b;">🔴 เลยกำหนดบำรุงรักษา (' + overdue.length + ' รายการ)</h3><ul>';
@@ -151,12 +202,30 @@ function checkAndNotify() {
     });
     html += '</ul>';
   }
+
+  if (partsAlerts.lowStock.length) {
+    html += '<h3 style="color:#c0392b;">📦 อะไหล่ใกล้/หมดสต๊อก (' + partsAlerts.lowStock.length + ' รายการ)</h3><ul>';
+    partsAlerts.lowStock.forEach(p => {
+      html += '<li><b>' + (p.code || '-') + '</b> ' + p.name + ' — คงเหลือ ' + p.qty + ' ' + (p.unit || '') + '</li>';
+    });
+    html += '</ul>';
+  }
+
+  if (partsAlerts.expiring.length) {
+    html += '<h3 style="color:#b8860b;">⏳ อะไหล่ใกล้/หมดอายุ (' + partsAlerts.expiring.length + ' รายการ)</h3><ul>';
+    partsAlerts.expiring.forEach(p => {
+      const statusText = p.days < 0 ? 'หมดอายุแล้ว ' + Math.abs(p.days) + ' วัน' : 'อีก ' + p.days + ' วันหมดอายุ';
+      html += '<li><b>' + (p.code || '-') + '</b> ' + p.name + ' — ' + statusText + '</li>';
+    });
+    html += '</ul>';
+  }
   html += '</div>';
 
   // ส่งอีเมลสรุปรวมถึงอีเมลหลัก
   MailApp.sendEmail({
     to: CONFIG.NOTIFY_EMAIL,
-    subject: 'แจ้งเตือนบำรุงรักษาเครื่องจักร: เลยกำหนด ' + overdue.length + ' รายการ / ใกล้ถึงกำหนด ' + soon.length + ' รายการ',
+    subject: 'แจ้งเตือนเครื่องจักร/อะไหล่: PM เลยกำหนด ' + overdue.length + ', ใกล้ถึง ' + soon.length
+      + ', อะไหล่ใกล้หมด ' + partsAlerts.lowStock.length + ', ใกล้หมดอายุ ' + partsAlerts.expiring.length,
     htmlBody: html
   });
   Logger.log('ส่งอีเมลสรุปไปที่ ' + CONFIG.NOTIFY_EMAIL);
@@ -194,29 +263,56 @@ function setupTrigger() {
 }
 
 /**
- * รับข้อมูลเครื่องจักรที่ส่งมาจากแอประบบจัดการเครื่องจักร (ผ่านปุ่ม "ซิงก์ Google Sheet")
- * แล้วเขียนทับข้อมูลทั้งหมดในชีต "Machines" ให้เป็นข้อมูลล่าสุดโดยอัตโนมัติ
+ * เขียนข้อมูลทับลงชีตที่ระบุ (ลบของเดิมทั้งหมดแล้วเขียนใหม่)
+ */
+function writeSheet_(sheetName, headers, rows2D) {
+  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
+  sheet.clearContents();
+  const data = [headers].concat(rows2D);
+  sheet.getRange(1, 1, data.length, headers.length).setValues(data);
+}
+
+/**
+ * รับข้อมูลเครื่องจักรและคลังอะไหล่ที่ส่งมาจากแอประบบจัดการเครื่องจักร
+ * (ผ่านปุ่ม "ซิงก์ Google Sheet") แล้วเขียนทับข้อมูลในชีตที่เกี่ยวข้องให้เป็นปัจจุบันเสมอ
  */
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
-    const rows = payload.machines || [];
+    let counts = { machines: 0, parts: 0, partsTx: 0 };
 
-    const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ยี่ห้อ','รุ่น','ซีเรียล','สถานที่','ผู้จำหน่าย',
-      'ผู้รับผิดชอบ','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)',
-      'บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
+    if (payload.machines) {
+      const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ยี่ห้อ','รุ่น','ซีเรียล','สถานที่','ผู้จำหน่าย',
+        'ผู้รับผิดชอบ','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)',
+        'บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
+      const rows = payload.machines.map(m => [
+        m.code, m.name, m.type, m.status, m.brand, m.model, m.serial, m.location, m.supplier,
+        m.owner, m.email || '', m.purchaseDate, m.price, m.warrantyDate, m.cycle, m.lastMaint, m.nextMaint, m.notes
+      ]);
+      writeSheet_(CONFIG.SHEET_NAME, headers, rows);
+      counts.machines = rows.length;
+    }
 
-    let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
-    if (!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(CONFIG.SHEET_NAME);
-    sheet.clearContents();
+    if (payload.parts) {
+      const headers = ['รหัส','ชื่ออะไหล่','รุ่น','หมวดหมู่','คงเหลือ','ขั้นต่ำ','หน่วย','ราคา/หน่วย','ที่จัดเก็บ','เลขที่ล็อต','วันหมดอายุ','ผู้จำหน่าย'];
+      const rows = payload.parts.map(p => [
+        p.code || '', p.name, p.model || '', p.category || '', p.qty, p.min, p.unit || '', p.cost, p.location || '', p.lot || '', p.expiry || '', p.supplier || ''
+      ]);
+      writeSheet_(CONFIG.PARTS_SHEET_NAME, headers, rows);
+      counts.parts = rows.length;
+    }
 
-    const data = [headers].concat(rows.map(m => [
-      m.code, m.name, m.type, m.status, m.brand, m.model, m.serial, m.location, m.supplier,
-      m.owner, m.email || '', m.purchaseDate, m.price, m.warrantyDate, m.cycle, m.lastMaint, m.nextMaint, m.notes
-    ]));
-    sheet.getRange(1, 1, data.length, headers.length).setValues(data);
+    if (payload.partsTx) {
+      const headers = ['วันที่','ประเภท','อะไหล่','จำนวน','เครื่องจักร','เลขที่เอกสาร','ผู้ดำเนินการ','หมายเหตุ'];
+      const rows = payload.partsTx.map(t => [
+        t.date, t.type, t.partName, t.qty, t.machineCode || '', t.docRef || '', t.person || '', t.note || ''
+      ]);
+      writeSheet_(CONFIG.PARTS_TX_SHEET_NAME, headers, rows);
+      counts.partsTx = rows.length;
+    }
 
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, count: rows.length }))
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, counts: counts }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: String(err) }))

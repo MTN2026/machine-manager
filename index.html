@@ -275,7 +275,7 @@
       <button class="btn" id="partsExportBtn">⬇ ส่งออก CSV</button>
     </div>
 
-    <table class="data-table"><thead><tr><th></th><th>รหัส</th><th>ชื่ออะไหล่</th><th>หมวดหมู่</th><th>คงเหลือ</th><th>ขั้นต่ำ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>ที่จัดเก็บ</th><th>วันหมดอายุ</th><th></th></tr></thead><tbody id="partsCatalogBody"></tbody></table>
+    <table class="data-table"><thead><tr><th></th><th>รหัส</th><th>ชื่ออะไหล่</th><th>รุ่น</th><th>หมวดหมู่</th><th>คงเหลือ</th><th>ขั้นต่ำ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>ที่จัดเก็บ</th><th>วันหมดอายุ</th><th></th></tr></thead><tbody id="partsCatalogBody"></tbody></table>
 
     <div class="section-title">ประวัติการเบิก-จ่ายอะไหล่ (ล่าสุด 100 รายการ)</div>
     <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เครื่องจักร</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="partsTxBody"></tbody></table>
@@ -301,6 +301,7 @@
       <div class="form-grid">
         <div class="field"><label>ชื่ออะไหล่ <span class="req">*</span></label><input id="pc_name" required></div>
         <div class="field"><label>รหัสอะไหล่</label><input id="pc_code"></div>
+        <div class="field"><label>รุ่นอะไหล่</label><input id="pc_model" placeholder="เช่น รุ่น/สเปกของอะไหล่"></div>
         <div class="field"><label>หมวดหมู่ <span class="req">*</span></label><input id="pc_category" required list="partCatList"><datalist id="partCatList"></datalist></div>
         <div class="field"><label>หน่วยนับ</label><input id="pc_unit" placeholder="เช่น ชิ้น, กล่อง, เมตร, ลิตร"></div>
         <div class="field"><label>คงเหลือเริ่มต้น</label><input type="number" id="pc_qty" min="0" value="0"></div>
@@ -1018,7 +1019,7 @@
   // ===== GLOBAL PARTS WAREHOUSE =====
   let partsCatalog = [], partsTx = [];
   async function loadPartsCatalog(){ try{ const r = await window.storage.get('parts_catalog', false); partsCatalog = r && r.value ? JSON.parse(r.value) : []; }catch(e){ partsCatalog = []; } }
-  async function savePartsCatalog(){ try{ await window.storage.set('parts_catalog', JSON.stringify(partsCatalog), false); }catch(e){ toast('บันทึกคลังอะไหล่ไม่สำเร็จ'); } }
+  async function savePartsCatalog(){ try{ await window.storage.set('parts_catalog', JSON.stringify(partsCatalog), false); maybeAutoSync(); }catch(e){ toast('บันทึกคลังอะไหล่ไม่สำเร็จ'); } }
   async function loadPartsTx(){ try{ const r = await window.storage.get('parts_transactions', false); partsTx = r && r.value ? JSON.parse(r.value) : []; }catch(e){ partsTx = []; } }
   async function savePartsTx(){ try{ await window.storage.set('parts_transactions', JSON.stringify(partsTx), false); }catch(e){ toast('บันทึกประวัติเบิก-จ่ายไม่สำเร็จ'); } }
 
@@ -1123,7 +1124,7 @@
     let list = partsCatalog.filter(p=>{
       if(cat && p.category!==cat) return false;
       if(lowOnly && !isLowStock(p)) return false;
-      if(q){ const hay=[p.name,p.code,p.category].join(' ').toLowerCase(); if(!hay.includes(q)) return false; }
+      if(q){ const hay=[p.name,p.code,p.model,p.category].join(' ').toLowerCase(); if(!hay.includes(q)) return false; }
       return true;
     });
     $('partsCatalogBody').innerHTML = list.length ? list.map(p=>{
@@ -1134,6 +1135,7 @@
         <td>${p.image?`<img class="thumb-sm" src="${p.image}">`:'🔩'}</td>
         <td>${escapeHtml(p.code||'—')}</td>
         <td>${escapeHtml(p.name)}${p.lot?`<div class="hint">ล็อต: ${escapeHtml(p.lot)}</div>`:''}</td>
+        <td>${escapeHtml(p.model||'—')}</td>
         <td>${escapeHtml(p.category||'—')}</td>
         <td>${p.qty}${isLowStock(p)?` <span class="tag low">${p.qty<=0?'หมดสต๊อก':'ใกล้หมด'}</span>`:''}</td>
         <td>${p.min}</td>
@@ -1146,7 +1148,7 @@
           ${isTech?'':`<button class="btn btn-sm" data-editcat="${p.id}">แก้ไข</button> <button class="btn btn-sm btn-danger" data-delcat="${p.id}">ลบ</button>`}
         </td>
       </tr>`;
-    }).join('') : `<tr><td colspan="11" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีข้อมูลอะไหล่ในคลัง</td></tr>`;
+    }).join('') : `<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีข้อมูลอะไหล่ในคลัง</td></tr>`;
 
     $('partsCatalogBody').querySelectorAll('[data-tx]').forEach(btn=>btn.addEventListener('click', ()=>openPartTx(btn.dataset.tx)));
     $('partsCatalogBody').querySelectorAll('[data-editcat]').forEach(btn=>btn.addEventListener('click', ()=>openPartForm(partsCatalog.find(p=>p.id===btn.dataset.editcat))));
@@ -1192,6 +1194,7 @@
     $('pc_id').value = part ? part.id : '';
     $('pc_name').value = part ? part.name : '';
     $('pc_code').value = part ? part.code||'' : '';
+    $('pc_model').value = part ? part.model||'' : '';
     $('pc_category').value = part ? part.category||'' : '';
     $('pc_unit').value = part ? part.unit||'' : '';
     $('pc_qty').value = part ? part.qty : 0;
@@ -1219,7 +1222,7 @@
     const name = $('pc_name').value.trim(); if(!name){ toast('กรุณากรอกชื่ออะไหล่'); return; }
     const idx = partsCatalog.findIndex(p=>p.id===id);
     const data = {
-      id, name, code:$('pc_code').value.trim(), category:$('pc_category').value.trim(), unit:$('pc_unit').value.trim(),
+      id, name, code:$('pc_code').value.trim(), model:$('pc_model').value.trim(), category:$('pc_category').value.trim(), unit:$('pc_unit').value.trim(),
       qty: idx>=0 ? partsCatalog[idx].qty : (Number($('pc_qty').value)||0),
       min: Number($('pc_min').value)||0, cost:$('pc_cost').value?Number($('pc_cost').value):null,
       location:$('pc_location').value.trim(), lot:$('pc_lot').value.trim(), expiry:$('pc_expiry').value,
@@ -1285,8 +1288,8 @@
   });
 
   $('partsExportBtn').addEventListener('click', ()=>{
-    const headers = ['รหัส','ชื่ออะไหล่','หมวดหมู่','คงเหลือ','ขั้นต่ำ','หน่วย','ราคา/หน่วย','ที่จัดเก็บ','ผู้จำหน่าย'];
-    const rows = partsCatalog.map(p=>[p.code,p.name,p.category,p.qty,p.min,p.unit,p.cost,p.location,p.supplier]);
+    const headers = ['รหัส','ชื่ออะไหล่','รุ่น','หมวดหมู่','คงเหลือ','ขั้นต่ำ','หน่วย','ราคา/หน่วย','ที่จัดเก็บ','เลขที่ล็อต','วันหมดอายุ','ผู้จำหน่าย'];
+    const rows = partsCatalog.map(p=>[p.code,p.name,p.model,p.category,p.qty,p.min,p.unit,p.cost,p.location,p.lot,p.expiry,p.supplier]);
     const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
@@ -1509,12 +1512,22 @@
 
   async function syncToSheet(silent){
     if(!syncSettings.url){ if(!silent) toast('กรุณาตั้งค่า Web App URL ก่อน'); return; }
-    const payload = { machines: machines.map(m=>({
-      code:m.code, name:m.name, type:m.type, status:STATUS_LABEL[m.status]||m.status,
-      brand:m.brand, model:m.model, serial:m.serial, location:m.location, supplier:m.supplier,
-      owner:m.owner, email:m.ownerEmail||'', purchaseDate:m.purchaseDate, price:m.price, warrantyDate:m.warrantyDate,
-      cycle:m.cycle, lastMaint:m.lastMaint, nextMaint:m.nextMaint, notes:m.notes
-    }))};
+    const payload = {
+      machines: machines.map(m=>({
+        code:m.code, name:m.name, type:m.type, status:STATUS_LABEL[m.status]||m.status,
+        brand:m.brand, model:m.model, serial:m.serial, location:m.location, supplier:m.supplier,
+        owner:m.owner, email:m.ownerEmail||'', purchaseDate:m.purchaseDate, price:m.price, warrantyDate:m.warrantyDate,
+        cycle:m.cycle, lastMaint:m.lastMaint, nextMaint:m.nextMaint, notes:m.notes
+      })),
+      parts: partsCatalog.map(p=>({
+        code:p.code, name:p.name, model:p.model||'', category:p.category, qty:p.qty, min:p.min, unit:p.unit, cost:p.cost,
+        location:p.location, lot:p.lot||'', expiry:p.expiry||'', supplier:p.supplier||''
+      })),
+      partsTx: partsTx.slice(0,500).map(t=>({
+        date:t.date, type:TX_TYPE_LABEL[t.type]||t.type, partName:t.partName, qty:t.qty,
+        machineCode:t.machineCode||'', docRef:t.docRef||'', person:t.person||'', note:t.note||''
+      }))
+    };
     try{
       await fetch(syncSettings.url, {
         method:'POST',
@@ -1523,8 +1536,8 @@
         body: JSON.stringify(payload)
       });
       const ts = new Date().toLocaleString('th-TH');
-      $('syncLastStatus').textContent = 'ส่งข้อมูลล่าสุดเมื่อ '+ts+' (โปรดตรวจสอบใน Google Sheet ว่าอัปเดตแล้ว)';
-      if(!silent) toast('ส่งข้อมูล '+machines.length+' รายการไปยัง Google Sheet แล้ว');
+      $('syncLastStatus').textContent = 'ส่งข้อมูลล่าสุดเมื่อ '+ts+' ('+machines.length+' เครื่องจักร, '+partsCatalog.length+' อะไหล่ — โปรดตรวจสอบใน Google Sheet ว่าอัปเดตแล้ว)';
+      if(!silent) toast('ส่งข้อมูลเครื่องจักรและอะไหล่ไปยัง Google Sheet แล้ว');
     }catch(err){
       if(!silent) toast('ซิงก์ไม่สำเร็จ กรุณาตรวจสอบ URL และการตั้งค่า Deploy');
       $('syncLastStatus').textContent = 'ซิงก์ล่าสุดไม่สำเร็จ: '+String(err);

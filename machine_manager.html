@@ -711,6 +711,14 @@
   const grid = $('grid');
 
   function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2300); }
+
+  // Surface any unexpected error visibly instead of failing silently, so issues can be reported accurately.
+  window.addEventListener('error', (e)=>{
+    try{ toast('เกิดข้อผิดพลาด: '+(e.message||'unknown error')); }catch(_){}
+  });
+  window.addEventListener('unhandledrejection', (e)=>{
+    try{ const msg = (e.reason && e.reason.message) ? e.reason.message : String(e.reason); toast('เกิดข้อผิดพลาด: '+msg); }catch(_){}
+  });
   function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function fmtDate(d){
     if(!d) return '—';
@@ -1137,64 +1145,68 @@
   async function openDetail(id){
     const m = machines.find(x=>x.id===id); if(!m) return;
     currentDetailId = id;
-    $('detailOverlay').querySelector('.subtab').click();
-    $('detailName').textContent = m.name;
-    $('detailCode').textContent = m.code+' · '+STATUS_LABEL[m.status]+' · ความสำคัญ: '+PRIORITY_LABEL[m.priority||'medium'];
+    try{
+      $('detailOverlay').querySelector('.subtab').click();
+      $('detailName').textContent = m.name;
+      $('detailCode').textContent = m.code+' · '+STATUS_LABEL[m.status]+' · ความสำคัญ: '+PRIORITY_LABEL[m.priority||'medium'];
 
-    const photo = photoCache[id];
-    if(photo){ $('detailPhoto').src = photo; $('detailPhoto').style.display=''; } else { $('detailPhoto').style.display='none'; }
+      const photo = photoCache[id];
+      if(photo){ $('detailPhoto').src = photo; $('detailPhoto').style.display=''; } else { $('detailPhoto').style.display='none'; }
 
-    const due = getDueInfo(m);
-    const age = calcMachineAge(m);
-    $('detailGrid').innerHTML = `
-      <div class="detail-item"><div class="k">รุ่น</div><div class="v">${escapeHtml(m.model||'—')}</div></div>
-      <div class="detail-item"><div class="k">หมายเลขซีเรียล</div><div class="v">${escapeHtml(m.serial||'—')}</div></div>
-      <div class="detail-item"><div class="k">ปีที่ผลิต</div><div class="v">${m.manufactureYear||'—'}</div></div>
-      <div class="detail-item"><div class="k">ยี่ห้อ</div><div class="v">${escapeHtml(m.brand||'—')}</div></div>
-      <div class="detail-item"><div class="k">ประเภท</div><div class="v">${escapeHtml(m.type||'—')}</div></div>
-      <div class="detail-item"><div class="k">ปีที่ติดตั้ง</div><div class="v">${m.installYear||'—'}</div></div>
-      <div class="detail-item"><div class="k">อายุเครื่องจักร</div><div class="v">${age!==null ? age+' ปี' : '—'}</div></div>
-      <div class="detail-item"><div class="k">สถานที่ติดตั้ง</div><div class="v">${escapeHtml(m.location||'—')}</div></div>
-      <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${m.priority||'medium'}">${PRIORITY_LABEL[m.priority||'medium']}</span></div></div>
-      <div class="detail-item"><div class="k">ผู้จำหน่าย</div><div class="v">${escapeHtml(m.supplier||'—')}</div></div>
-      <div class="detail-item"><div class="k">ผู้รับผิดชอบดูแล</div><div class="v">${escapeHtml(m.owner||'—')}</div></div>
-      <div class="detail-item"><div class="k">วันที่จัดซื้อ</div><div class="v">${fmtDate(m.purchaseDate)}</div></div>
-      <div class="detail-item"><div class="k">ราคาจัดซื้อ</div><div class="v">${fmtMoney(m.price)}</div></div>
-      <div class="detail-item"><div class="k">วันหมดประกัน</div><div class="v">${fmtDate(m.warrantyDate)}</div></div>
-      <div class="detail-item"><div class="k">รอบบำรุงรักษา</div><div class="v">${m.cycle?('ทุก '+m.cycle+' วัน'):'—'}</div></div>
-      <div class="detail-item"><div class="k">เกณฑ์รอบบำรุงรักษา</div><div class="v">${escapeHtml(m.cycleBasis||'—')}</div></div>
-      <div class="detail-item"><div class="k">รอบบำรุงรักษาล่าสุด</div><div class="v">${fmtDate(m.lastMaint)}</div></div>
-      <div class="detail-item"><div class="k">กำหนดครั้งถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
-      <div class="detail-item" style="grid-column:1/-1;"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(m.notes||'—')}</div></div>`;
+      const due = getDueInfo(m);
+      const age = calcMachineAge(m);
+      $('detailGrid').innerHTML = `
+        <div class="detail-item"><div class="k">รุ่น</div><div class="v">${escapeHtml(m.model||'—')}</div></div>
+        <div class="detail-item"><div class="k">หมายเลขซีเรียล</div><div class="v">${escapeHtml(m.serial||'—')}</div></div>
+        <div class="detail-item"><div class="k">ปีที่ผลิต</div><div class="v">${m.manufactureYear||'—'}</div></div>
+        <div class="detail-item"><div class="k">ยี่ห้อ</div><div class="v">${escapeHtml(m.brand||'—')}</div></div>
+        <div class="detail-item"><div class="k">ประเภท</div><div class="v">${escapeHtml(m.type||'—')}</div></div>
+        <div class="detail-item"><div class="k">ปีที่ติดตั้ง</div><div class="v">${m.installYear||'—'}</div></div>
+        <div class="detail-item"><div class="k">อายุเครื่องจักร</div><div class="v">${age!==null ? age+' ปี' : '—'}</div></div>
+        <div class="detail-item"><div class="k">สถานที่ติดตั้ง</div><div class="v">${escapeHtml(m.location||'—')}</div></div>
+        <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${m.priority||'medium'}">${PRIORITY_LABEL[m.priority||'medium']}</span></div></div>
+        <div class="detail-item"><div class="k">ผู้จำหน่าย</div><div class="v">${escapeHtml(m.supplier||'—')}</div></div>
+        <div class="detail-item"><div class="k">ผู้รับผิดชอบดูแล</div><div class="v">${escapeHtml(m.owner||'—')}</div></div>
+        <div class="detail-item"><div class="k">วันที่จัดซื้อ</div><div class="v">${fmtDate(m.purchaseDate)}</div></div>
+        <div class="detail-item"><div class="k">ราคาจัดซื้อ</div><div class="v">${fmtMoney(m.price)}</div></div>
+        <div class="detail-item"><div class="k">วันหมดประกัน</div><div class="v">${fmtDate(m.warrantyDate)}</div></div>
+        <div class="detail-item"><div class="k">รอบบำรุงรักษา</div><div class="v">${m.cycle?('ทุก '+m.cycle+' วัน'):'—'}</div></div>
+        <div class="detail-item"><div class="k">เกณฑ์รอบบำรุงรักษา</div><div class="v">${escapeHtml(m.cycleBasis||'—')}</div></div>
+        <div class="detail-item"><div class="k">รอบบำรุงรักษาล่าสุด</div><div class="v">${fmtDate(m.lastMaint)}</div></div>
+        <div class="detail-item"><div class="k">กำหนดครั้งถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
+        <div class="detail-item" style="grid-column:1/-1;"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(m.notes||'—')}</div></div>`;
 
-    // depreciation
-    if(m.price && m.lifeYears && m.purchaseDate){
-      const years = (new Date()-new Date(m.purchaseDate+'T00:00:00'))/(365.25*86400000);
-      const bookValue = Math.max(0, m.price*(1-Math.min(1,years/m.lifeYears)));
-      $('depreBox').innerHTML = `
-        <div class="d-item"><div class="n">${fmtMoney(m.price)}</div><div class="l">ราคาซื้อ</div></div>
-        <div class="d-item"><div class="n">${years.toFixed(1)} ปี</div><div class="l">อายุใช้งานปัจจุบัน / ${m.lifeYears} ปี</div></div>
-        <div class="d-item"><div class="n">${fmtMoney(Math.round(bookValue))}</div><div class="l">มูลค่าคงเหลือโดยประมาณ (เส้นตรง)</div></div>`;
-    } else {
-      $('depreBox').innerHTML = `<div class="hint">กรอกราคาซื้อ วันที่จัดซื้อ และอายุการใช้งาน เพื่อคำนวณมูลค่าคงเหลือ</div>`;
+      // depreciation
+      if(m.price && m.lifeYears && m.purchaseDate){
+        const years = (new Date()-new Date(m.purchaseDate+'T00:00:00'))/(365.25*86400000);
+        const bookValue = Math.max(0, m.price*(1-Math.min(1,years/m.lifeYears)));
+        $('depreBox').innerHTML = `
+          <div class="d-item"><div class="n">${fmtMoney(m.price)}</div><div class="l">ราคาซื้อ</div></div>
+          <div class="d-item"><div class="n">${years.toFixed(1)} ปี</div><div class="l">อายุใช้งานปัจจุบัน / ${m.lifeYears} ปี</div></div>
+          <div class="d-item"><div class="n">${fmtMoney(Math.round(bookValue))}</div><div class="l">มูลค่าคงเหลือโดยประมาณ (เส้นตรง)</div></div>`;
+      } else {
+        $('depreBox').innerHTML = `<div class="hint">กรอกราคาซื้อ วันที่จัดซื้อ และอายุการใช้งาน เพื่อคำนวณมูลค่าคงเหลือ</div>`;
+      }
+
+      $('m_date').value = todayStr();
+      $('checklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-idx="${i}"> ${escapeHtml(c)}</label>`).join('');
+      tempPartRows = [];
+      renderPartRows();
+      await renderMaintTable(id);
+      renderPartsTxBody(id);
+      await renderFiles(id);
+      await renderLoc(id);
+      renderQr(m);
+
+      const isTech = currentRole==='tech';
+      $('deleteFromDetail').style.display = isTech ? 'none':'';
+      $('editFromDetail').style.display = isTech ? 'none':'';
+      $('issueForMachineBtn').style.display = isTech ? 'none':'';
+    }catch(err){
+      toast('เกิดข้อผิดพลาดบางส่วนขณะแสดงรายละเอียด (ยังเปิดหน้าต่างให้ได้)');
+    }finally{
+      $('detailOverlay').classList.add('show');
     }
-
-    $('m_date').value = todayStr();
-    $('checklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-idx="${i}"> ${escapeHtml(c)}</label>`).join('');
-    tempPartRows = [];
-    renderPartRows();
-    await renderMaintTable(id);
-    renderPartsTxBody(id);
-    await renderFiles(id);
-    await renderLoc(id);
-    renderQr(m);
-
-    const isTech = currentRole==='tech';
-    $('deleteFromDetail').style.display = isTech ? 'none':'';
-    $('editFromDetail').style.display = isTech ? 'none':'';
-    $('issueForMachineBtn').style.display = isTech ? 'none':'';
-
-    $('detailOverlay').classList.add('show');
   }
   function closeDetail(){ $('detailOverlay').classList.remove('show'); currentDetailId=null; }
 
@@ -1609,17 +1621,18 @@
   // ===== QR CODE =====
   function renderQr(m){
     $('qrcanvas').innerHTML = '';
-    const due = getDueInfo(m);
-    const lines = [
-      'เครื่องจักร: '+m.name,
-      'รหัส: '+m.code,
-      'ประเภท: '+(m.type||'-'),
-      'สถานที่: '+(m.location||'-'),
-      'สถานะ: '+STATUS_LABEL[m.status],
-      'ผู้รับผิดชอบดูแล: '+(m.owner||'-'),
-      'กำหนดบำรุงรักษาถัดไป: '+due.text
-    ];
-    new QRCode($('qrcanvas'), {text: lines.join('\n'), width:220, height:220, colorDark:'#12161b', colorLight:'#ffffff'});
+    try{
+      const due = getDueInfo(m);
+      const lines = [
+        m.name,
+        'รหัส: '+m.code,
+        'สถานที่: '+(m.location||'-'),
+        'กำหนดบำรุงรักษา: '+due.text
+      ];
+      new QRCode($('qrcanvas'), {text: lines.join('\n'), width:220, height:220, colorDark:'#12161b', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.L});
+    }catch(err){
+      $('qrcanvas').innerHTML = '<div class="hint" style="color:var(--red);">ไม่สามารถสร้าง QR Code ได้ (ข้อมูลอาจยาวเกินไป) — ลองย่อชื่อ/สถานที่ให้สั้นลง</div>';
+    }
   }
   $('downloadQrBtn').addEventListener('click', ()=>{
     const canvas = $('qrcanvas').querySelector('canvas');

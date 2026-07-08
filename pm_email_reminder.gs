@@ -63,6 +63,7 @@ const CONFIG = {
   SHEET_NAME: 'Machines',      // ชื่อชีตที่เก็บข้อมูลเครื่องจักร
   PARTS_SHEET_NAME: 'Parts',              // ชื่อชีตที่เก็บข้อมูลอะไหล่ในคลัง
   PARTS_TX_SHEET_NAME: 'PartsTransactions', // ชื่อชีตที่เก็บประวัติการเบิก-จ่ายอะไหล่
+  TOOLS_SHEET_NAME: 'Tools',              // ชื่อชีตที่เก็บข้อมูลเครื่องมือ/อุปกรณ์
   NOTIFY_EMAIL: 'you@example.com', // อีเมลหลักที่จะรับสรุปการแจ้งเตือนทุกวัน (แก้เป็นของคุณ)
   DAYS_AHEAD: 7,                // แจ้งเตือนล่วงหน้ากี่วันก่อนถึงกำหนด
   LOW_STOCK_DAYS_AHEAD: 30,      // แจ้งเตือนอะไหล่ใกล้หมดอายุกี่วันล่วงหน้า
@@ -96,6 +97,40 @@ function getMachines_() {
   if (col.code === -1 || col.next === -1) {
     throw new Error('ไม่พบคอลัมน์ "รหัส" หรือ "กำหนดครั้งถัดไป" ในชีต กรุณาตรวจสอบหัวตาราง');
   }
+
+  return data.slice(1)
+    .filter(r => r[col.code])
+    .map(r => ({
+      code: r[col.code],
+      name: col.name >= 0 ? r[col.name] : '',
+      status: col.status >= 0 ? r[col.status] : '',
+      priority: col.priority >= 0 ? r[col.priority] : '',
+      location: col.location >= 0 ? r[col.location] : '',
+      owner: col.owner >= 0 ? r[col.owner] : '',
+      next: r[col.next],
+      email: col.email >= 0 ? r[col.email] : ''
+    }));
+}
+
+function getTools_() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.TOOLS_SHEET_NAME);
+  if (!sheet) return []; // ยังไม่เคยซิงก์ข้อมูลเครื่องมือ/อุปกรณ์ - ไม่ถือเป็นข้อผิดพลาด
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+
+  const headers = data[0];
+  const idx = (name) => headers.indexOf(name);
+  const col = {
+    code: idx('รหัส'),
+    name: idx('ชื่อ'),
+    status: idx('สถานะ'),
+    priority: idx('ระดับความสำคัญ'),
+    location: idx('สถานที่'),
+    owner: idx('ผู้รับผิดชอบดูแล'),
+    next: idx('กำหนดครั้งถัดไป'),
+    email: idx('อีเมลผู้รับผิดชอบ')
+  };
+  if (col.code === -1 || col.next === -1) return [];
 
   return data.slice(1)
     .filter(r => r[col.code])
@@ -166,7 +201,8 @@ function getPartsAlerts_() {
 
 function checkAndNotify() {
   const machines = getMachines_();
-  const overdue = [], soon = [];
+  const tools = getTools_();
+  const overdue = [], soon = [], toolOverdue = [], toolSoon = [];
   const PRIORITY_WEIGHT = { 'วิกฤต': 0, 'สูง': 1, 'ปานกลาง': 2, 'ต่ำ': 3 };
   const byPriority = (a, b) => (PRIORITY_WEIGHT[a.priority] ?? 2) - (PRIORITY_WEIGHT[b.priority] ?? 2);
 
@@ -181,18 +217,30 @@ function checkAndNotify() {
   overdue.sort(byPriority);
   soon.sort(byPriority);
 
+  tools.forEach(t => {
+    if (t.status === 'ปลดระวาง') return;
+    const d = parseDate_(t.next);
+    if (!d) return;
+    const days = daysUntil_(d);
+    if (days < 0) toolOverdue.push(Object.assign({}, t, { days: days }));
+    else if (days <= CONFIG.DAYS_AHEAD) toolSoon.push(Object.assign({}, t, { days: days }));
+  });
+  toolOverdue.sort(byPriority);
+  toolSoon.sort(byPriority);
+
   const partsAlerts = getPartsAlerts_();
 
-  if (overdue.length === 0 && soon.length === 0 && partsAlerts.lowStock.length === 0 && partsAlerts.expiring.length === 0) {
+  if (overdue.length === 0 && soon.length === 0 && toolOverdue.length === 0 && toolSoon.length === 0
+      && partsAlerts.lowStock.length === 0 && partsAlerts.expiring.length === 0) {
     Logger.log('ไม่มีรายการที่ต้องแจ้งเตือนวันนี้');
     return;
   }
 
   let html = '<div style="font-family:sans-serif;">';
-  html += '<h2>สรุปการแจ้งเตือนเครื่องจักรและอะไหล่ (' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy') + ')</h2>';
+  html += '<h2>สรุปการแจ้งเตือนเครื่องจักร เครื่องมือ/อุปกรณ์ และอะไหล่ (' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy') + ')</h2>';
 
   if (overdue.length) {
-    html += '<h3 style="color:#c0392b;">🔴 เลยกำหนดบำรุงรักษา (' + overdue.length + ' รายการ)</h3><ul>';
+    html += '<h3 style="color:#c0392b;">🔴 เครื่องจักรเลยกำหนดบำรุงรักษา (' + overdue.length + ' รายการ)</h3><ul>';
     overdue.forEach(m => {
       html += '<li>' + (m.priority ? '[' + m.priority + '] ' : '') + '<b>' + m.code + '</b> ' + m.name + ' — เลยกำหนดมาแล้ว ' + Math.abs(m.days) + ' วัน '
         + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (m.owner || '-') + ')</li>';
@@ -201,10 +249,28 @@ function checkAndNotify() {
   }
 
   if (soon.length) {
-    html += '<h3 style="color:#b8860b;">🟡 ใกล้ถึงกำหนดบำรุงรักษา (' + soon.length + ' รายการ)</h3><ul>';
+    html += '<h3 style="color:#b8860b;">🟡 เครื่องจักรใกล้ถึงกำหนดบำรุงรักษา (' + soon.length + ' รายการ)</h3><ul>';
     soon.forEach(m => {
       html += '<li>' + (m.priority ? '[' + m.priority + '] ' : '') + '<b>' + m.code + '</b> ' + m.name + ' — อีก ' + m.days + ' วัน '
         + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (m.owner || '-') + ')</li>';
+    });
+    html += '</ul>';
+  }
+
+  if (toolOverdue.length) {
+    html += '<h3 style="color:#c0392b;">🔴 เครื่องมือ/อุปกรณ์เลยกำหนดบำรุงรักษา (' + toolOverdue.length + ' รายการ)</h3><ul>';
+    toolOverdue.forEach(t => {
+      html += '<li>' + (t.priority ? '[' + t.priority + '] ' : '') + '<b>' + t.code + '</b> ' + t.name + ' — เลยกำหนดมาแล้ว ' + Math.abs(t.days) + ' วัน '
+        + '(สถานที่: ' + (t.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (t.owner || '-') + ')</li>';
+    });
+    html += '</ul>';
+  }
+
+  if (toolSoon.length) {
+    html += '<h3 style="color:#b8860b;">🟡 เครื่องมือ/อุปกรณ์ใกล้ถึงกำหนดบำรุงรักษา (' + toolSoon.length + ' รายการ)</h3><ul>';
+    toolSoon.forEach(t => {
+      html += '<li>' + (t.priority ? '[' + t.priority + '] ' : '') + '<b>' + t.code + '</b> ' + t.name + ' — อีก ' + t.days + ' วัน '
+        + '(สถานที่: ' + (t.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (t.owner || '-') + ')</li>';
     });
     html += '</ul>';
   }
@@ -230,14 +296,14 @@ function checkAndNotify() {
   // ส่งอีเมลสรุปรวมถึงอีเมลหลัก
   MailApp.sendEmail({
     to: CONFIG.NOTIFY_EMAIL,
-    subject: 'แจ้งเตือนเครื่องจักร/อะไหล่: PM เลยกำหนด ' + overdue.length + ', ใกล้ถึง ' + soon.length
+    subject: 'แจ้งเตือนเครื่องจักร/เครื่องมือ/อะไหล่: PM เลยกำหนด ' + (overdue.length + toolOverdue.length) + ', ใกล้ถึง ' + (soon.length + toolSoon.length)
       + ', อะไหล่ใกล้หมด ' + partsAlerts.lowStock.length + ', ใกล้หมดอายุ ' + partsAlerts.expiring.length,
     htmlBody: html
   });
   Logger.log('ส่งอีเมลสรุปไปที่ ' + CONFIG.NOTIFY_EMAIL);
 
-  // ถ้ามีคอลัมน์ "อีเมลผู้รับผิดชอบ" ให้ส่งแจ้งเตือนแยกถึงแต่ละคนด้วย
-  overdue.concat(soon).forEach(m => {
+  // ถ้ามีคอลัมน์ "อีเมลผู้รับผิดชอบ" ให้ส่งแจ้งเตือนแยกถึงแต่ละคนด้วย (ทั้งเครื่องจักรและเครื่องมือ/อุปกรณ์)
+  overdue.concat(soon).concat(toolOverdue).concat(toolSoon).forEach(m => {
     if (m.email) {
       const statusText = m.days < 0
         ? 'เลยกำหนดมาแล้ว ' + Math.abs(m.days) + ' วัน'
@@ -316,6 +382,18 @@ function doPost(e) {
       ]);
       writeSheet_(CONFIG.PARTS_TX_SHEET_NAME, headers, rows);
       counts.partsTx = rows.length;
+    }
+
+    if (payload.tools) {
+      const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ซีเรียล','สถานที่','ผู้จำหน่าย',
+        'ผู้รับผิดชอบดูแล','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)',
+        'บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
+      const rows = payload.tools.map(t => [
+        t.code, t.name, t.type, t.status, t.priority || '', t.brand, t.model, t.serial, t.location, t.supplier,
+        t.owner, t.email || '', t.purchaseDate, t.price, t.warrantyDate, t.cycle, t.lastMaint, t.nextMaint, t.notes
+      ]);
+      writeSheet_(CONFIG.TOOLS_SHEET_NAME, headers, rows);
+      counts.tools = rows.length;
     }
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true, counts: counts }))

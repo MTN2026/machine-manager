@@ -205,7 +205,7 @@
   <div class="topbar">
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#1a1200" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" stroke="#1a1200" stroke-width="1.6"/></svg></div>
-      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-08-03</p></div>
+      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-08-04</p></div>
     </div>
     <div class="topbar-actions">
       <div class="role-badge">บทบาท:
@@ -1625,11 +1625,12 @@
     try{
       if(typeof QRCode === 'undefined') throw new Error('ไลบรารี QR Code โหลดไม่สำเร็จ (เช็คการเชื่อมต่ออินเทอร์เน็ต)');
       const due = getDueInfo(m);
+      const trunc = (s, n) => { s = String(s||''); return s.length > n ? s.slice(0, n-1)+'…' : s; };
       const lines = [
-        m.name,
-        'รหัส: '+m.code,
-        'สถานที่: '+(m.location||'-'),
-        'กำหนดบำรุงรักษา: '+due.text
+        trunc(m.name, 40),
+        'รหัส: '+trunc(m.code, 20),
+        'สถานที่: '+trunc(m.location||'-', 30),
+        'กำหนดบำรุงรักษา: '+trunc(due.text, 30)
       ];
       new QRCode($('qrcanvas'), {text: lines.join('\n'), width:220, height:220, colorDark:'#12161b', colorLight:'#ffffff', correctLevel: (QRCode.CorrectLevel && QRCode.CorrectLevel.L) || 1});
     }catch(err){

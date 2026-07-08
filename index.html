@@ -386,7 +386,13 @@
       <div class="form-grid">
         <div class="field"><label>รหัสเครื่องจักร <span class="req">*</span></label><input id="f_code" required placeholder="เช่น MCH-001"></div>
         <div class="field"><label>ชื่อเครื่องจักร <span class="req">*</span></label><input id="f_name" required placeholder="เช่น เครื่องปั๊มลม"></div>
+        <div class="field"><label>รุ่น</label><input id="f_model"></div>
+        <div class="field"><label>หมายเลขซีเรียล</label><input id="f_serial"></div>
+        <div class="field"><label>ปีที่ผลิต</label><input type="number" id="f_manufactureYear" min="1950" max="2100" placeholder="เช่น 2020"></div>
+        <div class="field"><label>ยี่ห้อ</label><input id="f_brand"></div>
         <div class="field"><label>ประเภท/หมวดหมู่ <span class="req">*</span></label><input id="f_type" required list="typeList"><datalist id="typeList"></datalist></div>
+        <div class="field"><label>ปีที่ติดตั้ง</label><input type="number" id="f_installYear" min="1950" max="2100" placeholder="เช่น 2022"></div>
+        <div class="field"><label>สถานที่ติดตั้ง/แผนก</label><input id="f_location"></div>
         <div class="field"><label>สถานะ</label>
           <select id="f_status"><option value="run">ใช้งานปกติ</option><option value="maint">ซ่อมบำรุง</option><option value="down">ชำรุด/เสีย</option><option value="retired">ปลดระวาง</option></select>
         </div>
@@ -398,13 +404,8 @@
             <option value="low">ต่ำ</option>
           </select>
         </div>
-        <div class="field"><label>ยี่ห้อ</label><input id="f_brand"></div>
-        <div class="field"><label>รุ่น</label><input id="f_model"></div>
-        <div class="field"><label>ปีที่ผลิต</label><input type="number" id="f_manufactureYear" min="1950" max="2100" placeholder="เช่น 2020"></div>
-        <div class="field"><label>หมายเลขซีเรียล</label><input id="f_serial"></div>
-        <div class="field"><label>สถานที่ติดตั้ง/แผนก</label><input id="f_location"></div>
         <div class="field"><label>ผู้จำหน่าย/ซัพพลายเออร์</label><input id="f_supplier"></div>
-        <div class="field"><label>ผู้รับผิดชอบ</label><input id="f_owner"></div>
+        <div class="field"><label>ผู้รับผิดชอบดูแล</label><input id="f_owner"></div>
         <div class="field"><label>อีเมลผู้รับผิดชอบ</label><input type="email" id="f_ownerEmail" placeholder="สำหรับแจ้งเตือนอัตโนมัติ"></div>
         <div class="field"><label>วันที่จัดซื้อ</label><input type="date" id="f_purchaseDate"></div>
         <div class="field"><label>ราคาจัดซื้อ (บาท)</label><input type="number" id="f_price" min="0" step="0.01"></div>
@@ -423,8 +424,7 @@
           </select>
         </div>
         <div class="field"><label>เกณฑ์รอบบำรุงรักษา</label><input id="f_cycleBasis" placeholder="เช่น ตรวจสอบทุกครั้งที่ใช้งานครบ 500 ชม. หรือครบกำหนดตามปฏิทิน แล้วแต่ถึงก่อน"></div>
-
-        <div class="field"><label>วันบำรุงรักษาล่าสุด</label><input type="date" id="f_lastMaint"></div>
+        <div class="field"><label>รอบบำรุงรักษาล่าสุด</label><input type="date" id="f_lastMaint"></div>
 
         <div class="field full"><label>หมายเหตุ</label><textarea id="f_notes"></textarea></div>
       </div>
@@ -902,6 +902,7 @@
     $('f_brand').value = machine ? machine.brand||'' : '';
     $('f_model').value = machine ? machine.model||'' : '';
     $('f_manufactureYear').value = machine ? machine.manufactureYear ?? '' : '';
+    $('f_installYear').value = machine ? machine.installYear ?? '' : '';
     $('f_serial').value = machine ? machine.serial||'' : '';
     $('f_location').value = machine ? machine.location||'' : '';
     $('f_supplier').value = machine ? machine.supplier||'' : '';
@@ -946,7 +947,7 @@
 
     const data = {
       id, code, name, type:$('f_type').value.trim(), status:$('f_status').value, priority:$('f_priority').value,
-      brand:$('f_brand').value.trim(), model:$('f_model').value.trim(), manufactureYear:$('f_manufactureYear').value?Number($('f_manufactureYear').value):null, serial:$('f_serial').value.trim(),
+      brand:$('f_brand').value.trim(), model:$('f_model').value.trim(), manufactureYear:$('f_manufactureYear').value?Number($('f_manufactureYear').value):null, installYear:$('f_installYear').value?Number($('f_installYear').value):null, serial:$('f_serial').value.trim(),
       location:$('f_location').value.trim(), supplier:$('f_supplier').value.trim(), owner:$('f_owner').value.trim(), ownerEmail:$('f_ownerEmail').value.trim(),
       purchaseDate:$('f_purchaseDate').value, price:$('f_price').value?Number($('f_price').value):null,
       warrantyDate:$('f_warrantyDate').value, lifeYears:$('f_lifeYears').value?Number($('f_lifeYears').value):null,
@@ -987,20 +988,23 @@
 
     const due = getDueInfo(m);
     $('detailGrid').innerHTML = `
-      <div class="detail-item"><div class="k">ประเภท</div><div class="v">${escapeHtml(m.type||'—')}</div></div>
-      <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${m.priority||'medium'}">${PRIORITY_LABEL[m.priority||'medium']}</span></div></div>
-      <div class="detail-item"><div class="k">สถานที่ติดตั้ง</div><div class="v">${escapeHtml(m.location||'—')}</div></div>
-      <div class="detail-item"><div class="k">ยี่ห้อ / รุ่น</div><div class="v">${escapeHtml(m.brand||'—')} / ${escapeHtml(m.model||'—')}</div></div>
-      <div class="detail-item"><div class="k">ปีที่ผลิต</div><div class="v">${m.manufactureYear||'—'}</div></div>
+      <div class="detail-item"><div class="k">รุ่น</div><div class="v">${escapeHtml(m.model||'—')}</div></div>
       <div class="detail-item"><div class="k">หมายเลขซีเรียล</div><div class="v">${escapeHtml(m.serial||'—')}</div></div>
+      <div class="detail-item"><div class="k">ปีที่ผลิต</div><div class="v">${m.manufactureYear||'—'}</div></div>
+      <div class="detail-item"><div class="k">ยี่ห้อ</div><div class="v">${escapeHtml(m.brand||'—')}</div></div>
+      <div class="detail-item"><div class="k">ประเภท</div><div class="v">${escapeHtml(m.type||'—')}</div></div>
+      <div class="detail-item"><div class="k">ปีที่ติดตั้ง</div><div class="v">${m.installYear||'—'}</div></div>
+      <div class="detail-item"><div class="k">สถานที่ติดตั้ง</div><div class="v">${escapeHtml(m.location||'—')}</div></div>
+      <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${m.priority||'medium'}">${PRIORITY_LABEL[m.priority||'medium']}</span></div></div>
       <div class="detail-item"><div class="k">ผู้จำหน่าย</div><div class="v">${escapeHtml(m.supplier||'—')}</div></div>
-      <div class="detail-item"><div class="k">ผู้รับผิดชอบ</div><div class="v">${escapeHtml(m.owner||'—')}</div></div>
+      <div class="detail-item"><div class="k">ผู้รับผิดชอบดูแล</div><div class="v">${escapeHtml(m.owner||'—')}</div></div>
       <div class="detail-item"><div class="k">วันที่จัดซื้อ</div><div class="v">${fmtDate(m.purchaseDate)}</div></div>
       <div class="detail-item"><div class="k">ราคาจัดซื้อ</div><div class="v">${fmtMoney(m.price)}</div></div>
       <div class="detail-item"><div class="k">วันหมดประกัน</div><div class="v">${fmtDate(m.warrantyDate)}</div></div>
       <div class="detail-item"><div class="k">รอบบำรุงรักษา</div><div class="v">${m.cycle?('ทุก '+m.cycle+' วัน'):'—'}</div></div>
       <div class="detail-item"><div class="k">เกณฑ์รอบบำรุงรักษา</div><div class="v">${escapeHtml(m.cycleBasis||'—')}</div></div>
-      <div class="detail-item"><div class="k">กำหนดบำรุงรักษาถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
+      <div class="detail-item"><div class="k">รอบบำรุงรักษาล่าสุด</div><div class="v">${fmtDate(m.lastMaint)}</div></div>
+      <div class="detail-item"><div class="k">กำหนดครั้งถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
       <div class="detail-item" style="grid-column:1/-1;"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(m.notes||'—')}</div></div>`;
 
     // depreciation
@@ -1481,9 +1485,9 @@
   });
 
   // ===== CSV IMPORT/EXPORT =====
-  const CSV_HEADERS = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ปีที่ผลิต','ซีเรียล','สถานที่','ผู้จำหน่าย','ผู้รับผิดชอบ','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)','บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
+  const CSV_HEADERS = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ปีที่ผลิต','ปีที่ติดตั้ง','ซีเรียล','สถานที่','ผู้จำหน่าย','ผู้รับผิดชอบ','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)','บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
   $('exportBtn').addEventListener('click', ()=>{
-    const rows = machines.map(m=>[m.code,m.name,m.type,STATUS_LABEL[m.status],PRIORITY_LABEL[m.priority||'medium'],m.brand,m.model,m.manufactureYear,m.serial,m.location,m.supplier,m.owner,m.ownerEmail,m.purchaseDate,m.price,m.warrantyDate,m.cycle,m.lastMaint,m.nextMaint,m.notes]);
+    const rows = machines.map(m=>[m.code,m.name,m.type,STATUS_LABEL[m.status],PRIORITY_LABEL[m.priority||'medium'],m.brand,m.model,m.manufactureYear,m.installYear,m.serial,m.location,m.supplier,m.owner,m.ownerEmail,m.purchaseDate,m.price,m.warrantyDate,m.cycle,m.lastMaint,m.nextMaint,m.notes]);
     const csv = '\uFEFF' + [CSV_HEADERS, ...rows].map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
@@ -1548,7 +1552,7 @@
     const payload = {
       machines: machines.map(m=>({
         code:m.code, name:m.name, type:m.type, status:STATUS_LABEL[m.status]||m.status, priority:PRIORITY_LABEL[m.priority||'medium'],
-        brand:m.brand, model:m.model, manufactureYear:m.manufactureYear||'', serial:m.serial, location:m.location, supplier:m.supplier,
+        brand:m.brand, model:m.model, manufactureYear:m.manufactureYear||'', installYear:m.installYear||'', serial:m.serial, location:m.location, supplier:m.supplier,
         owner:m.owner, email:m.ownerEmail||'', purchaseDate:m.purchaseDate, price:m.price, warrantyDate:m.warrantyDate,
         cycle:m.cycle, lastMaint:m.lastMaint, nextMaint:m.nextMaint, notes:m.notes
       })),
@@ -1613,9 +1617,9 @@
       if(machines.find(m=>m.code.toLowerCase()===code.toLowerCase())){ skipped++; continue; }
       machines.push({
         id:'m_'+Date.now()+'_'+i, code, name:r[1]||code, type:r[2]||'', status:STATUS_REVERSE[r[3]]||'run', priority:PRIORITY_REVERSE[r[4]]||'medium',
-        brand:r[5]||'', model:r[6]||'', manufactureYear:r[7]?Number(r[7]):null, serial:r[8]||'', location:r[9]||'', supplier:r[10]||'', owner:r[11]||'', ownerEmail:r[12]||'',
-        purchaseDate:r[13]||'', price:r[14]?Number(r[14]):null, warrantyDate:r[15]||'', cycleBasis:'', cycle:r[16]?Number(r[16]):null,
-        lastMaint:r[17]||'', nextMaint:r[18]||'', notes:r[19]||''
+        brand:r[5]||'', model:r[6]||'', manufactureYear:r[7]?Number(r[7]):null, installYear:r[8]?Number(r[8]):null, serial:r[9]||'', location:r[10]||'', supplier:r[11]||'', owner:r[12]||'', ownerEmail:r[13]||'',
+        purchaseDate:r[14]||'', price:r[15]?Number(r[15]):null, warrantyDate:r[16]||'', cycleBasis:'', cycle:r[17]?Number(r[17]):null,
+        lastMaint:r[18]||'', nextMaint:r[19]||'', notes:r[20]||''
       });
       imported++;
     }

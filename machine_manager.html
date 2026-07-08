@@ -1006,15 +1006,15 @@
   const CYCLE_PRESETS = [30,90,120,180,365];
 
   function sanitizeNumericInput(str){
+    // Only convert Thai digits to Arabic digits while typing - everything else (commas, currency
+    // symbols, spaces, etc.) is left untouched so the person can type however feels natural.
+    // The actual numeric value is extracted safely by parseNumericInput() when the form is saved.
     const thaiDigits = '๐๑๒๓๔๕๖๗๘๙';
     let out = '';
     for(const ch of str){
       const idx = thaiDigits.indexOf(ch);
       out += idx>=0 ? String(idx) : ch;
     }
-    out = out.replace(/[^0-9.,]/g,''); // allow digits, one decimal point, and thousand-separator commas while typing
-    const firstDot = out.indexOf('.');
-    if(firstDot>=0){ out = out.slice(0,firstDot+1) + out.slice(firstDot+1).replace(/\./g,''); }
     return out;
   }
   function parseNumericInput(str){
@@ -1026,7 +1026,12 @@
       out += idx>=0 ? String(idx) : ch;
     }
     out = out.replace(/[,\s]/g,''); // strip thousand-separator commas and spaces
-    out = out.replace(/[^0-9.\-]/g,'');
+    out = out.replace(/[^0-9.\-]/g,''); // drop any remaining non-numeric symbols (currency signs, letters, etc.)
+    const firstDot = out.indexOf('.');
+    if(firstDot>=0){ out = out.slice(0,firstDot+1) + out.slice(firstDot+1).replace(/\./g,''); } // keep only the first decimal point
+    const neg = out.startsWith('-');
+    out = out.replace(/-/g,''); // drop stray minus signs, then re-add one at the front if present
+    if(neg) out = '-'+out;
     if(out === '' || out === '-' || out === '.') return null;
     const n = Number(out);
     return isNaN(n) ? null : n;

@@ -726,7 +726,14 @@
 
   function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2300); }
   function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function fmtDate(d){ if(!d) return '—'; try{ return new Date(d+'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); }catch(e){ return d; } }
+  function fmtDate(d){
+    if(!d) return '—';
+    try{
+      const dt = new Date(d+'T00:00:00');
+      if(isNaN(dt.getTime())) return d; // not a valid ISO date - show raw value instead of "Invalid Date"
+      return dt.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});
+    }catch(e){ return d; }
+  }
   function fmtMoney(n){ if(n===undefined||n===null||n===''||isNaN(Number(n))) return '—'; return Number(n).toLocaleString('th-TH',{maximumFractionDigits:2})+' ฿'; }
   function todayStr(){ return new Date().toISOString().slice(0,10); }
   function addDays(d,days){ const dt=new Date(d+'T00:00:00'); dt.setDate(dt.getDate()+Number(days)); return dt.toISOString().slice(0,10); }
@@ -1957,8 +1964,8 @@
       tools.push({
         id:'tool_'+Date.now()+'_'+i, code, name:r[1]||code, type:r[2]||'', status:TOOL_STATUS_REVERSE[r[3]]||'run', priority:PRIORITY_REVERSE[r[4]]||'medium',
         brand:r[5]||'', model:r[6]||'', serial:r[7]||'', location:r[8]||'', supplier:r[9]||'', owner:r[10]||'', ownerEmail:r[11]||'',
-        purchaseDate:r[12]||'', price:parseNumericInput(r[13]), warrantyDate:r[14]||'', cycleBasis:'', cycle:r[15]?Number(r[15]):null,
-        lastMaint:r[16]||'', nextMaint:r[17]||'', notes:r[18]||''
+        purchaseDate:parseDateInput(r[12]), price:parseNumericInput(r[13]), warrantyDate:parseDateInput(r[14]), cycleBasis:'', cycle:r[15]?Number(r[15]):null,
+        lastMaint:parseDateInput(r[16]), nextMaint:parseDateInput(r[17]), notes:r[18]||''
       });
       imported++;
     }
@@ -2074,6 +2081,31 @@
   $('saveSyncBtn').addEventListener('click', async ()=>{ await saveSyncSettings(); toast('บันทึกการตั้งค่าซิงก์เรียบร้อย'); });
   $('syncNowBtn').addEventListener('click', async ()=>{ await saveSyncSettings(); await syncToSheet(false); });
 
+  function parseDateInput(str){
+    if(!str) return '';
+    str = String(str).trim();
+    if(!str) return '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return str; // already ISO, leave as-is
+    let m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/); // D/M/YYYY or D-M-YYYY
+    if(m){
+      let [, d, mo, y] = m;
+      let year = Number(y);
+      if(year > 2400) year -= 543; // Buddhist Era -> Gregorian
+      if(Number(mo) > 12 && Number(d) <= 12){ const tmp=d; d=mo; mo=tmp; } // looks like M/D/YYYY instead
+      return year+'-'+mo.padStart(2,'0')+'-'+d.padStart(2,'0');
+    }
+    m = str.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/); // YYYY/M/D
+    if(m){
+      let [, y, mo, d] = m;
+      let year = Number(y);
+      if(year > 2400) year -= 543;
+      return year+'-'+mo.padStart(2,'0')+'-'+d.padStart(2,'0');
+    }
+    const dt = new Date(str);
+    if(!isNaN(dt.getTime())) return dt.toISOString().slice(0,10);
+    return ''; // unrecognized format - leave blank rather than store garbage
+  }
+
   function parseCsvText(text){
     const rows = []; let row=[], field='', inQuotes=false;
     for(let i=0;i<text.length;i++){
@@ -2108,8 +2140,8 @@
       machines.push({
         id:'m_'+Date.now()+'_'+i, code, name:r[1]||code, type:r[2]||'', status:STATUS_REVERSE[r[3]]||'run', priority:PRIORITY_REVERSE[r[4]]||'medium',
         brand:r[5]||'', model:r[6]||'', manufactureYear:r[7]?Number(r[7]):null, installYear:r[8]?Number(r[8]):null, serial:r[9]||'', location:r[10]||'', supplier:r[11]||'', owner:r[12]||'', ownerEmail:r[13]||'',
-        purchaseDate:r[14]||'', price:parseNumericInput(r[15]), warrantyDate:r[16]||'', cycleBasis:'', cycle:r[17]?Number(r[17]):null,
-        lastMaint:r[18]||'', nextMaint:r[19]||'', notes:r[20]||''
+        purchaseDate:parseDateInput(r[14]), price:parseNumericInput(r[15]), warrantyDate:parseDateInput(r[16]), cycleBasis:'', cycle:r[17]?Number(r[17]):null,
+        lastMaint:parseDateInput(r[18]), nextMaint:parseDateInput(r[19]), notes:r[20]||''
       });
       imported++;
     }

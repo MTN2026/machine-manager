@@ -614,6 +614,15 @@
   function addDays(d,days){ const dt=new Date(d+'T00:00:00'); dt.setDate(dt.getDate()+Number(days)); return dt.toISOString().slice(0,10); }
   function daysBetween(a,b){ return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000); }
 
+  function calcMachineAge(m){
+    const year = m.manufactureYear || m.installYear;
+    if(!year) return null;
+    const now = new Date();
+    let age = now.getFullYear() - year;
+    if(age < 0) age = 0;
+    return age;
+  }
+
   function getDueInfo(m){
     if(m.status === 'retired') return {overdue:false, soon:false, text:'—'};
     if(!m.nextMaint) return {overdue:false, soon:false, text:'—'};
@@ -987,6 +996,7 @@
     if(photo){ $('detailPhoto').src = photo; $('detailPhoto').style.display=''; } else { $('detailPhoto').style.display='none'; }
 
     const due = getDueInfo(m);
+    const age = calcMachineAge(m);
     $('detailGrid').innerHTML = `
       <div class="detail-item"><div class="k">รุ่น</div><div class="v">${escapeHtml(m.model||'—')}</div></div>
       <div class="detail-item"><div class="k">หมายเลขซีเรียล</div><div class="v">${escapeHtml(m.serial||'—')}</div></div>
@@ -994,6 +1004,7 @@
       <div class="detail-item"><div class="k">ยี่ห้อ</div><div class="v">${escapeHtml(m.brand||'—')}</div></div>
       <div class="detail-item"><div class="k">ประเภท</div><div class="v">${escapeHtml(m.type||'—')}</div></div>
       <div class="detail-item"><div class="k">ปีที่ติดตั้ง</div><div class="v">${m.installYear||'—'}</div></div>
+      <div class="detail-item"><div class="k">อายุเครื่องจักร</div><div class="v">${age!==null ? age+' ปี' : '—'}</div></div>
       <div class="detail-item"><div class="k">สถานที่ติดตั้ง</div><div class="v">${escapeHtml(m.location||'—')}</div></div>
       <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${m.priority||'medium'}">${PRIORITY_LABEL[m.priority||'medium']}</span></div></div>
       <div class="detail-item"><div class="k">ผู้จำหน่าย</div><div class="v">${escapeHtml(m.supplier||'—')}</div></div>

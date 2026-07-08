@@ -1623,7 +1623,17 @@
   // ===== QR CODE =====
   function renderQr(m){
     $('qrcanvas').innerHTML = '';
-    new QRCode($('qrcanvas'), {text: JSON.stringify({code:m.code, id:m.id, name:m.name}), width:160, height:160, colorDark:'#12161b', colorLight:'#ffffff'});
+    const due = getDueInfo(m);
+    const lines = [
+      'เครื่องจักร: '+m.name,
+      'รหัส: '+m.code,
+      'ประเภท: '+(m.type||'-'),
+      'สถานที่: '+(m.location||'-'),
+      'สถานะ: '+STATUS_LABEL[m.status],
+      'ผู้รับผิดชอบดูแล: '+(m.owner||'-'),
+      'กำหนดบำรุงรักษาถัดไป: '+due.text
+    ];
+    new QRCode($('qrcanvas'), {text: lines.join('\n'), width:220, height:220, colorDark:'#12161b', colorLight:'#ffffff'});
   }
   $('downloadQrBtn').addEventListener('click', ()=>{
     const canvas = $('qrcanvas').querySelector('canvas');

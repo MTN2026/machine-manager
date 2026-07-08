@@ -838,7 +838,7 @@
         <div class="plate-meta">
           <div><span class="k">ประเภท</span><span class="v">${escapeHtml(m.type||'—')}</span></div>
           <div><span class="k">สถานที่</span><span class="v">${escapeHtml(m.location||'—')}</span></div>
-          <div><span class="k">ผู้รับผิดชอบ</span><span class="v">${escapeHtml(m.owner||'—')}</span></div>
+          <div><span class="k">ผู้รับผิดชอบดูแล</span><span class="v">${escapeHtml(m.owner||'—')}</span></div>
           <div><span class="k">กำหนดบำรุงรักษา</span><span class="v ${vcls}">${escapeHtml(due.text)}</span></div>
         </div>
         <div class="plate-foot">
@@ -1485,7 +1485,7 @@
   });
 
   // ===== CSV IMPORT/EXPORT =====
-  const CSV_HEADERS = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ปีที่ผลิต','ปีที่ติดตั้ง','ซีเรียล','สถานที่','ผู้จำหน่าย','ผู้รับผิดชอบ','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)','บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
+  const CSV_HEADERS = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ปีที่ผลิต','ปีที่ติดตั้ง','ซีเรียล','สถานที่','ผู้จำหน่าย','ผู้รับผิดชอบดูแล','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)','บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
   $('exportBtn').addEventListener('click', ()=>{
     const rows = machines.map(m=>[m.code,m.name,m.type,STATUS_LABEL[m.status],PRIORITY_LABEL[m.priority||'medium'],m.brand,m.model,m.manufactureYear,m.installYear,m.serial,m.location,m.supplier,m.owner,m.ownerEmail,m.purchaseDate,m.price,m.warrantyDate,m.cycle,m.lastMaint,m.nextMaint,m.notes]);
     const csv = '\uFEFF' + [CSV_HEADERS, ...rows].map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
@@ -1518,7 +1518,7 @@
       lines.push('DTSTART;VALUE=DATE:'+dt);
       lines.push('DTEND;VALUE=DATE:'+icsDate(addDays(m.nextMaint,1)));
       lines.push(foldLine('SUMMARY:PM: '+m.code+' '+m.name));
-      lines.push(foldLine('DESCRIPTION:กำหนดบำรุงรักษาเครื่องจักร '+m.name+' (รหัส '+m.code+') สถานที่: '+(m.location||'-')+' ผู้รับผิดชอบ: '+(m.owner||'-')));
+      lines.push(foldLine('DESCRIPTION:กำหนดบำรุงรักษาเครื่องจักร '+m.name+' (รหัส '+m.code+') สถานที่: '+(m.location||'-')+' ผู้รับผิดชอบดูแล: '+(m.owner||'-')));
       lines.push('BEGIN:VALARM');
       lines.push('ACTION:DISPLAY');
       lines.push('DESCRIPTION:แจ้งเตือนบำรุงรักษา '+m.code);

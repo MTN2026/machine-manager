@@ -88,7 +88,7 @@ function getMachines_() {
     status: idx('สถานะ'),
     priority: idx('ระดับความสำคัญ'),
     location: idx('สถานที่'),
-    owner: idx('ผู้รับผิดชอบ'),
+    owner: idx('ผู้รับผิดชอบดูแล'),
     next: idx('กำหนดครั้งถัดไป'),
     email: idx('อีเมลผู้รับผิดชอบ') // คอลัมน์เสริม ไม่บังคับต้องมี
   };
@@ -195,7 +195,7 @@ function checkAndNotify() {
     html += '<h3 style="color:#c0392b;">🔴 เลยกำหนดบำรุงรักษา (' + overdue.length + ' รายการ)</h3><ul>';
     overdue.forEach(m => {
       html += '<li>' + (m.priority ? '[' + m.priority + '] ' : '') + '<b>' + m.code + '</b> ' + m.name + ' — เลยกำหนดมาแล้ว ' + Math.abs(m.days) + ' วัน '
-        + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบ: ' + (m.owner || '-') + ')</li>';
+        + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (m.owner || '-') + ')</li>';
     });
     html += '</ul>';
   }
@@ -204,7 +204,7 @@ function checkAndNotify() {
     html += '<h3 style="color:#b8860b;">🟡 ใกล้ถึงกำหนดบำรุงรักษา (' + soon.length + ' รายการ)</h3><ul>';
     soon.forEach(m => {
       html += '<li>' + (m.priority ? '[' + m.priority + '] ' : '') + '<b>' + m.code + '</b> ' + m.name + ' — อีก ' + m.days + ' วัน '
-        + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบ: ' + (m.owner || '-') + ')</li>';
+        + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (m.owner || '-') + ')</li>';
     });
     html += '</ul>';
   }
@@ -289,11 +289,11 @@ function doPost(e) {
     let counts = { machines: 0, parts: 0, partsTx: 0 };
 
     if (payload.machines) {
-      const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ปีที่ผลิต','ซีเรียล','สถานที่','ผู้จำหน่าย',
-        'ผู้รับผิดชอบ','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)',
+      const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ปีที่ผลิต','ปีที่ติดตั้ง','ซีเรียล','สถานที่','ผู้จำหน่าย',
+        'ผู้รับผิดชอบดูแล','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)',
         'บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
       const rows = payload.machines.map(m => [
-        m.code, m.name, m.type, m.status, m.priority || '', m.brand, m.model, m.manufactureYear || '', m.serial, m.location, m.supplier,
+        m.code, m.name, m.type, m.status, m.priority || '', m.brand, m.model, m.manufactureYear || '', m.installYear || '', m.serial, m.location, m.supplier,
         m.owner, m.email || '', m.purchaseDate, m.price, m.warrantyDate, m.cycle, m.lastMaint, m.nextMaint, m.notes
       ]);
       writeSheet_(CONFIG.SHEET_NAME, headers, rows);

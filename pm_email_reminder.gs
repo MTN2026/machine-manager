@@ -86,6 +86,7 @@ function getMachines_() {
     code: idx('รหัส'),
     name: idx('ชื่อ'),
     status: idx('สถานะ'),
+    priority: idx('ระดับความสำคัญ'),
     location: idx('สถานที่'),
     owner: idx('ผู้รับผิดชอบ'),
     next: idx('กำหนดครั้งถัดไป'),
@@ -102,6 +103,7 @@ function getMachines_() {
       code: r[col.code],
       name: col.name >= 0 ? r[col.name] : '',
       status: col.status >= 0 ? r[col.status] : '',
+      priority: col.priority >= 0 ? r[col.priority] : '',
       location: col.location >= 0 ? r[col.location] : '',
       owner: col.owner >= 0 ? r[col.owner] : '',
       next: r[col.next],
@@ -165,6 +167,8 @@ function getPartsAlerts_() {
 function checkAndNotify() {
   const machines = getMachines_();
   const overdue = [], soon = [];
+  const PRIORITY_WEIGHT = { 'วิกฤต': 0, 'สูง': 1, 'ปานกลาง': 2, 'ต่ำ': 3 };
+  const byPriority = (a, b) => (PRIORITY_WEIGHT[a.priority] ?? 2) - (PRIORITY_WEIGHT[b.priority] ?? 2);
 
   machines.forEach(m => {
     if (m.status === 'ปลดระวาง') return; // ข้ามเครื่องที่ปลดระวางแล้ว
@@ -174,6 +178,8 @@ function checkAndNotify() {
     if (days < 0) overdue.push(Object.assign({}, m, { days: days }));
     else if (days <= CONFIG.DAYS_AHEAD) soon.push(Object.assign({}, m, { days: days }));
   });
+  overdue.sort(byPriority);
+  soon.sort(byPriority);
 
   const partsAlerts = getPartsAlerts_();
 
@@ -188,7 +194,7 @@ function checkAndNotify() {
   if (overdue.length) {
     html += '<h3 style="color:#c0392b;">🔴 เลยกำหนดบำรุงรักษา (' + overdue.length + ' รายการ)</h3><ul>';
     overdue.forEach(m => {
-      html += '<li><b>' + m.code + '</b> ' + m.name + ' — เลยกำหนดมาแล้ว ' + Math.abs(m.days) + ' วัน '
+      html += '<li>' + (m.priority ? '[' + m.priority + '] ' : '') + '<b>' + m.code + '</b> ' + m.name + ' — เลยกำหนดมาแล้ว ' + Math.abs(m.days) + ' วัน '
         + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบ: ' + (m.owner || '-') + ')</li>';
     });
     html += '</ul>';
@@ -197,7 +203,7 @@ function checkAndNotify() {
   if (soon.length) {
     html += '<h3 style="color:#b8860b;">🟡 ใกล้ถึงกำหนดบำรุงรักษา (' + soon.length + ' รายการ)</h3><ul>';
     soon.forEach(m => {
-      html += '<li><b>' + m.code + '</b> ' + m.name + ' — อีก ' + m.days + ' วัน '
+      html += '<li>' + (m.priority ? '[' + m.priority + '] ' : '') + '<b>' + m.code + '</b> ' + m.name + ' — อีก ' + m.days + ' วัน '
         + '(สถานที่: ' + (m.location || '-') + ', ผู้รับผิดชอบ: ' + (m.owner || '-') + ')</li>';
     });
     html += '</ul>';
@@ -283,11 +289,11 @@ function doPost(e) {
     let counts = { machines: 0, parts: 0, partsTx: 0 };
 
     if (payload.machines) {
-      const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ยี่ห้อ','รุ่น','ซีเรียล','สถานที่','ผู้จำหน่าย',
+      const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ยี่ห้อ','รุ่น','ปีที่ผลิต','ซีเรียล','สถานที่','ผู้จำหน่าย',
         'ผู้รับผิดชอบ','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)',
         'บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
       const rows = payload.machines.map(m => [
-        m.code, m.name, m.type, m.status, m.brand, m.model, m.serial, m.location, m.supplier,
+        m.code, m.name, m.type, m.status, m.priority || '', m.brand, m.model, m.manufactureYear || '', m.serial, m.location, m.supplier,
         m.owner, m.email || '', m.purchaseDate, m.price, m.warrantyDate, m.cycle, m.lastMaint, m.nextMaint, m.notes
       ]);
       writeSheet_(CONFIG.SHEET_NAME, headers, rows);

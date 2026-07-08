@@ -727,7 +727,7 @@
   function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2300); }
   function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function fmtDate(d){ if(!d) return '—'; try{ return new Date(d+'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); }catch(e){ return d; } }
-  function fmtMoney(n){ if(n===undefined||n===null||n==='') return '—'; return Number(n).toLocaleString('th-TH',{maximumFractionDigits:2})+' ฿'; }
+  function fmtMoney(n){ if(n===undefined||n===null||n===''||isNaN(Number(n))) return '—'; return Number(n).toLocaleString('th-TH',{maximumFractionDigits:2})+' ฿'; }
   function todayStr(){ return new Date().toISOString().slice(0,10); }
   function addDays(d,days){ const dt=new Date(d+'T00:00:00'); dt.setDate(dt.getDate()+Number(days)); return dt.toISOString().slice(0,10); }
   function daysBetween(a,b){ return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000); }
@@ -1019,10 +1019,24 @@
       const idx = thaiDigits.indexOf(ch);
       out += idx>=0 ? String(idx) : ch;
     }
-    out = out.replace(/[^0-9.]/g,'');
+    out = out.replace(/[^0-9.,]/g,''); // allow digits, one decimal point, and thousand-separator commas while typing
     const firstDot = out.indexOf('.');
     if(firstDot>=0){ out = out.slice(0,firstDot+1) + out.slice(firstDot+1).replace(/\./g,''); }
     return out;
+  }
+  function parseNumericInput(str){
+    if(str===null || str===undefined) return null;
+    const thaiDigits = '๐๑๒๓๔๕๖๗๘๙';
+    let out = '';
+    for(const ch of String(str)){
+      const idx = thaiDigits.indexOf(ch);
+      out += idx>=0 ? String(idx) : ch;
+    }
+    out = out.replace(/[,\s]/g,''); // strip thousand-separator commas and spaces
+    out = out.replace(/[^0-9.\-]/g,'');
+    if(out === '' || out === '-' || out === '.') return null;
+    const n = Number(out);
+    return isNaN(n) ? null : n;
   }
   $('f_price').addEventListener('input', e=>{
     const cleaned = sanitizeNumericInput(e.target.value);
@@ -1094,7 +1108,7 @@
       id, code, name, type:$('f_type').value.trim(), status:$('f_status').value, priority:$('f_priority').value,
       brand:$('f_brand').value.trim(), model:$('f_model').value.trim(), manufactureYear:$('f_manufactureYear').value?Number($('f_manufactureYear').value):null, installYear:$('f_installYear').value?Number($('f_installYear').value):null, serial:$('f_serial').value.trim(),
       location:$('f_location').value.trim(), supplier:$('f_supplier').value.trim(), owner:$('f_owner').value.trim(), ownerEmail:$('f_ownerEmail').value.trim(),
-      purchaseDate:$('f_purchaseDate').value, price:$('f_price').value?Number($('f_price').value):null,
+      purchaseDate:$('f_purchaseDate').value, price:parseNumericInput($('f_price').value),
       warrantyDate:$('f_warrantyDate').value, lifeYears:$('f_lifeYears').value?Number($('f_lifeYears').value):null,
       cycleBasis:$('f_cycleBasis').value.trim(), cycle:cycleValue,
       lastMaint:$('f_lastMaint').value, nextMaint, notes:$('f_notes').value.trim()
@@ -1822,7 +1836,7 @@
       id, code, name, model:$('t_model').value.trim(), serial:$('t_serial').value.trim(), brand:$('t_brand').value.trim(),
       type:$('t_type').value.trim(), location:$('t_location').value.trim(), status:$('t_status').value, priority:$('t_priority').value,
       supplier:$('t_supplier').value.trim(), owner:$('t_owner').value.trim(), ownerEmail:$('t_ownerEmail').value.trim(),
-      purchaseDate:$('t_purchaseDate').value, price:$('t_price').value?Number($('t_price').value):null,
+      purchaseDate:$('t_purchaseDate').value, price:parseNumericInput($('t_price').value),
       warrantyDate:$('t_warrantyDate').value, cycleBasis:$('t_cycleBasis').value.trim(), cycle:cycleValue,
       lastMaint:$('t_lastMaint').value, nextMaint, notes:$('t_notes').value.trim()
     };
@@ -1943,7 +1957,7 @@
       tools.push({
         id:'tool_'+Date.now()+'_'+i, code, name:r[1]||code, type:r[2]||'', status:TOOL_STATUS_REVERSE[r[3]]||'run', priority:PRIORITY_REVERSE[r[4]]||'medium',
         brand:r[5]||'', model:r[6]||'', serial:r[7]||'', location:r[8]||'', supplier:r[9]||'', owner:r[10]||'', ownerEmail:r[11]||'',
-        purchaseDate:r[12]||'', price:r[13]?Number(r[13]):null, warrantyDate:r[14]||'', cycleBasis:'', cycle:r[15]?Number(r[15]):null,
+        purchaseDate:r[12]||'', price:parseNumericInput(r[13]), warrantyDate:r[14]||'', cycleBasis:'', cycle:r[15]?Number(r[15]):null,
         lastMaint:r[16]||'', nextMaint:r[17]||'', notes:r[18]||''
       });
       imported++;
@@ -2094,7 +2108,7 @@
       machines.push({
         id:'m_'+Date.now()+'_'+i, code, name:r[1]||code, type:r[2]||'', status:STATUS_REVERSE[r[3]]||'run', priority:PRIORITY_REVERSE[r[4]]||'medium',
         brand:r[5]||'', model:r[6]||'', manufactureYear:r[7]?Number(r[7]):null, installYear:r[8]?Number(r[8]):null, serial:r[9]||'', location:r[10]||'', supplier:r[11]||'', owner:r[12]||'', ownerEmail:r[13]||'',
-        purchaseDate:r[14]||'', price:r[15]?Number(r[15]):null, warrantyDate:r[16]||'', cycleBasis:'', cycle:r[17]?Number(r[17]):null,
+        purchaseDate:r[14]||'', price:parseNumericInput(r[15]), warrantyDate:r[16]||'', cycleBasis:'', cycle:r[17]?Number(r[17]):null,
         lastMaint:r[18]||'', nextMaint:r[19]||'', notes:r[20]||''
       });
       imported++;

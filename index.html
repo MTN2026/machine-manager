@@ -217,7 +217,7 @@
   <div class="topbar">
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#1a1200" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" stroke="#1a1200" stroke-width="1.6"/></svg></div>
-      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-09-02</p></div>
+      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-09-03</p></div>
     </div>
     <div class="topbar-actions">
       <div class="role-badge">บทบาท:
@@ -548,10 +548,52 @@
         <div class="field"><label>หน่วย SWL</label>
           <select id="cr_swlUnit"><option value="ตัน">ตัน</option><option value="กก.">กก.</option></select>
         </div>
-        <div class="field"><label>เลขที่ใบรับรอง ปจ.1</label><input id="cr_pj1" placeholder="แบบแจ้งชนิด/ขนาดปั้นจั่น"></div>
-        <div class="field"><label>เลขที่ใบรับรอง ปจ.2</label><input id="cr_pj2" placeholder="รายงานผลการตรวจสอบ"></div>
+        <div class="field"><label>เลขทะเบียนกรมสวัสดิการและคุ้มครองแรงงาน</label><input id="cr_legalReg" placeholder="เลขทะเบียนที่แจ้งราชการ"></div>
+        <div class="field"></div>
+
+        <div class="field full"><label style="color:var(--amber);">— ใบรับรอง ปจ.1 (แบบแจ้งชนิด/ขนาดปั้นจั่น) —</label></div>
+        <div class="field"><label>เลขที่ใบรับรอง ปจ.1</label><input id="cr_pj1"></div>
+        <div class="field"><label>วันที่ออกใบรับรอง ปจ.1</label><input type="date" id="cr_pj1IssueDate"></div>
+        <div class="field"><label>วันหมดอายุใบรับรอง ปจ.1</label><input type="date" id="cr_pj1ExpiryDate"></div>
+        <div class="field"></div>
+
+        <div class="field full"><label style="color:var(--amber);">— ใบรับรอง ปจ.2 (รายงานผลการตรวจสอบ) —</label></div>
+        <div class="field"><label>เลขที่ใบรับรอง ปจ.2</label><input id="cr_pj2"></div>
+        <div class="field"><label>วันที่ออกใบรับรอง ปจ.2</label><input type="date" id="cr_pj2IssueDate"></div>
+        <div class="field"><label>วันหมดอายุใบรับรอง ปจ.2</label><input type="date" id="cr_pj2ExpiryDate"></div>
+        <div class="field"></div>
+
+        <div class="field full"><label style="color:var(--amber);">— ผู้ตรวจสอบและผู้บังคับปั้นจั่น —</label></div>
         <div class="field"><label>ผู้ตรวจสอบ</label><input id="cr_inspector" placeholder="ชื่อวิศวกร/ผู้ตรวจสอบ"></div>
         <div class="field"><label>เลขที่ใบอนุญาตผู้ตรวจสอบ</label><input id="cr_inspectorLicense"></div>
+        <div class="field"><label>ผู้บังคับปั้นจั่น (Operator)</label><input id="cr_operator" placeholder="ชื่อผู้ได้รับอนุญาตบังคับปั้นจั่น"></div>
+        <div class="field"><label>เลขที่ใบรับรอง/วันหมดอายุผู้บังคับปั้นจั่น</label><input id="cr_operatorLicense" placeholder="เลขที่ใบรับรอง"></div>
+        <div class="field"><label>วันหมดอายุใบรับรองผู้บังคับปั้นจั่น</label><input type="date" id="cr_operatorLicenseExpiry"></div>
+        <div class="field"></div>
+
+        <div class="field full"><label style="color:var(--amber);">— การประเมินความเสี่ยง (ISO 45001) —</label></div>
+        <div class="field"><label>วันที่ประเมินความเสี่ยงล่าสุด</label><input type="date" id="cr_riskDate"></div>
+        <div class="field"><label>ระดับความเสี่ยง</label>
+          <select id="cr_riskLevel"><option value="">ไม่ระบุ</option><option value="high">สูง</option><option value="medium">ปานกลาง</option><option value="low">ต่ำ</option></select>
+        </div>
+        <div class="field"><label>กำหนดประเมินความเสี่ยงครั้งถัดไป</label><input type="date" id="cr_riskNextDate"></div>
+        <div class="field"></div>
+
+        <div class="field full"><label style="color:var(--amber);">— การทดสอบรับน้ำหนัก (Load Test) —</label></div>
+        <div class="field"><label>วันที่ทดสอบรับน้ำหนักล่าสุด</label><input type="date" id="cr_loadTestDate"></div>
+        <div class="field"><label>รอบทดสอบรับน้ำหนัก</label>
+          <select id="cr_loadTestCycle">
+            <option value="">ไม่ระบุ</option>
+            <option value="365">ทุก 1 ปี</option>
+            <option value="730">ทุก 2 ปี</option>
+            <option value="1095">ทุก 3 ปี</option>
+            <option value="__other__">อื่นๆ (ค่าเดิม)</option>
+          </select>
+        </div>
+        <div class="field"><label>ผลการทดสอบล่าสุด</label>
+          <select id="cr_loadTestResult"><option value="">ไม่ระบุ</option><option value="pass">ผ่าน</option><option value="fail">ไม่ผ่าน</option></select>
+        </div>
+        <div class="field"></div>
 
         <div class="field"><label>ผู้จำหน่าย/ผู้ผลิต</label><input id="cr_supplier"></div>
         <div class="field"><label>ผู้รับผิดชอบดูแล</label><input id="cr_owner"></div>
@@ -594,6 +636,7 @@
     <div class="subtabs">
       <button class="subtab active" data-cranesubtab="general">ข้อมูลทั่วไป</button>
       <button class="subtab" data-cranesubtab="maint">การตรวจสอบ/บำรุงรักษา</button>
+      <button class="subtab" data-cranesubtab="incident">อุบัติเหตุ/เหตุการณ์</button>
     </div>
 
     <div class="subpage active" id="cranesub-general">
@@ -615,6 +658,21 @@
       </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary" id="addCraneMaintBtn">💾 บันทึกรายการ</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="cranesub-incident">
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="craneIncidentBody"></tbody></table>
+      <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
+      <div class="maint-add">
+        <div class="field"><label>วันที่</label><input type="date" id="cri_date"></div>
+        <div class="field"><label>ความรุนแรง</label><select id="cri_severity"><option value="near">เกือบเกิดเหตุ (Near Miss)</option><option value="minor">เล็กน้อย (Minor)</option><option value="major">รุนแรง (Major)</option></select></div>
+        <div class="field full"><label>รายละเอียดเหตุการณ์</label><input id="cri_desc" placeholder="อธิบายสิ่งที่เกิดขึ้น..."></div>
+        <div class="field full"><label>มาตรการแก้ไข/ป้องกัน (Corrective Action)</label><input id="cri_action" placeholder="สิ่งที่ดำเนินการแก้ไข/ป้องกันไม่ให้เกิดซ้ำ..."></div>
+        <div class="field"><label>ผู้รายงาน</label><input id="cri_reporter"></div>
+      </div>
+      <div class="modal-actions" style="border-top:none;">
+        <button class="btn btn-primary" id="addCraneIncidentBtn">💾 บันทึกเหตุการณ์</button>
       </div>
     </div>
 
@@ -2072,8 +2130,10 @@
       cranes = cranes.filter(c=>c.id!==pendingDeleteId);
       await saveCranes();
       try{ await window.storage.delete('cranemaint_'+pendingDeleteId, false); }catch(e){}
+      try{ await window.storage.delete('craneincident_'+pendingDeleteId, false); }catch(e){}
       try{ await window.storage.delete('photo_'+pendingDeleteId, false); }catch(e){}
       delete craneMaintCache[pendingDeleteId];
+      delete craneIncidentCache[pendingDeleteId];
       delete photoCache[pendingDeleteId];
       $('confirmOverlay').classList.remove('show');
       closeCraneDetail(); pendingDeleteId=null; pendingDeleteType=null;
@@ -2672,10 +2732,30 @@
     $('cr_priority').value = crane ? (crane.priority||'medium') : 'medium';
     $('cr_swl').value = crane ? crane.swl ?? '' : '';
     $('cr_swlUnit').value = crane ? (crane.swlUnit||'ตัน') : 'ตัน';
+    $('cr_legalReg').value = crane ? crane.legalReg||'' : '';
     $('cr_pj1').value = crane ? crane.pj1||'' : '';
+    $('cr_pj1IssueDate').value = crane ? crane.pj1IssueDate||'' : '';
+    $('cr_pj1ExpiryDate').value = crane ? crane.pj1ExpiryDate||'' : '';
     $('cr_pj2').value = crane ? crane.pj2||'' : '';
+    $('cr_pj2IssueDate').value = crane ? crane.pj2IssueDate||'' : '';
+    $('cr_pj2ExpiryDate').value = crane ? crane.pj2ExpiryDate||'' : '';
     $('cr_inspector').value = crane ? crane.inspector||'' : '';
     $('cr_inspectorLicense').value = crane ? crane.inspectorLicense||'' : '';
+    $('cr_operator').value = crane ? crane.operator||'' : '';
+    $('cr_operatorLicense').value = crane ? crane.operatorLicense||'' : '';
+    $('cr_operatorLicenseExpiry').value = crane ? crane.operatorLicenseExpiry||'' : '';
+    $('cr_riskDate').value = crane ? crane.riskDate||'' : '';
+    $('cr_riskLevel').value = crane ? (crane.riskLevel||'') : '';
+    $('cr_riskNextDate').value = crane ? crane.riskNextDate||'' : '';
+    $('cr_loadTestDate').value = crane ? crane.loadTestDate||'' : '';
+    $('cr_loadTestResult').value = crane ? (crane.loadTestResult||'') : '';
+    if(crane && crane.loadTestCycle && ![365,730,1095].includes(Number(crane.loadTestCycle))){
+      $('cr_loadTestCycle').value = '__other__';
+      $('cr_loadTestCycle').dataset.otherValue = crane.loadTestCycle;
+    } else {
+      $('cr_loadTestCycle').value = crane && crane.loadTestCycle ? String(crane.loadTestCycle) : '';
+      $('cr_loadTestCycle').dataset.otherValue = '';
+    }
     $('cr_supplier').value = crane ? crane.supplier||'' : '';
     $('cr_owner').value = crane ? crane.owner||'' : '';
     $('cr_ownerEmail').value = crane ? crane.ownerEmail||'' : '';
@@ -2716,11 +2796,21 @@
     let nextMaint = '';
     if($('cr_lastMaint').value && cycleValue) nextMaint = addDays($('cr_lastMaint').value, cycleValue);
 
+    const loadTestCycleSel = $('cr_loadTestCycle').value;
+    const loadTestCycleValue = loadTestCycleSel==='__other__' ? (Number($('cr_loadTestCycle').dataset.otherValue)||null) : (loadTestCycleSel?Number(loadTestCycleSel):null);
+    let loadTestNextDate = '';
+    if($('cr_loadTestDate').value && loadTestCycleValue) loadTestNextDate = addDays($('cr_loadTestDate').value, loadTestCycleValue);
+
     const data = {
       id, code, name, type:$('cr_type').value.trim(), brand:$('cr_brand').value.trim(), model:$('cr_model').value.trim(), serial:$('cr_serial').value.trim(),
       location:$('cr_location').value.trim(), status:$('cr_status').value, priority:$('cr_priority').value,
-      swl:parseNumericInput($('cr_swl').value), swlUnit:$('cr_swlUnit').value,
-      pj1:$('cr_pj1').value.trim(), pj2:$('cr_pj2').value.trim(), inspector:$('cr_inspector').value.trim(), inspectorLicense:$('cr_inspectorLicense').value.trim(),
+      swl:parseNumericInput($('cr_swl').value), swlUnit:$('cr_swlUnit').value, legalReg:$('cr_legalReg').value.trim(),
+      pj1:$('cr_pj1').value.trim(), pj1IssueDate:$('cr_pj1IssueDate').value, pj1ExpiryDate:$('cr_pj1ExpiryDate').value,
+      pj2:$('cr_pj2').value.trim(), pj2IssueDate:$('cr_pj2IssueDate').value, pj2ExpiryDate:$('cr_pj2ExpiryDate').value,
+      inspector:$('cr_inspector').value.trim(), inspectorLicense:$('cr_inspectorLicense').value.trim(),
+      operator:$('cr_operator').value.trim(), operatorLicense:$('cr_operatorLicense').value.trim(), operatorLicenseExpiry:$('cr_operatorLicenseExpiry').value,
+      riskDate:$('cr_riskDate').value, riskLevel:$('cr_riskLevel').value, riskNextDate:$('cr_riskNextDate').value,
+      loadTestDate:$('cr_loadTestDate').value, loadTestCycle:loadTestCycleValue, loadTestNextDate, loadTestResult:$('cr_loadTestResult').value,
       supplier:$('cr_supplier').value.trim(), owner:$('cr_owner').value.trim(), ownerEmail:$('cr_ownerEmail').value.trim(),
       purchaseDate:$('cr_purchaseDate').value, price:parseNumericInput($('cr_price').value),
       warrantyDate:$('cr_warrantyDate').value, cycleBasis:$('cr_cycleBasis').value.trim(), cycle:cycleValue,
@@ -2759,6 +2849,14 @@
       if(cranePhoto){ $('craneDetailPhoto').src = cranePhoto; $('craneDetailPhoto').style.display=''; } else { $('craneDetailPhoto').style.display='none'; }
 
       const due = getDueInfo(c);
+      const expiryNote = (dateStr) => {
+        if(!dateStr) return '';
+        const d = daysBetween(todayStr(), dateStr);
+        if(d < 0) return ' <span class="tag low">หมดอายุแล้ว</span>';
+        if(d <= 30) return ' <span class="tag pm">ใกล้หมดอายุ</span>';
+        return '';
+      };
+      const loadTestDue = c.loadTestNextDate ? {overdue: daysBetween(todayStr(), c.loadTestNextDate) < 0, soon: daysBetween(todayStr(), c.loadTestNextDate) >= 0 && daysBetween(todayStr(), c.loadTestNextDate) <= 30} : {overdue:false, soon:false};
       $('craneDetailGrid').innerHTML = `
         <div class="detail-item"><div class="k">ประเภทปั้นจั่น</div><div class="v">${escapeHtml(c.type||'—')}</div></div>
         <div class="detail-item"><div class="k">ยี่ห้อ / รุ่น</div><div class="v">${escapeHtml(c.brand||'—')} / ${escapeHtml(c.model||'—')}</div></div>
@@ -2766,10 +2864,20 @@
         <div class="detail-item"><div class="k">สถานที่ติดตั้ง/ใช้งาน</div><div class="v">${escapeHtml(c.location||'—')}</div></div>
         <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${c.priority||'medium'}">${PRIORITY_LABEL[c.priority||'medium']}</span></div></div>
         <div class="detail-item"><div class="k">พิกัดยกน้ำหนักปลอดภัย (SWL)</div><div class="v">${c.swl?(escapeHtml(String(c.swl))+' '+escapeHtml(c.swlUnit||'ตัน')):'—'}</div></div>
-        <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.1</div><div class="v">${escapeHtml(c.pj1||'—')}</div></div>
-        <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.2</div><div class="v">${escapeHtml(c.pj2||'—')}</div></div>
+        <div class="detail-item"><div class="k">เลขทะเบียนกรมสวัสดิการฯ</div><div class="v">${escapeHtml(c.legalReg||'—')}</div></div>
+        <div class="detail-item"><div class="k">&nbsp;</div><div class="v">&nbsp;</div></div>
+        <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.1</div><div class="v">${escapeHtml(c.pj1||'—')}${expiryNote(c.pj1ExpiryDate)}</div></div>
+        <div class="detail-item"><div class="k">ปจ.1 ออก / หมดอายุ</div><div class="v">${fmtDate(c.pj1IssueDate)} / ${fmtDate(c.pj1ExpiryDate)}</div></div>
+        <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.2</div><div class="v">${escapeHtml(c.pj2||'—')}${expiryNote(c.pj2ExpiryDate)}</div></div>
+        <div class="detail-item"><div class="k">ปจ.2 ออก / หมดอายุ</div><div class="v">${fmtDate(c.pj2IssueDate)} / ${fmtDate(c.pj2ExpiryDate)}</div></div>
         <div class="detail-item"><div class="k">ผู้ตรวจสอบ</div><div class="v">${escapeHtml(c.inspector||'—')}</div></div>
         <div class="detail-item"><div class="k">เลขที่ใบอนุญาตผู้ตรวจสอบ</div><div class="v">${escapeHtml(c.inspectorLicense||'—')}</div></div>
+        <div class="detail-item"><div class="k">ผู้บังคับปั้นจั่น (Operator)</div><div class="v">${escapeHtml(c.operator||'—')}</div></div>
+        <div class="detail-item"><div class="k">ใบรับรองผู้บังคับ / หมดอายุ</div><div class="v">${escapeHtml(c.operatorLicense||'—')} / ${fmtDate(c.operatorLicenseExpiry)}${expiryNote(c.operatorLicenseExpiry)}</div></div>
+        <div class="detail-item"><div class="k">ประเมินความเสี่ยงล่าสุด</div><div class="v">${fmtDate(c.riskDate)}${c.riskLevel?' <span class="prio-badge '+c.riskLevel+'">'+({high:'สูง',medium:'ปานกลาง',low:'ต่ำ'}[c.riskLevel]||c.riskLevel)+'</span>':''}</div></div>
+        <div class="detail-item"><div class="k">กำหนดประเมินความเสี่ยงครั้งถัดไป</div><div class="v">${fmtDate(c.riskNextDate)}${expiryNote(c.riskNextDate)}</div></div>
+        <div class="detail-item"><div class="k">ทดสอบรับน้ำหนักล่าสุด</div><div class="v">${fmtDate(c.loadTestDate)}${c.loadTestResult?' ('+(c.loadTestResult==='pass'?'ผ่าน':'ไม่ผ่าน')+')':''}</div></div>
+        <div class="detail-item"><div class="k">กำหนดทดสอบรับน้ำหนักครั้งถัดไป</div><div class="v" style="${loadTestDue.overdue?'color:var(--red);font-weight:600;':(loadTestDue.soon?'color:var(--amber);font-weight:600;':'')}">${c.loadTestNextDate?fmtDate(c.loadTestNextDate):'—'}</div></div>
         <div class="detail-item"><div class="k">ผู้จำหน่าย/ผู้ผลิต</div><div class="v">${escapeHtml(c.supplier||'—')}</div></div>
         <div class="detail-item"><div class="k">ผู้รับผิดชอบดูแล</div><div class="v">${escapeHtml(c.owner||'—')}</div></div>
         <div class="detail-item"><div class="k">วันที่จัดซื้อ/ติดตั้ง</div><div class="v">${fmtDate(c.purchaseDate)}</div></div>
@@ -2781,6 +2889,8 @@
         <div class="detail-item"><div class="k">กำหนดตรวจสอบครั้งถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
         <div class="detail-item" style="grid-column:1/-1;"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(c.notes||'—')}</div></div>`;
 
+      $('cri_date').value = todayStr();
+      await renderCraneIncidentTable(id);
       $('crm_date').value = todayStr();
       await renderCraneMaintTable(id);
 
@@ -2825,6 +2935,35 @@
     toast('เพิ่มประวัติการตรวจสอบเรียบร้อย');
   });
 
+  const CRANE_SEVERITY_LABEL = {near:'เกือบเกิดเหตุ', minor:'เล็กน้อย', major:'รุนแรง'};
+  let craneIncidentCache = {};
+  async function renderCraneIncidentTable(id){
+    const list = await loadList(craneIncidentCache,'craneincident_', id);
+    const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+    $('craneIncidentBody').innerHTML = sorted.length ? sorted.map(r=>`
+      <tr>
+        <td>${fmtDate(r.date)}</td>
+        <td><span class="tag ${r.severity==='major'?'low':(r.severity==='minor'?'pm':'insp')}">${CRANE_SEVERITY_LABEL[r.severity]||r.severity}</span></td>
+        <td>${escapeHtml(r.desc||'—')}</td>
+        <td>${escapeHtml(r.action||'—')}</td>
+        <td>${escapeHtml(r.reporter||'—')}</td>
+      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+  }
+
+  $('addCraneIncidentBtn').addEventListener('click', async ()=>{
+    if(!currentCraneDetailId) return;
+    const date = $('cri_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
+    const desc = $('cri_desc').value.trim(); if(!desc){ toast('กรุณากรอกรายละเอียดเหตุการณ์'); return; }
+    const record = {id:'inc_'+Date.now(), date, severity:$('cri_severity').value, desc, action:$('cri_action').value.trim(), reporter:$('cri_reporter').value.trim()};
+    const list = await loadList(craneIncidentCache,'craneincident_', currentCraneDetailId);
+    list.push(record);
+    await saveList(craneIncidentCache,'craneincident_', currentCraneDetailId, list);
+
+    $('cri_desc').value=''; $('cri_action').value=''; $('cri_reporter').value='';
+    await renderCraneIncidentTable(currentCraneDetailId);
+    toast('บันทึกเหตุการณ์เรียบร้อย');
+  });
+
   $('editCraneFromDetail').addEventListener('click', ()=>{ const c = cranes.find(x=>x.id===currentCraneDetailId); closeCraneDetail(); openCraneForm(c); });
   $('deleteCraneFromDetail').addEventListener('click', ()=>{ askDeleteCrane(currentCraneDetailId); });
 
@@ -2836,9 +2975,23 @@
   }
 
   // ---- crane CSV export/import ----
-  const CRANE_CSV_HEADERS = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','SWL','หน่วยSWL','เลขที่ปจ.1','เลขที่ปจ.2','ผู้ตรวจสอบ','เลขที่ใบอนุญาตผู้ตรวจสอบ','ยี่ห้อ','รุ่น','ซีเรียล','สถานที่','ผู้จำหน่าย','ผู้รับผิดชอบดูแล','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบตรวจสอบ(วัน)','ตรวจสอบล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
+  const CRANE_CSV_HEADERS = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','SWL','หน่วยSWL','เลขทะเบียนกรมสวัสดิการฯ',
+    'เลขที่ปจ.1','วันที่ออกปจ.1','วันหมดอายุปจ.1','เลขที่ปจ.2','วันที่ออกปจ.2','วันหมดอายุปจ.2',
+    'ผู้ตรวจสอบ','เลขที่ใบอนุญาตผู้ตรวจสอบ','ผู้บังคับปั้นจั่น','เลขที่ใบรับรองผู้บังคับ','วันหมดอายุใบรับรองผู้บังคับ',
+    'วันที่ประเมินความเสี่ยงล่าสุด','ระดับความเสี่ยง','กำหนดประเมินความเสี่ยงครั้งถัดไป',
+    'วันที่ทดสอบรับน้ำหนักล่าสุด','รอบทดสอบรับน้ำหนัก(วัน)','ผลทดสอบรับน้ำหนัก','กำหนดทดสอบรับน้ำหนักครั้งถัดไป',
+    'ยี่ห้อ','รุ่น','ซีเรียล','สถานที่','ผู้จำหน่าย','ผู้รับผิดชอบดูแล','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน',
+    'รอบตรวจสอบ(วัน)','ตรวจสอบล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
   $('craneExportBtn').addEventListener('click', ()=>{
-    const rows = cranes.map(c=>[c.code,c.name,c.type,CRANE_STATUS_LABEL[c.status],PRIORITY_LABEL[c.priority||'medium'],c.swl,c.swlUnit,c.pj1,c.pj2,c.inspector,c.inspectorLicense,c.brand,c.model,c.serial,c.location,c.supplier,c.owner,c.ownerEmail,c.purchaseDate,c.price,c.warrantyDate,c.cycle,c.lastMaint,c.nextMaint,c.notes]);
+    const rows = cranes.map(c=>[
+      c.code,c.name,c.type,CRANE_STATUS_LABEL[c.status],PRIORITY_LABEL[c.priority||'medium'],c.swl,c.swlUnit,c.legalReg,
+      c.pj1,c.pj1IssueDate,c.pj1ExpiryDate,c.pj2,c.pj2IssueDate,c.pj2ExpiryDate,
+      c.inspector,c.inspectorLicense,c.operator,c.operatorLicense,c.operatorLicenseExpiry,
+      c.riskDate,c.riskLevel?({high:'สูง',medium:'ปานกลาง',low:'ต่ำ'}[c.riskLevel]):'',c.riskNextDate,
+      c.loadTestDate,c.loadTestCycle,c.loadTestResult?(c.loadTestResult==='pass'?'ผ่าน':'ไม่ผ่าน'):'',c.loadTestNextDate,
+      c.brand,c.model,c.serial,c.location,c.supplier,c.owner,c.ownerEmail,c.purchaseDate,c.price,c.warrantyDate,
+      c.cycle,c.lastMaint,c.nextMaint,c.notes
+    ]);
     const csv = '\uFEFF' + [CRANE_CSV_HEADERS, ...rows].map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
@@ -2847,6 +3000,8 @@
     toast('ส่งออกข้อมูลเป็น CSV เรียบร้อย');
   });
   const CRANE_STATUS_REVERSE = {'พร้อมใช้งาน':'run','ซ่อมบำรุง':'maint','ชำรุด/เสีย':'down','ปลดระวาง':'retired'};
+  const CRANE_RISK_REVERSE = {'สูง':'high','ปานกลาง':'medium','ต่ำ':'low'};
+  const CRANE_LOADTEST_REVERSE = {'ผ่าน':'pass','ไม่ผ่าน':'fail'};
   $('craneCsvImportBtn').addEventListener('click', ()=>$('craneCsvImportInput').click());
   $('craneCsvImportInput').addEventListener('change', async e=>{
     const file = e.target.files[0]; if(!file) return;
@@ -2860,10 +3015,15 @@
       if(cranes.find(c=>c.code.toLowerCase()===code.toLowerCase())){ skipped++; continue; }
       cranes.push({
         id:'crane_'+Date.now()+'_'+i, code, name:r[1]||code, type:r[2]||'', status:CRANE_STATUS_REVERSE[r[3]]||'run', priority:PRIORITY_REVERSE[r[4]]||'medium',
-        swl:parseNumericInput(r[5]), swlUnit:r[6]||'ตัน', pj1:r[7]||'', pj2:r[8]||'', inspector:r[9]||'', inspectorLicense:r[10]||'',
-        brand:r[11]||'', model:r[12]||'', serial:r[13]||'', location:r[14]||'', supplier:r[15]||'', owner:r[16]||'', ownerEmail:r[17]||'',
-        purchaseDate:parseDateInput(r[18]), price:parseNumericInput(r[19]), warrantyDate:parseDateInput(r[20]), cycleBasis:'', cycle:r[21]?Number(r[21]):null,
-        lastMaint:parseDateInput(r[22]), nextMaint:parseDateInput(r[23]), notes:r[24]||''
+        swl:parseNumericInput(r[5]), swlUnit:r[6]||'ตัน', legalReg:r[7]||'',
+        pj1:r[8]||'', pj1IssueDate:parseDateInput(r[9]), pj1ExpiryDate:parseDateInput(r[10]),
+        pj2:r[11]||'', pj2IssueDate:parseDateInput(r[12]), pj2ExpiryDate:parseDateInput(r[13]),
+        inspector:r[14]||'', inspectorLicense:r[15]||'', operator:r[16]||'', operatorLicense:r[17]||'', operatorLicenseExpiry:parseDateInput(r[18]),
+        riskDate:parseDateInput(r[19]), riskLevel:CRANE_RISK_REVERSE[r[20]]||'', riskNextDate:parseDateInput(r[21]),
+        loadTestDate:parseDateInput(r[22]), loadTestCycle:r[23]?Number(r[23]):null, loadTestResult:CRANE_LOADTEST_REVERSE[r[24]]||'', loadTestNextDate:parseDateInput(r[25]),
+        brand:r[26]||'', model:r[27]||'', serial:r[28]||'', location:r[29]||'', supplier:r[30]||'', owner:r[31]||'', ownerEmail:r[32]||'',
+        purchaseDate:parseDateInput(r[33]), price:parseNumericInput(r[34]), warrantyDate:parseDateInput(r[35]), cycleBasis:'', cycle:r[36]?Number(r[36]):null,
+        lastMaint:parseDateInput(r[37]), nextMaint:parseDateInput(r[38]), notes:r[39]||''
       });
       imported++;
     }

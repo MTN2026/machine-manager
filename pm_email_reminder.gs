@@ -273,7 +273,8 @@ function checkAndNotify() {
   const machines = getMachines_();
   const tools = getTools_();
   const cranes = getCranes_();
-  const overdue = [], soon = [], toolOverdue = [], toolSoon = [], craneOverdue = [], craneSoon = [];
+  const vehicles = getVehicles_();
+  const overdue = [], soon = [], toolOverdue = [], toolSoon = [], craneOverdue = [], craneSoon = [], vehicleOverdue = [], vehicleSoon = [];
   const PRIORITY_WEIGHT = { 'วิกฤต': 0, 'สูง': 1, 'ปานกลาง': 2, 'ต่ำ': 3 };
   const byPriority = (a, b) => (PRIORITY_WEIGHT[a.priority] ?? 2) - (PRIORITY_WEIGHT[b.priority] ?? 2);
 
@@ -310,17 +311,28 @@ function checkAndNotify() {
   craneOverdue.sort(byPriority);
   craneSoon.sort(byPriority);
 
+  vehicles.forEach(v => {
+    if (v.status === 'ปลดระวาง') return;
+    const d = parseDate_(v.next);
+    if (!d) return;
+    const days = daysUntil_(d);
+    if (days < 0) vehicleOverdue.push(Object.assign({}, v, { days: days }));
+    else if (days <= CONFIG.DAYS_AHEAD) vehicleSoon.push(Object.assign({}, v, { days: days }));
+  });
+  vehicleOverdue.sort(byPriority);
+  vehicleSoon.sort(byPriority);
+
   const partsAlerts = getPartsAlerts_();
 
   if (overdue.length === 0 && soon.length === 0 && toolOverdue.length === 0 && toolSoon.length === 0
-      && craneOverdue.length === 0 && craneSoon.length === 0
+      && craneOverdue.length === 0 && craneSoon.length === 0 && vehicleOverdue.length === 0 && vehicleSoon.length === 0
       && partsAlerts.lowStock.length === 0 && partsAlerts.expiring.length === 0) {
     Logger.log('ไม่มีรายการที่ต้องแจ้งเตือนวันนี้');
     return;
   }
 
   let html = '<div style="font-family:sans-serif;">';
-  html += '<h2>สรุปการแจ้งเตือนเครื่องจักร เครื่องมือ/อุปกรณ์ เครน/ปั้นจั่น และอะไหล่ (' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy') + ')</h2>';
+  html += '<h2>สรุปการแจ้งเตือนเครื่องจักร เครื่องมือ/อุปกรณ์ เครน/ปั้นจั่น ยานพาหนะ และอะไหล่ (' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy') + ')</h2>';
 
   if (overdue.length) {
     html += '<h3 style="color:#c0392b;">🔴 เครื่องจักรเลยกำหนดบำรุงรักษา (' + overdue.length + ' รายการ)</h3><ul>';
@@ -376,6 +388,24 @@ function checkAndNotify() {
     html += '</ul>';
   }
 
+  if (vehicleOverdue.length) {
+    html += '<h3 style="color:#c0392b;">🔴 ยานพาหนะเลยกำหนดบำรุงรักษา (' + vehicleOverdue.length + ' รายการ)</h3><ul>';
+    vehicleOverdue.forEach(v => {
+      html += '<li>' + (v.priority ? '[' + v.priority + '] ' : '') + '<b>' + v.code + '</b> ' + v.name + ' — เลยกำหนดมาแล้ว ' + Math.abs(v.days) + ' วัน '
+        + '(สถานที่: ' + (v.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (v.owner || '-') + ')</li>';
+    });
+    html += '</ul>';
+  }
+
+  if (vehicleSoon.length) {
+    html += '<h3 style="color:#b8860b;">🟡 ยานพาหนะใกล้ถึงกำหนดบำรุงรักษา (' + vehicleSoon.length + ' รายการ)</h3><ul>';
+    vehicleSoon.forEach(v => {
+      html += '<li>' + (v.priority ? '[' + v.priority + '] ' : '') + '<b>' + v.code + '</b> ' + v.name + ' — อีก ' + v.days + ' วัน '
+        + '(สถานที่: ' + (v.location || '-') + ', ผู้รับผิดชอบดูแล: ' + (v.owner || '-') + ')</li>';
+    });
+    html += '</ul>';
+  }
+
   if (partsAlerts.lowStock.length) {
     html += '<h3 style="color:#c0392b;">📦 อะไหล่ใกล้/หมดสต๊อก (' + partsAlerts.lowStock.length + ' รายการ)</h3><ul>';
     partsAlerts.lowStock.forEach(p => {
@@ -397,14 +427,14 @@ function checkAndNotify() {
   // ส่งอีเมลสรุปรวมถึงอีเมลหลัก
   MailApp.sendEmail({
     to: CONFIG.NOTIFY_EMAIL,
-    subject: 'แจ้งเตือนเครื่องจักร/เครื่องมือ/เครน/อะไหล่: เลยกำหนด ' + (overdue.length + toolOverdue.length + craneOverdue.length) + ', ใกล้ถึง ' + (soon.length + toolSoon.length + craneSoon.length)
+    subject: 'แจ้งเตือนเครื่องจักร/เครื่องมือ/เครน/ยานพาหนะ/อะไหล่: เลยกำหนด ' + (overdue.length + toolOverdue.length + craneOverdue.length + vehicleOverdue.length) + ', ใกล้ถึง ' + (soon.length + toolSoon.length + craneSoon.length + vehicleSoon.length)
       + ', อะไหล่ใกล้หมด ' + partsAlerts.lowStock.length + ', ใกล้หมดอายุ ' + partsAlerts.expiring.length,
     htmlBody: html
   });
   Logger.log('ส่งอีเมลสรุปไปที่ ' + CONFIG.NOTIFY_EMAIL);
 
-  // ถ้ามีคอลัมน์ "อีเมลผู้รับผิดชอบ" ให้ส่งแจ้งเตือนแยกถึงแต่ละคนด้วย (เครื่องจักร เครื่องมือ/อุปกรณ์ และเครน/ปั้นจั่น)
-  overdue.concat(soon).concat(toolOverdue).concat(toolSoon).concat(craneOverdue).concat(craneSoon).forEach(m => {
+  // ถ้ามีคอลัมน์ "อีเมลผู้รับผิดชอบ" ให้ส่งแจ้งเตือนแยกถึงแต่ละคนด้วย (เครื่องจักร เครื่องมือ/อุปกรณ์ เครน/ปั้นจั่น และยานพาหนะ)
+  overdue.concat(soon).concat(toolOverdue).concat(toolSoon).concat(craneOverdue).concat(craneSoon).concat(vehicleOverdue).concat(vehicleSoon).forEach(m => {
     if (m.email) {
       const statusText = m.days < 0
         ? 'เลยกำหนดมาแล้ว ' + Math.abs(m.days) + ' วัน'
@@ -507,6 +537,18 @@ function doPost(e) {
       ]);
       writeSheet_(CONFIG.CRANES_SHEET_NAME, headers, rows);
       counts.cranes = rows.length;
+    }
+
+    if (payload.vehicles) {
+      const headers = ['รหัส','ชื่อ','ประเภท','สถานะ','ระดับความสำคัญ','ทะเบียนรถ','ยี่ห้อ','รุ่น','สถานที่','ผู้จำหน่าย',
+        'ผู้รับผิดชอบดูแล','อีเมลผู้รับผิดชอบ','วันที่จัดซื้อ','ราคา','วันหมดประกัน','รอบบำรุงรักษา(วัน)',
+        'บำรุงรักษาล่าสุด','กำหนดครั้งถัดไป','หมายเหตุ'];
+      const rows = payload.vehicles.map(v => [
+        v.code, v.name, v.type, v.status, v.priority || '', v.plate || '', v.brand, v.model, v.location, v.supplier,
+        v.owner, v.email || '', v.purchaseDate, v.price, v.warrantyDate, v.cycle, v.lastMaint, v.nextMaint, v.notes
+      ]);
+      writeSheet_(CONFIG.VEHICLES_SHEET_NAME, headers, rows);
+      counts.vehicles = rows.length;
     }
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true, counts: counts }))

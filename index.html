@@ -217,7 +217,7 @@
   <div class="topbar">
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#1a1200" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" stroke="#1a1200" stroke-width="1.6"/></svg></div>
-      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-09-01</p></div>
+      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-09-02</p></div>
     </div>
     <div class="topbar-actions">
       <div class="role-badge">บทบาท:
@@ -1516,10 +1516,10 @@
 
   // ===== SUBTABS in detail =====
   document.querySelectorAll('.subtab').forEach(btn=>{
-    if(btn.dataset.toolsubtab) return; // handled separately by the tool subtab block
+    if(btn.dataset.toolsubtab || btn.dataset.cranesubtab || btn.dataset.vehiclesubtab) return; // handled separately by their own subtab blocks
     btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.subtab').forEach(b=>{ if(!b.dataset.toolsubtab) b.classList.remove('active'); });
-      document.querySelectorAll('.subpage').forEach(p=>{ if(!p.id.startsWith('toolsub-')) p.classList.remove('active'); });
+      document.querySelectorAll('.subtab').forEach(b=>{ if(!b.dataset.toolsubtab && !b.dataset.cranesubtab && !b.dataset.vehiclesubtab) b.classList.remove('active'); });
+      document.querySelectorAll('.subpage').forEach(p=>{ if(!p.id.startsWith('toolsub-') && !p.id.startsWith('cranesub-') && !p.id.startsWith('vehiclesub-')) p.classList.remove('active'); });
       btn.classList.add('active');
       $('sub-'+btn.dataset.subtab).classList.add('active');
     });
@@ -2749,44 +2749,47 @@
   async function openCraneDetail(id){
     const c = cranes.find(x=>x.id===id); if(!c) return;
     currentCraneDetailId = id;
-    document.querySelector('[data-cranesubtab="general"]').click();
-    $('craneDetailName').textContent = c.name;
-    $('craneDetailCode').textContent = c.code+' · '+CRANE_STATUS_LABEL[c.status]+' · ความสำคัญ: '+PRIORITY_LABEL[c.priority||'medium'];
+    $('craneDetailOverlay').classList.add('show'); // show the modal immediately, before rendering any content
+    try{
+      document.querySelector('[data-cranesubtab="general"]').click();
+      $('craneDetailName').textContent = c.name;
+      $('craneDetailCode').textContent = c.code+' · '+CRANE_STATUS_LABEL[c.status]+' · ความสำคัญ: '+PRIORITY_LABEL[c.priority||'medium'];
 
-    const cranePhoto = photoCache[id];
-    if(cranePhoto){ $('craneDetailPhoto').src = cranePhoto; $('craneDetailPhoto').style.display=''; } else { $('craneDetailPhoto').style.display='none'; }
+      const cranePhoto = photoCache[id];
+      if(cranePhoto){ $('craneDetailPhoto').src = cranePhoto; $('craneDetailPhoto').style.display=''; } else { $('craneDetailPhoto').style.display='none'; }
 
-    const due = getDueInfo(c);
-    $('craneDetailGrid').innerHTML = `
-      <div class="detail-item"><div class="k">ประเภทปั้นจั่น</div><div class="v">${escapeHtml(c.type||'—')}</div></div>
-      <div class="detail-item"><div class="k">ยี่ห้อ / รุ่น</div><div class="v">${escapeHtml(c.brand||'—')} / ${escapeHtml(c.model||'—')}</div></div>
-      <div class="detail-item"><div class="k">หมายเลขซีเรียล</div><div class="v">${escapeHtml(c.serial||'—')}</div></div>
-      <div class="detail-item"><div class="k">สถานที่ติดตั้ง/ใช้งาน</div><div class="v">${escapeHtml(c.location||'—')}</div></div>
-      <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${c.priority||'medium'}">${PRIORITY_LABEL[c.priority||'medium']}</span></div></div>
-      <div class="detail-item"><div class="k">พิกัดยกน้ำหนักปลอดภัย (SWL)</div><div class="v">${c.swl?(escapeHtml(String(c.swl))+' '+escapeHtml(c.swlUnit||'ตัน')):'—'}</div></div>
-      <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.1</div><div class="v">${escapeHtml(c.pj1||'—')}</div></div>
-      <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.2</div><div class="v">${escapeHtml(c.pj2||'—')}</div></div>
-      <div class="detail-item"><div class="k">ผู้ตรวจสอบ</div><div class="v">${escapeHtml(c.inspector||'—')}</div></div>
-      <div class="detail-item"><div class="k">เลขที่ใบอนุญาตผู้ตรวจสอบ</div><div class="v">${escapeHtml(c.inspectorLicense||'—')}</div></div>
-      <div class="detail-item"><div class="k">ผู้จำหน่าย/ผู้ผลิต</div><div class="v">${escapeHtml(c.supplier||'—')}</div></div>
-      <div class="detail-item"><div class="k">ผู้รับผิดชอบดูแล</div><div class="v">${escapeHtml(c.owner||'—')}</div></div>
-      <div class="detail-item"><div class="k">วันที่จัดซื้อ/ติดตั้ง</div><div class="v">${fmtDate(c.purchaseDate)}</div></div>
-      <div class="detail-item"><div class="k">ราคาจัดซื้อ</div><div class="v">${fmtMoney(c.price)}</div></div>
-      <div class="detail-item"><div class="k">วันหมดประกัน</div><div class="v">${fmtDate(c.warrantyDate)}</div></div>
-      <div class="detail-item"><div class="k">รอบการตรวจสอบ</div><div class="v">${c.cycle?('ทุก '+c.cycle+' วัน'):'—'}</div></div>
-      <div class="detail-item"><div class="k">เกณฑ์การตรวจสอบ</div><div class="v">${escapeHtml(c.cycleBasis||'—')}</div></div>
-      <div class="detail-item"><div class="k">วันที่ตรวจสอบล่าสุด</div><div class="v">${fmtDate(c.lastMaint)}</div></div>
-      <div class="detail-item"><div class="k">กำหนดตรวจสอบครั้งถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
-      <div class="detail-item" style="grid-column:1/-1;"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(c.notes||'—')}</div></div>`;
+      const due = getDueInfo(c);
+      $('craneDetailGrid').innerHTML = `
+        <div class="detail-item"><div class="k">ประเภทปั้นจั่น</div><div class="v">${escapeHtml(c.type||'—')}</div></div>
+        <div class="detail-item"><div class="k">ยี่ห้อ / รุ่น</div><div class="v">${escapeHtml(c.brand||'—')} / ${escapeHtml(c.model||'—')}</div></div>
+        <div class="detail-item"><div class="k">หมายเลขซีเรียล</div><div class="v">${escapeHtml(c.serial||'—')}</div></div>
+        <div class="detail-item"><div class="k">สถานที่ติดตั้ง/ใช้งาน</div><div class="v">${escapeHtml(c.location||'—')}</div></div>
+        <div class="detail-item"><div class="k">ระดับความสำคัญ</div><div class="v"><span class="prio-badge ${c.priority||'medium'}">${PRIORITY_LABEL[c.priority||'medium']}</span></div></div>
+        <div class="detail-item"><div class="k">พิกัดยกน้ำหนักปลอดภัย (SWL)</div><div class="v">${c.swl?(escapeHtml(String(c.swl))+' '+escapeHtml(c.swlUnit||'ตัน')):'—'}</div></div>
+        <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.1</div><div class="v">${escapeHtml(c.pj1||'—')}</div></div>
+        <div class="detail-item"><div class="k">เลขที่ใบรับรอง ปจ.2</div><div class="v">${escapeHtml(c.pj2||'—')}</div></div>
+        <div class="detail-item"><div class="k">ผู้ตรวจสอบ</div><div class="v">${escapeHtml(c.inspector||'—')}</div></div>
+        <div class="detail-item"><div class="k">เลขที่ใบอนุญาตผู้ตรวจสอบ</div><div class="v">${escapeHtml(c.inspectorLicense||'—')}</div></div>
+        <div class="detail-item"><div class="k">ผู้จำหน่าย/ผู้ผลิต</div><div class="v">${escapeHtml(c.supplier||'—')}</div></div>
+        <div class="detail-item"><div class="k">ผู้รับผิดชอบดูแล</div><div class="v">${escapeHtml(c.owner||'—')}</div></div>
+        <div class="detail-item"><div class="k">วันที่จัดซื้อ/ติดตั้ง</div><div class="v">${fmtDate(c.purchaseDate)}</div></div>
+        <div class="detail-item"><div class="k">ราคาจัดซื้อ</div><div class="v">${fmtMoney(c.price)}</div></div>
+        <div class="detail-item"><div class="k">วันหมดประกัน</div><div class="v">${fmtDate(c.warrantyDate)}</div></div>
+        <div class="detail-item"><div class="k">รอบการตรวจสอบ</div><div class="v">${c.cycle?('ทุก '+c.cycle+' วัน'):'—'}</div></div>
+        <div class="detail-item"><div class="k">เกณฑ์การตรวจสอบ</div><div class="v">${escapeHtml(c.cycleBasis||'—')}</div></div>
+        <div class="detail-item"><div class="k">วันที่ตรวจสอบล่าสุด</div><div class="v">${fmtDate(c.lastMaint)}</div></div>
+        <div class="detail-item"><div class="k">กำหนดตรวจสอบครั้งถัดไป</div><div class="v" style="${due.overdue?'color:var(--red);font-weight:600;':(due.soon?'color:var(--amber);font-weight:600;':'')}">${escapeHtml(due.text)}</div></div>
+        <div class="detail-item" style="grid-column:1/-1;"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(c.notes||'—')}</div></div>`;
 
-    $('crm_date').value = todayStr();
-    await renderCraneMaintTable(id);
+      $('crm_date').value = todayStr();
+      await renderCraneMaintTable(id);
 
-    const isTech = currentRole==='tech';
-    $('deleteCraneFromDetail').style.display = isTech ? 'none':'';
-    $('editCraneFromDetail').style.display = isTech ? 'none':'';
-
-    $('craneDetailOverlay').classList.add('show');
+      const isTech = currentRole==='tech';
+      $('deleteCraneFromDetail').style.display = isTech ? 'none':'';
+      $('editCraneFromDetail').style.display = isTech ? 'none':'';
+    }catch(err){
+      toast('เกิดข้อผิดพลาดบางส่วนขณะแสดงรายละเอียด (ยังเปิดหน้าต่างให้ได้)');
+    }
   }
   function closeCraneDetail(){ $('craneDetailOverlay').classList.remove('show'); currentCraneDetailId=null; }
 

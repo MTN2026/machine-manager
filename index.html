@@ -217,11 +217,11 @@
   <div class="topbar">
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#1a1200" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" stroke="#1a1200" stroke-width="1.6"/></svg></div>
-      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-09-03</p></div>
+      <div><h1>ระบบจัดการเครื่องจักร</h1><p id="lastUpdated">MACHINE ASSET REGISTRY</p><p style="margin:2px 0 0;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);">build v2026-07-09-04</p></div>
     </div>
     <div class="topbar-actions">
       <div class="role-badge">บทบาท:
-        <select id="roleSelect"><option value="admin">ผู้ดูแลระบบ</option><option value="tech">ช่างเทคนิค</option></select>
+        <select id="roleSelect"><option value="guest">ผู้เยี่ยมชม (อ่านอย่างเดียว)</option><option value="tech">ช่างเทคนิค</option><option value="admin">ผู้ดูแลระบบ</option></select>
       </div>
       <input type="file" id="csvImportInput" accept=".csv" style="display:none;">
       <button class="btn" id="syncBtn">🔄 ซิงก์ Google Sheet</button>
@@ -281,7 +281,7 @@
       <button class="btn" id="exportBtn">⬇ ส่งออก CSV</button>
       <button class="btn" id="icsBtn">📅 ส่งออกปฏิทิน PM (.ics)</button>
       <input type="file" id="bulkPhotoInput" accept="image/*" multiple style="display:none;">
-      <button class="btn" id="bulkPhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
+      <button class="btn js-guest-hide" id="bulkPhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
       <button class="btn btn-primary js-admin-only" id="addBtn">＋ เพิ่มเครื่องจักร</button>
     </div>
     <div class="grid" id="grid"></div>
@@ -323,10 +323,10 @@
       </select>
       <select id="toolSortBy"><option value="name">เรียงตาม: ชื่อ</option><option value="next">เรียงตาม: กำหนดบำรุงรักษา</option><option value="status">เรียงตาม: สถานะ</option><option value="priority">เรียงตาม: ความสำคัญ</option></select>
       <input type="file" id="toolCsvImportInput" accept=".csv" style="display:none;">
-      <button class="btn" id="toolCsvImportBtn">⬆ นำเข้า CSV</button>
+      <button class="btn js-admin-only" id="toolCsvImportBtn">⬆ นำเข้า CSV</button>
       <button class="btn" id="toolExportBtn">⬇ ส่งออก CSV</button>
       <input type="file" id="bulkToolPhotoInput" accept="image/*" multiple style="display:none;">
-      <button class="btn" id="bulkToolPhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
+      <button class="btn js-guest-hide" id="bulkToolPhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
       <button class="btn btn-primary js-admin-only" id="addToolBtn">＋ เพิ่มเครื่องมือ/อุปกรณ์</button>
     </div>
     <div class="grid" id="toolGrid"></div>
@@ -351,10 +351,10 @@
       </select>
       <select id="craneSortBy"><option value="name">เรียงตาม: ชื่อ</option><option value="next">เรียงตาม: กำหนดตรวจสอบ</option><option value="status">เรียงตาม: สถานะ</option><option value="priority">เรียงตาม: ความสำคัญ</option></select>
       <input type="file" id="craneCsvImportInput" accept=".csv" style="display:none;">
-      <button class="btn" id="craneCsvImportBtn">⬆ นำเข้า CSV</button>
+      <button class="btn js-admin-only" id="craneCsvImportBtn">⬆ นำเข้า CSV</button>
       <button class="btn" id="craneExportBtn">⬇ ส่งออก CSV</button>
       <input type="file" id="bulkCranePhotoInput" accept="image/*" multiple style="display:none;">
-      <button class="btn" id="bulkCranePhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
+      <button class="btn js-guest-hide" id="bulkCranePhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
       <button class="btn btn-primary js-admin-only" id="addCraneBtn">＋ เพิ่มเครน/ปั้นจั่น</button>
     </div>
     <div class="grid" id="craneGrid"></div>
@@ -379,10 +379,10 @@
       </select>
       <select id="vehicleSortBy"><option value="name">เรียงตาม: ชื่อ</option><option value="next">เรียงตาม: กำหนดบำรุงรักษา</option><option value="status">เรียงตาม: สถานะ</option><option value="priority">เรียงตาม: ความสำคัญ</option></select>
       <input type="file" id="vehicleCsvImportInput" accept=".csv" style="display:none;">
-      <button class="btn" id="vehicleCsvImportBtn">⬆ นำเข้า CSV</button>
+      <button class="btn js-admin-only" id="vehicleCsvImportBtn">⬆ นำเข้า CSV</button>
       <button class="btn" id="vehicleExportBtn">⬇ ส่งออก CSV</button>
       <input type="file" id="bulkVehiclePhotoInput" accept="image/*" multiple style="display:none;">
-      <button class="btn" id="bulkVehiclePhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
+      <button class="btn js-guest-hide" id="bulkVehiclePhotoBtn">📷 อัปโหลดรูปภาพ (จับคู่ตามรหัส)</button>
       <button class="btn btn-primary js-admin-only" id="addVehicleBtn">＋ เพิ่มยานพาหนะ</button>
     </div>
     <div class="grid" id="vehicleGrid"></div>
@@ -492,7 +492,7 @@
         <button type="button" class="btn btn-sm" id="addVehiclePartRowBtn">＋ เพิ่มอะไหล่</button>
       </div>
       <div class="modal-actions" style="border-top:none;">
-        <button class="btn btn-primary" id="addVehicleMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
+        <button class="btn btn-primary js-guest-hide" id="addVehicleMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
       </div>
     </div>
 
@@ -657,7 +657,7 @@
         <div class="field"><label>ผู้ดำเนินการ</label><input id="crm_tech"></div>
       </div>
       <div class="modal-actions" style="border-top:none;">
-        <button class="btn btn-primary" id="addCraneMaintBtn">💾 บันทึกรายการ</button>
+        <button class="btn btn-primary js-guest-hide" id="addCraneMaintBtn">💾 บันทึกรายการ</button>
       </div>
     </div>
 
@@ -672,7 +672,7 @@
         <div class="field"><label>ผู้รายงาน</label><input id="cri_reporter"></div>
       </div>
       <div class="modal-actions" style="border-top:none;">
-        <button class="btn btn-primary" id="addCraneIncidentBtn">💾 บันทึกเหตุการณ์</button>
+        <button class="btn btn-primary js-guest-hide" id="addCraneIncidentBtn">💾 บันทึกเหตุการณ์</button>
       </div>
     </div>
 
@@ -788,7 +788,7 @@
         <button type="button" class="btn btn-sm" id="addToolPartRowBtn">＋ เพิ่มอะไหล่</button>
       </div>
       <div class="modal-actions" style="border-top:none;">
-        <button class="btn btn-primary" id="addToolMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
+        <button class="btn btn-primary js-guest-hide" id="addToolMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
       </div>
     </div>
 
@@ -996,7 +996,7 @@
       </div>
 
       <div class="modal-actions" style="border-top:none;">
-        <button class="btn btn-primary" id="addMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
+        <button class="btn btn-primary js-guest-hide" id="addMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
       </div>
     </div>
 
@@ -1007,7 +1007,7 @@
     </div>
 
     <div class="subpage" id="sub-files">
-      <form class="attachform" id="attachForm">
+      <form class="attachform js-guest-hide" id="attachForm">
         <div class="field"><label>ไฟล์ (สูงสุด 3MB)</label><input type="file" id="a_file"></div>
         <div class="field"><label>หมวดหมู่</label><select id="a_cat"><option value="manual">คู่มือการใช้งาน</option><option value="warranty">ใบรับประกัน</option><option value="other">อื่นๆ</option></select></div>
         <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
@@ -1023,7 +1023,7 @@
         <div class="field"><label>วันที่ย้าย</label><input type="date" id="l_date"></div>
         <div class="field"><label>ตำแหน่งใหม่</label><input id="l_loc"></div>
         <div class="field"><label>หมายเหตุ</label><input id="l_note"></div>
-        <button type="button" class="btn btn-sm btn-primary" id="addLocBtn">＋ บันทึก</button>
+        <button type="button" class="btn btn-sm btn-primary js-guest-hide" id="addLocBtn">＋ บันทึก</button>
       </div>
     </div>
 
@@ -1052,6 +1052,26 @@
 </div>
 
 <!-- SYNC SETTINGS -->
+<!-- PIN GATE FOR ROLE ELEVATION -->
+<div class="overlay" id="pinOverlay">
+  <div class="modal" style="max-width:400px;">
+    <button class="modal-close" data-close>✕</button>
+    <h2 id="pinTitle">ใส่รหัส PIN</h2>
+    <p class="sub" id="pinSub">กรอกรหัส PIN เพื่อสลับเป็นบทบาทที่แก้ไขข้อมูลได้</p>
+    <div class="field full" style="margin-bottom:14px;">
+      <input type="password" id="pinInput" placeholder="รหัส PIN" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="hint" id="pinError" style="color:var(--red);display:none;">รหัส PIN ไม่ถูกต้อง</div>
+    <div class="modal-actions">
+      <button class="btn" data-close>ยกเลิก</button>
+      <button class="btn btn-primary" id="pinSubmitBtn">ยืนยัน</button>
+    </div>
+    <div class="hint" style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+      ต้องการเปลี่ยนรหัส PIN? ดูวิธีในคอมเมนต์ต้นไฟล์ HTML (ค้นหา "PIN_HASH")
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="syncOverlay">
   <div class="modal" style="max-width:500px;">
     <button class="modal-close" data-close>✕</button>
@@ -1111,7 +1131,26 @@
 
   let machines = [];
   let maintCache = {}, filesCache = {}, locCache = {}, photoCache = {};
-  let currentDetailId = null, pendingDeleteId = null, pendingDeleteType = 'machine', currentRole = 'admin';
+  // ==========================================================================
+  // ระบบล็อกการแก้ไขด้วยรหัส PIN
+  // ==========================================================================
+  // ค่าเริ่มต้นคือ PIN "1234" — เปลี่ยนก่อนใช้งานจริงนะครับ! วิธีเปลี่ยน:
+  // 1. เปิดคอนโซลเบราว์เซอร์ (กด F12 แท็บ Console) แล้วพิมพ์:
+  //      crypto.subtle.digest('SHA-256', new TextEncoder().encode('รหัสPINใหม่ของคุณ'))
+  //        .then(b => console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
+  // 2. คัดลอกค่าที่ได้มาแทนที่ค่าใน PIN_HASH ด้านล่างนี้ แล้วอัปโหลดไฟล์ใหม่
+  const PIN_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // sha256("1234")
+
+  async function sha256Hex(text){
+    try{
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+      return Array.from(new Uint8Array(buf)).map(x=>x.toString(16).padStart(2,'0')).join('');
+    }catch(e){
+      return null; // Web Crypto unavailable (e.g. non-secure context) - PIN check will simply fail closed
+    }
+  }
+
+  let currentDetailId = null, pendingDeleteId = null, pendingDeleteType = 'machine', currentRole = 'guest';
   let tempPartRows = [];
   let charts = {};
 
@@ -1173,7 +1212,9 @@
   async function saveList(cache, prefix, id, list){ cache[id]=list; try{ await window.storage.set(prefix+id, JSON.stringify(list), false); }catch(e){ toast('บันทึกไม่สำเร็จ'); } }
 
   async function loadRole(){
-    try{ const r = await window.storage.get('app_role', false); if(r && r.value) currentRole = r.value; }catch(e){}
+    // เพื่อความปลอดภัย: ทุกครั้งที่เปิดหน้าเว็บใหม่ จะเริ่มต้นเป็น "ผู้เยี่ยมชม" เสมอ
+    // ต้องใส่ PIN ใหม่ทุกครั้งที่ต้องการสิทธิ์แก้ไข (ไม่จำสิทธิ์ข้ามเซสชัน)
+    currentRole = 'guest';
     $('roleSelect').value = currentRole;
     applyRoleUI();
   }
@@ -1202,11 +1243,45 @@
 
   // ===== ROLE UI =====
   function applyRoleUI(){
-    const isTech = currentRole === 'tech';
+    const isTech = currentRole !== 'admin';
+    const isGuest = currentRole === 'guest';
     $('csvImportBtn').style.display = isTech ? 'none' : '';
     document.querySelectorAll('.js-admin-only').forEach(el => el.style.display = isTech ? 'none' : '');
+    document.querySelectorAll('.js-guest-hide').forEach(el => el.style.display = isGuest ? 'none' : '');
   }
-  $('roleSelect').addEventListener('change', async e=>{ currentRole = e.target.value; await saveRole(); applyRoleUI(); renderGrid(); if(currentDetailId) openDetail(currentDetailId); });
+
+  let pendingRoleValue = null;
+  $('roleSelect').addEventListener('change', async e=>{
+    const newValue = e.target.value;
+    if(newValue === 'guest'){
+      currentRole = 'guest'; applyRoleUI(); renderGrid(); if(currentDetailId) openDetail(currentDetailId);
+      return;
+    }
+    // elevating to tech or admin requires the correct PIN
+    pendingRoleValue = newValue;
+    $('roleSelect').value = currentRole; // revert the visible select until PIN is confirmed
+    $('pinInput').value = '';
+    $('pinError').style.display = 'none';
+    $('pinSub').textContent = 'กรอกรหัส PIN เพื่อสลับเป็น "' + (newValue==='admin'?'ผู้ดูแลระบบ':'ช่างเทคนิค') + '"';
+    $('pinOverlay').classList.add('show');
+    $('pinInput').focus();
+  });
+  $('pinSubmitBtn').addEventListener('click', async ()=>{
+    const entered = $('pinInput').value;
+    const hash = await sha256Hex(entered);
+    if(hash === PIN_HASH){
+      currentRole = pendingRoleValue;
+      $('roleSelect').value = currentRole;
+      $('pinOverlay').classList.remove('show');
+      applyRoleUI(); renderGrid(); if(currentDetailId) openDetail(currentDetailId);
+      toast('เปลี่ยนบทบาทเรียบร้อย');
+    } else {
+      $('pinError').style.display = '';
+      $('pinInput').value = '';
+      $('pinInput').focus();
+    }
+  });
+  $('pinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') $('pinSubmitBtn').click(); });
 
   // ===== MAIN TABS =====
   document.querySelectorAll('.maintab').forEach(btn=>{
@@ -1386,7 +1461,7 @@
 
   function renderGrid(){
     const list = getFiltered();
-    const isTech = currentRole === 'tech';
+    const isTech = currentRole !== 'admin';
     if(list.length===0){ grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><h3>ไม่พบเครื่องจักร</h3><p>ลองปรับตัวกรอง หรือเพิ่มเครื่องจักรใหม่เพื่อเริ่มต้นบันทึกข้อมูล</p></div>`; return; }
     grid.innerHTML = list.map(m=>{
       const due = getDueInfo(m);
@@ -1641,7 +1716,7 @@
       await renderLoc(id);
       renderQr(m);
 
-      const isTech = currentRole==='tech';
+      const isTech = currentRole!=='admin';
       $('deleteFromDetail').style.display = isTech ? 'none':'';
       $('editFromDetail').style.display = isTech ? 'none':'';
       $('issueForMachineBtn').style.display = isTech ? 'none':'';
@@ -1772,7 +1847,8 @@
     const q = $('partsSearch').value.trim().toLowerCase();
     const cat = $('partsCatFilter').value;
     const lowOnly = $('partsLowFilter').value === 'low';
-    const isTech = currentRole==='tech';
+    const isTech = currentRole!=='admin';
+    const isGuest = currentRole==='guest';
     let list = partsCatalog.filter(p=>{
       if(cat && p.category!==cat) return false;
       if(lowOnly && !isLowStock(p)) return false;
@@ -1796,7 +1872,7 @@
         <td>${escapeHtml(p.location||'—')}</td>
         <td>${expLabel}</td>
         <td style="white-space:nowrap;">
-          <button class="btn btn-sm" data-tx="${p.id}">เบิก/รับ</button>
+          ${isGuest?'':`<button class="btn btn-sm" data-tx="${p.id}">เบิก/รับ</button>`}
           ${isTech?'':`<button class="btn btn-sm" data-editcat="${p.id}">แก้ไข</button> <button class="btn btn-sm btn-danger" data-delcat="${p.id}">ลบ</button>`}
         </td>
       </tr>`;
@@ -2231,7 +2307,7 @@
 
   function renderToolGrid(){
     const list = getToolFiltered();
-    const isTech = currentRole === 'tech';
+    const isTech = currentRole !== 'admin';
     const grid2 = $('toolGrid');
     if(list.length===0){ grid2.innerHTML = `<div class="empty" style="grid-column:1/-1;"><h3>ไม่พบเครื่องมือ/อุปกรณ์</h3><p>ลองปรับตัวกรอง หรือเพิ่มเครื่องมือ/อุปกรณ์ใหม่เพื่อเริ่มต้นบันทึกข้อมูล</p></div>`; return; }
     grid2.innerHTML = list.map(t=>{
@@ -2433,7 +2509,7 @@
       await renderToolMaintTable(id);
       renderToolQr(t);
 
-      const isTech = currentRole==='tech';
+      const isTech = currentRole!=='admin';
       $('deleteToolFromDetail').style.display = isTech ? 'none':'';
       $('editToolFromDetail').style.display = isTech ? 'none':'';
     }catch(err){
@@ -2656,7 +2732,7 @@
 
   function renderCraneGrid(){
     const list = getCraneFiltered();
-    const isTech = currentRole === 'tech';
+    const isTech = currentRole !== 'admin';
     const grid3 = $('craneGrid');
     if(list.length===0){ grid3.innerHTML = `<div class="empty" style="grid-column:1/-1;"><h3>ไม่พบเครน/ปั้นจั่น</h3><p>ลองปรับตัวกรอง หรือเพิ่มเครน/ปั้นจั่นใหม่เพื่อเริ่มต้นบันทึกข้อมูล</p></div>`; return; }
     grid3.innerHTML = list.map(c=>{
@@ -2894,7 +2970,7 @@
       $('crm_date').value = todayStr();
       await renderCraneMaintTable(id);
 
-      const isTech = currentRole==='tech';
+      const isTech = currentRole!=='admin';
       $('deleteCraneFromDetail').style.display = isTech ? 'none':'';
       $('editCraneFromDetail').style.display = isTech ? 'none':'';
     }catch(err){
@@ -3126,7 +3202,7 @@
 
   function renderVehicleGrid(){
     const list = getVehicleFiltered();
-    const isTech = currentRole === 'tech';
+    const isTech = currentRole !== 'admin';
     const grid4 = $('vehicleGrid');
     if(list.length===0){ grid4.innerHTML = `<div class="empty" style="grid-column:1/-1;"><h3>ไม่พบยานพาหนะ</h3><p>ลองปรับตัวกรอง หรือเพิ่มยานพาหนะใหม่เพื่อเริ่มต้นบันทึกข้อมูล</p></div>`; return; }
     grid4.innerHTML = list.map(v=>{
@@ -3324,7 +3400,7 @@
       await renderVehicleMaintTable(id);
       renderVehicleQr(v);
 
-      const isTech = currentRole==='tech';
+      const isTech = currentRole!=='admin';
       $('deleteVehicleFromDetail').style.display = isTech ? 'none':'';
       $('editVehicleFromDetail').style.display = isTech ? 'none':'';
     }catch(err){

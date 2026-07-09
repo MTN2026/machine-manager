@@ -2,16 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ระบบจัดการเครื่องจักร</title>
-<meta name="description" content="ระบบจัดการเก็บข้อมูลเครื่องจักร บำรุงรักษา อะไหล่ และแจ้งเตือน PM">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#12161b">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="เครื่องจักร">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -698,11 +689,6 @@
         async list(prefix){ const all = readAll(); const keys = Object.keys(all).filter(k => !prefix || k.startsWith(prefix)); return {keys, prefix, shared:false}; }
       };
     })();
-  }
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(()=>{});
-    });
   }
 })();
 </script>

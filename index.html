@@ -1073,23 +1073,32 @@
 </div>
 
 <div class="overlay" id="syncOverlay">
-  <div class="modal" style="max-width:500px;">
+  <div class="modal" style="max-width:520px;">
     <button class="modal-close" data-close>✕</button>
-    <h2>ซิงก์ข้อมูลไป Google Sheet</h2>
-    <p class="sub">ส่งข้อมูลเครื่องจักรทั้งหมดไปที่ Google Sheet โดยตรง เพื่อให้สคริปต์แจ้งเตือนอีเมลใช้ข้อมูลล่าสุดเสมอ ไม่ต้อง export/import CSV เอง</p>
+    <h2>เชื่อมต่อฐานข้อมูลกลาง (Google Sheet)</h2>
+    <p class="sub">เชื่อมต่อกับ Google Sheet ชุดเดียวกันจากทุกอุปกรณ์ เพื่อให้ทุกเครื่อง (มือถือ/คอมพิวเตอร์) เห็นข้อมูลตรงกันเสมอ ไม่ใช่แค่ส่งออกทางเดียวอีกต่อไป — อุปกรณ์นี้จะทั้งอ่านและเขียนผ่าน URL เดียวกัน</p>
     <div class="field full" style="margin-bottom:12px;">
       <label>Web App URL (จากการ Deploy Google Apps Script)</label>
       <input type="text" id="syncUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
-      <div class="hint">ดูวิธีสร้างลิงก์นี้ได้จากคอมเมนต์ในไฟล์ pm_email_reminder.gs หัวข้อ "เปิดใช้การซิงก์อัตโนมัติ"</div>
+    </div>
+    <div class="field full" style="margin-bottom:12px;">
+      <label>รหัสลับ (SYNC_TOKEN)</label>
+      <input type="text" id="syncToken" placeholder="รหัสลับที่ตั้งไว้ใน Script Properties">
+      <div class="hint">ต้องตรงกับค่า SYNC_TOKEN ที่ตั้งไว้ในสคริปต์ฝั่ง Google — ใช้ URL และรหัสลับชุดเดียวกันในทุกอุปกรณ์ที่ต้องการให้เห็นข้อมูลร่วมกัน</div>
     </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);margin-bottom:6px;">
-      <input type="checkbox" id="syncAuto" style="width:auto;"> ซิงก์อัตโนมัติทุกครั้งที่มีการเพิ่ม/แก้ไข/ลบเครื่องจักร หรือบันทึกงานบำรุงรักษา
+      <input type="checkbox" id="syncAuto" style="width:auto;"> อัปเดตชีทที่อ่านง่าย (Machines/Cranes/...) ทุกครั้งที่แก้ไข เพื่อดูข้อมูลตรงๆ ใน Google Sheet และใช้กับอีเมลแจ้งเตือน
     </label>
     <div class="hint" id="syncLastStatus">ยังไม่เคยซิงก์</div>
-    <div class="modal-actions">
+    <div class="modal-actions" style="flex-wrap:wrap;">
       <button class="btn" data-close>ปิด</button>
       <button class="btn" id="saveSyncBtn">💾 บันทึกการตั้งค่า</button>
-      <button class="btn btn-primary" id="syncNowBtn">🔄 ซิงก์เดี๋ยวนี้</button>
+      <button class="btn" id="pullNowBtn">⬇ ดึงข้อมูลล่าสุดจากคลาวด์</button>
+      <button class="btn" id="migrateNowBtn">📤 อัปโหลดข้อมูลเครื่องนี้ขึ้นคลาวด์ (ครั้งแรกเท่านั้น)</button>
+      <button class="btn btn-primary" id="syncNowBtn">🔄 ซิงก์ชีทที่อ่านง่ายเดี๋ยวนี้</button>
+    </div>
+    <div class="hint" style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+      ตั้งค่าครั้งแรก: อุปกรณ์ที่มีข้อมูลอยู่แล้ว (เช่น เครื่องที่มี 39 เครื่องจักร) ให้กรอก URL+รหัสลับ แล้วกด "📤 อัปโหลดข้อมูลเครื่องนี้ขึ้นคลาวด์" หนึ่งครั้ง จากนั้นอุปกรณ์อื่นๆ กรอก URL+รหัสลับชุดเดียวกัน แล้วกด "⬇ ดึงข้อมูลล่าสุดจากคลาวด์" ก็จะเห็นข้อมูลตรงกันทันที
     </div>
   </div>
 </div>
@@ -1098,18 +1107,125 @@
 
 <script>
 (function(){
+  // ---- ตั้งค่าการเชื่อมต่อคลาวด์ (Google Apps Script Web App) ----
+  // เก็บแยกจาก window.storage โดยตรงใน localStorage คนละคีย์ เพราะต้องอ่านค่านี้
+  // ให้ได้ "ก่อน" ที่จะสร้างตัวเชื่อมต่อ window.storage เอง (ไม่งั้นจะวนเป็นไก่กับไข่)
+  const CLOUD_CFG_KEY = 'mm_cloud_config';
+  function readCloudCfg(){ try{ return JSON.parse(localStorage.getItem(CLOUD_CFG_KEY) || '{}'); }catch(e){ return {}; } }
+  function writeCloudCfg(cfg){ try{ localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cfg||{})); }catch(e){} }
+  window.__cloudCfg = { read: readCloudCfg, write: writeCloudCfg };
+
   // Storage polyfill: if opened outside Claude.ai (window.storage undefined),
-  // fall back to localStorage so the app still saves data.
+  // use localStorage as a fast local cache, and — when a Cloud Sync URL is
+  // configured — a Google Sheet (via a Google Apps Script Web App) as the
+  // shared database, so every device/browser converges on the same data
+  // instead of each keeping its own isolated copy.
   if (typeof window.storage === 'undefined') {
     window.storage = (function(){
       const NS = 'mm_data';
+      const OUTBOX = 'mm_outbox';
       function readAll(){ try{ return JSON.parse(localStorage.getItem(NS) || '{}'); }catch(e){ return {}; } }
       function writeAll(obj){ localStorage.setItem(NS, JSON.stringify(obj)); }
+      function readOutbox(){ try{ return JSON.parse(localStorage.getItem(OUTBOX) || '[]'); }catch(e){ return []; } }
+      function writeOutbox(arr){ localStorage.setItem(OUTBOX, JSON.stringify(arr)); }
+      function queue(op){ const q = readOutbox(); q.push(op); writeOutbox(q); }
+
+      function cloudReady(){ const c = readCloudCfg(); return !!(c.url); }
+
+      async function cloudGet(action, params){
+        const c = readCloudCfg();
+        const qs = new URLSearchParams(Object.assign({action, token: c.token || ''}, params || {}));
+        const sep = c.url.indexOf('?') === -1 ? '?' : '&';
+        const res = await fetch(c.url + sep + qs.toString(), {method:'GET'});
+        if(!res.ok) throw new Error('cloud_http_' + res.status);
+        const j = await res.json();
+        if(j && j.error) throw new Error('cloud_error_' + j.error);
+        return j;
+      }
+      async function cloudPost(body){
+        const c = readCloudCfg();
+        const res = await fetch(c.url, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(Object.assign({token: c.token || ''}, body))
+        });
+        if(!res.ok) throw new Error('cloud_http_' + res.status);
+        const j = await res.json();
+        if(j && j.error) throw new Error('cloud_error_' + j.error);
+        return j;
+      }
+
+      let flushing = false;
+      async function flushOutbox(){
+        if(flushing || !cloudReady()) return;
+        flushing = true;
+        try{
+          let q = readOutbox();
+          if(!q.length) return;
+          const remaining = [];
+          for(const op of q){
+            try{
+              if(op.type === 'set') await cloudPost({action:'set', key:op.key, value:op.value, shared: op.shared ? 1 : 0});
+              else if(op.type === 'delete') await cloudPost({action:'delete', key:op.key, shared: op.shared ? 1 : 0});
+            }catch(e){ remaining.push(op); }
+          }
+          writeOutbox(remaining);
+        } finally { flushing = false; }
+      }
+      window.addEventListener('online', flushOutbox);
+
       return {
-        async get(key){ const all = readAll(); return (key in all) ? {key, value: all[key], shared:false} : null; },
-        async set(key, value){ const all = readAll(); all[key] = value; writeAll(all); return {key, value, shared:false}; },
-        async delete(key){ const all = readAll(); const existed = key in all; delete all[key]; writeAll(all); return {key, deleted:existed, shared:false}; },
-        async list(prefix){ const all = readAll(); const keys = Object.keys(all).filter(k => !prefix || k.startsWith(prefix)); return {keys, prefix, shared:false}; }
+        async get(key, shared){
+          const all = readAll();
+          return (key in all) ? {key, value: all[key], shared: !!shared} : null;
+        },
+        async set(key, value, shared){
+          const all = readAll(); all[key] = value; writeAll(all);
+          if(cloudReady()){
+            try{ await cloudPost({action:'set', key, value, shared: shared ? 1 : 0}); }
+            catch(e){ queue({type:'set', key, value, shared: !!shared}); }
+          }
+          return {key, value, shared: !!shared};
+        },
+        async delete(key, shared){
+          const all = readAll(); const existed = key in all; delete all[key]; writeAll(all);
+          if(cloudReady()){
+            try{ await cloudPost({action:'delete', key, shared: shared ? 1 : 0}); }
+            catch(e){ queue({type:'delete', key, shared: !!shared}); }
+          }
+          return {key, deleted: existed, shared: !!shared};
+        },
+        async list(prefix){
+          const all = readAll();
+          const keys = Object.keys(all).filter(k => !prefix || k.startsWith(prefix));
+          return {keys, prefix, shared: false};
+        },
+        // ดึงข้อมูลทั้งชุดจากคลาวด์มาทับ cache ในเครื่อง — ใช้ตอนเปิดแอป
+        // และรีเฟรชเป็นระยะ เพื่อให้ทุกอุปกรณ์เห็นข้อมูลชุดเดียวกัน
+        async pullAll(){
+          if(!cloudReady()) return false;
+          try{
+            const r = await cloudGet('export', {});
+            if(r && r.data){
+              const all = readAll();
+              Object.keys(r.data).forEach(k => { all[k] = r.data[k].value; });
+              writeAll(all);
+              return true;
+            }
+          }catch(e){ return false; }
+          return false;
+        },
+        // ส่งข้อมูลทั้งหมดที่มีอยู่ในเครื่องนี้ขึ้นคลาวด์ครั้งเดียว (ใช้ตอน migrate
+        // ข้อมูลเดิมของอุปกรณ์ที่มีข้อมูลอยู่แล้วก่อนเปิดใช้การซิงก์)
+        async pushAll(){
+          if(!cloudReady()) return false;
+          const all = readAll();
+          const entries = Object.keys(all).map(k => ({key:k, value: all[k], shared:false}));
+          try{ await cloudPost({action:'bulk_set', entries}); return true; }
+          catch(e){ return false; }
+        },
+        isCloudConfigured: cloudReady,
+        flushOutbox
       };
     })();
   }
@@ -1200,7 +1316,11 @@
   async function loadMachines(){
     try{ const res = await window.storage.get('machines_list', false); machines = res && res.value ? JSON.parse(res.value) : []; }
     catch(e){ machines = []; }
-    if(machines.length === 0){ machines = seedData(); await saveMachines(); }
+    // อย่าใส่ข้อมูลตัวอย่างทับ ถ้าเชื่อมต่อคลาวด์ไว้แล้ว — เครื่องจักรจริงอาจยังไม่ถูกดึงมา
+    // (เช่น กำลังออฟไลน์ชั่วคราว) การใส่ seed data ตอนนั้นจะเขียนทับข้อมูลจริงบนคลาวด์ได้
+    if(machines.length === 0 && !(window.storage.isCloudConfigured && window.storage.isCloudConfigured())){
+      machines = seedData(); await saveMachines();
+    }
   }
   async function saveMachines(){ try{ await window.storage.set('machines_list', JSON.stringify(machines), false); maybeAutoSync(); }catch(e){ toast('บันทึกข้อมูลไม่สำเร็จ'); } }
   async function loadList(cache, prefix, id){
@@ -3616,17 +3736,47 @@
   });
 
   // ===== GOOGLE SHEET SYNC =====
-  let syncSettings = {url:'', auto:false};
-  async function loadSyncSettings(){
-    try{ const r = await window.storage.get('sync_settings', false); if(r && r.value) syncSettings = JSON.parse(r.value); }catch(e){}
+  // syncSettings.url/token ขับเคลื่อนทั้งการซิงก์แบบสองทางจริง (ผ่าน window.storage
+  // ที่คุยกับคลาวด์โดยตรง) และการส่งออกไปชีทที่อ่านง่าย (syncToSheet ด้านล่าง)
+  let syncSettings = {url:'', token:'', auto:true};
+  function loadSyncSettings(){
+    const cfg = (window.__cloudCfg && window.__cloudCfg.read()) || {};
+    syncSettings = {url: cfg.url || '', token: cfg.token || '', auto: cfg.auto !== false};
     $('syncUrl').value = syncSettings.url || '';
+    $('syncToken').value = syncSettings.token || '';
     $('syncAuto').checked = !!syncSettings.auto;
+    if(syncSettings.url) $('syncLastStatus').textContent = 'เชื่อมต่อคลาวด์ไว้แล้ว ('+syncSettings.url.slice(0,40)+'...)';
   }
-  async function saveSyncSettings(){
-    syncSettings = {url: $('syncUrl').value.trim(), auto: $('syncAuto').checked};
-    try{ await window.storage.set('sync_settings', JSON.stringify(syncSettings), false); }catch(e){}
+  function saveSyncSettings(){
+    syncSettings = {url: $('syncUrl').value.trim(), token: $('syncToken').value.trim(), auto: $('syncAuto').checked};
+    if(window.__cloudCfg) window.__cloudCfg.write(syncSettings);
   }
   function maybeAutoSync(){ if(syncSettings.auto && syncSettings.url) syncToSheet(true); }
+
+  async function pullFromCloudAndRerender(silent){
+    if(!syncSettings.url){ if(!silent) toast('กรุณาตั้งค่า Web App URL และรหัสลับก่อน'); return; }
+    const ok = await window.storage.pullAll();
+    if(!ok){ if(!silent) toast('ดึงข้อมูลจากคลาวด์ไม่สำเร็จ กรุณาตรวจสอบ URL/รหัสลับ และการเชื่อมต่อ'); return; }
+    await loadMachines();
+    await loadAllPhotos();
+    await loadPartsCatalog();
+    await loadPartsTx();
+    await loadTools();
+    await loadCranes();
+    await loadVehicles();
+    renderAll(); renderToolsPage(); renderCranesPage(); renderVehiclesPage();
+    if(currentDetailId) openDetail(currentDetailId);
+    if(!silent) toast('ดึงข้อมูลล่าสุดจากคลาวด์เรียบร้อย');
+  }
+
+  $('pullNowBtn').addEventListener('click', async ()=>{ saveSyncSettings(); await pullFromCloudAndRerender(false); });
+  $('migrateNowBtn').addEventListener('click', async ()=>{
+    saveSyncSettings();
+    if(!syncSettings.url){ toast('กรุณาตั้งค่า Web App URL และรหัสลับก่อน'); return; }
+    const ok = await window.storage.pushAll();
+    toast(ok ? 'อัปโหลดข้อมูลเครื่องนี้ขึ้นคลาวด์เรียบร้อย — อุปกรณ์อื่นกด "ดึงข้อมูลล่าสุดจากคลาวด์" เพื่อรับข้อมูลชุดนี้ได้เลย' : 'อัปโหลดไม่สำเร็จ กรุณาตรวจสอบ URL/รหัสลับ');
+    await syncToSheet(true);
+  });
 
   async function syncToSheet(silent){
     if(!syncSettings.url){ if(!silent) toast('กรุณาตั้งค่า Web App URL ก่อน'); return; }
@@ -3804,7 +3954,14 @@
   (async function init(){
     $('lastUpdated').textContent = 'MACHINE ASSET REGISTRY · ' + new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
     await loadRole();
-    await loadSyncSettings();
+    loadSyncSettings();
+    // ถ้าตั้งค่าคลาวด์ไว้แล้ว ดึงข้อมูลชุดล่าสุดมาก่อน จึงค่อยโหลดเข้าตัวแปรในแอป
+    // เพื่อให้ทุกอุปกรณ์เริ่มต้นด้วยข้อมูลชุดเดียวกันเสมอ
+    if(window.storage.isCloudConfigured && window.storage.isCloudConfigured()){
+      const ok = await window.storage.pullAll();
+      if(!ok) toast('ดึงข้อมูลจากคลาวด์ไม่สำเร็จ กำลังใช้ข้อมูลที่แคชไว้ในเครื่องนี้แทน');
+      if(window.storage.flushOutbox) window.storage.flushOutbox();
+    }
     await loadMachines();
     await loadAllPhotos();
     await loadPartsCatalog();
@@ -3816,6 +3973,14 @@
     renderToolsPage();
     renderCranesPage();
     renderVehiclesPage();
+
+    // รีเฟรชข้อมูลจากคลาวด์เป็นระยะ + ทุกครั้งที่กลับมาเปิดแท็บ/แอปนี้ใหม่
+    // เพื่อให้เห็นการแก้ไขจากอุปกรณ์อื่นโดยไม่ต้องรีโหลดหน้าเอง
+    if(window.storage.isCloudConfigured){
+      setInterval(()=>{ if(window.storage.isCloudConfigured()) pullFromCloudAndRerender(true); }, 25000);
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && window.storage.isCloudConfigured()) pullFromCloudAndRerender(true); });
+      window.addEventListener('online', ()=>{ if(window.storage.isCloudConfigured()) pullFromCloudAndRerender(true); });
+    }
   })();
 })();
 </script>

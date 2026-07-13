@@ -11,6 +11,9 @@
  *  2) เก็บรูปภาพเครื่องจักร/เครน/ยานพาหนะ/เครื่องมือ ไว้ใน Google Drive (โฟลเดอร์
  *     "MachineManagerPhotos") แทนการยัด base64 ลงเซลล์ Sheet ที่มีขีดจำกัดขนาด
  *     แล้วเก็บแค่ลิงก์รูปไว้ใน AppData ทำให้รูปภาพซิงก์ข้ามอุปกรณ์ได้ด้วยเช่นกัน
+ *     ค่าอื่นๆ ที่ยาวเกินขีดจำกัดเซลล์ (เช่น รายการไฟล์แนบเอกสาร) ก็จะถูกย้ายไป
+ *     เก็บเป็นไฟล์ข้อความใน Drive (โฟลเดอร์ "MachineManagerBlobs") ให้อัตโนมัติ
+ *     เช่นกัน โดยฝั่งแอปไม่ต้องรู้เรื่องนี้เลย เรียก get/set ตามปกติ
  *
  *  3) มิเรอร์ข้อมูลไปยังชีทที่มนุษย์อ่านง่าย (Machines / Cranes / Vehicles /
  *     Tools / Parts / PartsTransactions) ทุกครั้งที่มีการแก้ไข เพื่อให้เปิดดู
@@ -145,22 +148,39 @@ function kvGet(key, shared){
   const data = sh.getDataRange().getValues();
   for(let i = 1; i < data.length; i++){
     if(data[i][0] === key && !!data[i][1] === !!shared){
-      return {found:true, key, value:data[i][2], updated_at:data[i][3]};
+      return {found:true, key, value:resolveBlobValue(data[i][2]), updated_at:data[i][3]};
     }
   }
   return {found:false, key};
 }
+// เซลล์ของ Google Sheet เก็บตัวอักษรได้ไม่เกิน ~50,000 ตัว ค่าที่ยาวเกินขนาดนี้
+// (เช่น รายการไฟล์แนบที่มี base64 ของเอกสารฝังอยู่) จะถูกเก็บเป็นไฟล์ข้อความ
+// ใน Google Drive แทนโดยอัตโนมัติ แล้วเก็บแค่ตัวชี้ (blob:<fileId>) ไว้ในเซลล์
+// ทำให้ set()/get()/export() ของฝั่งแอปใช้งานได้เหมือนเดิมทุกจุดโดยไม่ต้องรู้เรื่องนี้เลย
+const BLOB_MARKER = 'blob:';
+const MAX_CELL_CHARS = 35000; // เผื่อระยะห่างจากลิมิตจริงของ Sheets (~50,000)
+
 function kvSet(key, value, shared){
   const sh = kvSheet();
   const idx = kvFindRow(sh, key, shared);
   const now = new Date().toISOString();
-  if(idx === -1) sh.appendRow([key, !!shared, value, now]);
-  else sh.getRange(idx, 1, 1, 4).setValues([[key, !!shared, value, now]]);
+  let storeValue = value;
+  if(typeof value === 'string' && value.length > MAX_CELL_CHARS){
+    deleteValueBlob(key); // ลบไฟล์เก่าคีย์เดียวกันก่อน กันสะสมไฟล์ซ้ำ
+    const fileId = saveValueBlob(key, value);
+    storeValue = BLOB_MARKER + fileId;
+  }
+  if(idx === -1) sh.appendRow([key, !!shared, storeValue, now]);
+  else sh.getRange(idx, 1, 1, 4).setValues([[key, !!shared, storeValue, now]]);
 }
 function kvDelete(key, shared){
   const sh = kvSheet();
   const idx = kvFindRow(sh, key, shared);
-  if(idx !== -1) sh.deleteRow(idx);
+  if(idx !== -1){
+    const raw = sh.getRange(idx, 3).getValue();
+    if(typeof raw === 'string' && raw.indexOf(BLOB_MARKER) === 0) deleteValueBlob(key);
+    sh.deleteRow(idx);
+  }
 }
 function kvList(prefix, shared){
   const sh = kvSheet();
@@ -176,9 +196,42 @@ function kvExportAll(){
   const data = sh.getDataRange().getValues();
   const out = {};
   for(let i = 1; i < data.length; i++){
-    out[data[i][0]] = {value:data[i][2], shared:!!data[i][1], updated_at:data[i][3]};
+    out[data[i][0]] = {value:resolveBlobValue(data[i][2]), shared:!!data[i][1], updated_at:data[i][3]};
   }
   return out;
+}
+function resolveBlobValue(raw){
+  if(typeof raw === 'string' && raw.indexOf(BLOB_MARKER) === 0){
+    const fileId = raw.substring(BLOB_MARKER.length);
+    try{ return DriveApp.getFileById(fileId).getBlob().getDataAsString(); }
+    catch(e){ return raw; } // ไฟล์หายหรืออ่านไม่ได้ - คืนค่า marker ดิบไปเผื่อ debug ได้
+  }
+  return raw;
+}
+function sanitizeFileBase(key){
+  return String(key).replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+function getBlobFolder(){
+  const FOLDER_NAME = 'MachineManagerBlobs';
+  const it = DriveApp.getFoldersByName(FOLDER_NAME);
+  if(it.hasNext()) return it.next();
+  return DriveApp.createFolder(FOLDER_NAME);
+}
+function saveValueBlob(key, value){
+  const base = sanitizeFileBase(key);
+  const folder = getBlobFolder();
+  const blob = Utilities.newBlob(value, 'text/plain;charset=utf-8', base + '.txt');
+  const file = folder.createFile(blob);
+  return file.getId();
+}
+function deleteValueBlob(key){
+  const base = sanitizeFileBase(key);
+  const folder = getBlobFolder();
+  const it = folder.getFiles();
+  while(it.hasNext()){
+    const f = it.next();
+    if(f.getName().indexOf(base + '.') === 0) f.setTrashed(true);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -192,10 +245,6 @@ function getPhotoFolder(){
   const it = DriveApp.getFoldersByName(PHOTO_FOLDER_NAME);
   if(it.hasNext()) return it.next();
   return DriveApp.createFolder(PHOTO_FOLDER_NAME);
-}
-
-function sanitizeFileBase(key){
-  return String(key).replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
 function savePhotoToDrive(key, dataUrl){

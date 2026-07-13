@@ -7,6 +7,7 @@
 <meta name="description" content="ระบบจัดการเก็บข้อมูลเครื่องจักร บำรุงรักษา อะไหล่ และแจ้งเตือน PM">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#12161b">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="เครื่องจักร">
@@ -1132,15 +1133,12 @@
 
       function cloudReady(){ const c = readCloudCfg(); return !!(c.url); }
 
+      // หมายเหตุสำคัญ: Google Apps Script Web App เวลาตอบ request แบบ GET
+      // มักถูกเบราว์เซอร์บล็อกด้วยกลไก CORB (Cross-Origin Read Blocking)
+      // เพราะมีการ redirect เนื้อหาไปเสิร์ฟจากโดเมนอื่น (googleusercontent.com)
+      // จึงต้องยิงทุกคำสั่ง "อ่านข้อมูล" ผ่าน POST เหมือนคำสั่ง "เขียนข้อมูล" ด้วย
       async function cloudGet(action, params){
-        const c = readCloudCfg();
-        const qs = new URLSearchParams(Object.assign({action, token: c.token || ''}, params || {}));
-        const sep = c.url.indexOf('?') === -1 ? '?' : '&';
-        const res = await fetch(c.url + sep + qs.toString(), {method:'GET'});
-        if(!res.ok) throw new Error('cloud_http_' + res.status);
-        const j = await res.json();
-        if(j && j.error) throw new Error('cloud_error_' + j.error);
-        return j;
+        return cloudPost(Object.assign({action}, params || {}));
       }
       async function cloudPost(body){
         const c = readCloudCfg();
@@ -1167,6 +1165,8 @@
             try{
               if(op.type === 'set') await cloudPost({action:'set', key:op.key, value:op.value, shared: op.shared ? 1 : 0});
               else if(op.type === 'delete') await cloudPost({action:'delete', key:op.key, shared: op.shared ? 1 : 0});
+              else if(op.type === 'set_photo') await cloudPost({action:'set_photo', key:op.key, value:op.value});
+              else if(op.type === 'delete_photo') await cloudPost({action:'delete_photo', key:op.key});
             }catch(e){ remaining.push(op); }
           }
           writeOutbox(remaining);
@@ -1174,24 +1174,45 @@
       }
       window.addEventListener('online', flushOutbox);
 
+      function isPhotoKey(key, value){
+        return key.indexOf('photo_') === 0 && typeof value === 'string' && value.indexOf('data:') === 0;
+      }
+
       return {
         async get(key, shared){
           const all = readAll();
           return (key in all) ? {key, value: all[key], shared: !!shared} : null;
         },
+        // รูปภาพ (base64 data URL) ถูกตรวจจับอัตโนมัติจากคีย์ "photo_" แล้วส่งขึ้น
+        // Google Drive แทนการยัดใส่ช่องเซลล์ของ Sheet (ซึ่งมีขีดจำกัดขนาดและช้า)
+        // ส่วนอื่นของแอปเรียก set() เหมือนเดิมทุกจุด ไม่ต้องแก้โค้ดที่อื่นเลย
         async set(key, value, shared){
           const all = readAll(); all[key] = value; writeAll(all);
           if(cloudReady()){
-            try{ await cloudPost({action:'set', key, value, shared: shared ? 1 : 0}); }
-            catch(e){ queue({type:'set', key, value, shared: !!shared}); }
+            const photo = isPhotoKey(key, value);
+            try{
+              if(photo){
+                const r = await cloudPost({action:'set_photo', key, value});
+                if(r && r.url){ all[key] = r.url; writeAll(all); } // เก็บ URL (เบากว่า) แทน base64 ในแคชหลังซิงก์สำเร็จ
+              } else {
+                await cloudPost({action:'set', key, value, shared: shared ? 1 : 0});
+              }
+            }catch(e){
+              queue(photo ? {type:'set_photo', key, value} : {type:'set', key, value, shared: !!shared});
+            }
           }
-          return {key, value, shared: !!shared};
+          return {key, value: all[key], shared: !!shared};
         },
         async delete(key, shared){
           const all = readAll(); const existed = key in all; delete all[key]; writeAll(all);
           if(cloudReady()){
-            try{ await cloudPost({action:'delete', key, shared: shared ? 1 : 0}); }
-            catch(e){ queue({type:'delete', key, shared: !!shared}); }
+            const photo = key.indexOf('photo_') === 0;
+            try{
+              if(photo) await cloudPost({action:'delete_photo', key});
+              else await cloudPost({action:'delete', key, shared: shared ? 1 : 0});
+            }catch(e){
+              queue(photo ? {type:'delete_photo', key} : {type:'delete', key, shared: !!shared});
+            }
           }
           return {key, deleted: existed, shared: !!shared};
         },
@@ -1217,12 +1238,27 @@
         },
         // ส่งข้อมูลทั้งหมดที่มีอยู่ในเครื่องนี้ขึ้นคลาวด์ครั้งเดียว (ใช้ตอน migrate
         // ข้อมูลเดิมของอุปกรณ์ที่มีข้อมูลอยู่แล้วก่อนเปิดใช้การซิงก์)
-        async pushAll(){
+        // รูปภาพจะถูกอัปโหลดขึ้น Drive ทีละรูป (แยกจาก bulk_set) เพราะเซลล์ใน
+        // Sheet เก็บ base64 รูปยาวๆ ไม่ได้
+        async pushAll(onProgress){
           if(!cloudReady()) return false;
           const all = readAll();
-          const entries = Object.keys(all).map(k => ({key:k, value: all[k], shared:false}));
-          try{ await cloudPost({action:'bulk_set', entries}); return true; }
-          catch(e){ return false; }
+          const keys = Object.keys(all);
+          const photoKeys = keys.filter(k => isPhotoKey(k, all[k]));
+          const plainEntries = keys.filter(k => !photoKeys.includes(k)).map(k => ({key:k, value: all[k], shared:false}));
+          let ok = true;
+          try{ if(plainEntries.length) await cloudPost({action:'bulk_set', entries: plainEntries}); }
+          catch(e){ ok = false; }
+          for(let i = 0; i < photoKeys.length; i++){
+            const k = photoKeys[i];
+            try{
+              const r = await cloudPost({action:'set_photo', key:k, value: all[k]});
+              if(r && r.url){ all[k] = r.url; }
+            }catch(e){ ok = false; }
+            if(onProgress) try{ onProgress(i+1, photoKeys.length); }catch(_){}
+          }
+          writeAll(all);
+          return ok;
         },
         isCloudConfigured: cloudReady,
         flushOutbox
@@ -3773,8 +3809,10 @@
   $('migrateNowBtn').addEventListener('click', async ()=>{
     saveSyncSettings();
     if(!syncSettings.url){ toast('กรุณาตั้งค่า Web App URL และรหัสลับก่อน'); return; }
-    const ok = await window.storage.pushAll();
-    toast(ok ? 'อัปโหลดข้อมูลเครื่องนี้ขึ้นคลาวด์เรียบร้อย — อุปกรณ์อื่นกด "ดึงข้อมูลล่าสุดจากคลาวด์" เพื่อรับข้อมูลชุดนี้ได้เลย' : 'อัปโหลดไม่สำเร็จ กรุณาตรวจสอบ URL/รหัสลับ');
+    toast('กำลังอัปโหลดข้อมูลขึ้นคลาวด์...');
+    const ok = await window.storage.pushAll((done,total)=>{ $('syncLastStatus').textContent = 'กำลังอัปโหลดรูปภาพ '+done+'/'+total+' ...'; });
+    toast(ok ? 'อัปโหลดข้อมูลเครื่องนี้ขึ้นคลาวด์เรียบร้อย — อุปกรณ์อื่นกด "ดึงข้อมูลล่าสุดจากคลาวด์" เพื่อรับข้อมูลชุดนี้ได้เลย' : 'อัปโหลดบางส่วนไม่สำเร็จ กรุณาตรวจสอบ URL/รหัสลับ แล้วลองกดอัปโหลดซ้ำ');
+    $('syncLastStatus').textContent = ok ? 'อัปโหลดข้อมูลตั้งต้นขึ้นคลาวด์เรียบร้อยแล้ว' : 'อัปโหลดบางส่วนไม่สำเร็จ ลองกดซ้ำได้';
     await syncToSheet(true);
   });
 

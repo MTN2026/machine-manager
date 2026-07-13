@@ -6,13 +6,17 @@
  *  1) เป็น "ฐานข้อมูลกลาง" ให้เว็บแอปทุกอุปกรณ์อ่าน-เขียนข้อมูลชุดเดียวกันจริงๆ
  *     (ไม่ใช่แค่ export ทางเดียวเหมือนเดิม) โดยเก็บเป็น key-value ไว้ในชีทชื่อ
  *     "AppData" — คีย์เดียวกับที่แอปใช้เก็บใน localStorage เดิม (machines_list,
- *     cranes_list, parts_catalog, machmaint_xxx, photo_xxx ฯลฯ)
+ *     cranes_list, parts_catalog, machmaint_xxx ฯลฯ)
  *
- *  2) มิเรอร์ข้อมูลไปยังชีทที่มนุษย์อ่านง่าย (Machines / Cranes / Vehicles /
+ *  2) เก็บรูปภาพเครื่องจักร/เครน/ยานพาหนะ/เครื่องมือ ไว้ใน Google Drive (โฟลเดอร์
+ *     "MachineManagerPhotos") แทนการยัด base64 ลงเซลล์ Sheet ที่มีขีดจำกัดขนาด
+ *     แล้วเก็บแค่ลิงก์รูปไว้ใน AppData ทำให้รูปภาพซิงก์ข้ามอุปกรณ์ได้ด้วยเช่นกัน
+ *
+ *  3) มิเรอร์ข้อมูลไปยังชีทที่มนุษย์อ่านง่าย (Machines / Cranes / Vehicles /
  *     Tools / Parts / PartsTransactions) ทุกครั้งที่มีการแก้ไข เพื่อให้เปิดดู
  *     ตรงๆ ใน Google Sheet ได้ และให้สคริปต์แจ้งเตือนอีเมลใช้งานต่อได้
  *
- *  3) ส่งอีเมลแจ้งเตือนกำหนดบำรุงรักษาที่ใกล้ถึง (ต้องตั้ง Trigger เอง — ดูข้อ 8)
+ *  4) ส่งอีเมลแจ้งเตือนกำหนดบำรุงรักษาที่ใกล้ถึง (ต้องตั้ง Trigger เอง — ดูข้อ 8)
  *
  * หมายเหตุ: ถ้าคุณมีไฟล์ pm_email_reminder.gs เดิมอยู่แล้วที่ปรับแต่งไว้เฉพาะ
  * ของคุณ (เช่น ข้อความอีเมล, เงื่อนไขวันแจ้งเตือน) ให้เทียบเนื้อหากับไฟล์นี้
@@ -33,7 +37,8 @@
  *      - Who has access: Anyone
  *    กด Deploy แล้วกด Authorize เพื่ออนุญาตสิทธิ์ (ครั้งแรกจะมีคำเตือนความปลอดภัย
  *    ของ Google เพราะสคริปต์ยังไม่ได้ verify — กด Advanced > ไปที่หน้านี้ (ไม่ปลอดภัย)
- *    ได้ตามปกติ เพราะเป็นสคริปต์ของคุณเอง)
+ *    ได้ตามปกติ เพราะเป็นสคริปต์ของคุณเอง) ต้องกด Allow ให้สิทธิ์เข้าถึง Google Drive
+ *    ด้วย (ใช้เก็บไฟล์รูปภาพ) ไม่งั้นฟีเจอร์อัปโหลดรูปจะใช้งานไม่ได้
  *    คัดลอก "Web app URL" ที่ได้ (รูปแบบ https://script.google.com/macros/s/xxxx/exec)
  * 6. เปิดเว็บแอประบบจัดการเครื่องจักร กดปุ่ม 🔄 มุมขวาบน วาง Web App URL และ
  *    SYNC_TOKEN ที่ตั้งไว้ในข้อ 4 ให้ตรงกัน ทำแบบเดียวกันในทุกอุปกรณ์ที่ต้องการ
@@ -77,11 +82,25 @@ function doPost(e){
     if(!checkToken(body.token)) return json({error:'unauthorized'});
     const action = body.action;
 
+    // คำสั่งอ่านข้อมูล — แอปยิงมาทาง POST ทั้งหมด (ไม่ใช้ GET) เพื่อเลี่ยงปัญหา
+    // เบราว์เซอร์บล็อกการตอบกลับของ GET ด้วยกลไก CORB
+    if(action === 'get')    return json(kvGet(body.key, !!body.shared));
+    if(action === 'list')   return json(kvList(body.prefix || '', !!body.shared));
+    if(action === 'export') return json({data: kvExportAll()});
+
     if(action === 'set'){ kvSet(body.key, body.value, !!body.shared); return json({ok:true}); }
     if(action === 'delete'){ kvDelete(body.key, !!body.shared); return json({ok:true}); }
     if(action === 'bulk_set'){
       (body.entries || []).forEach(en => kvSet(en.key, en.value, !!en.shared));
       return json({ok:true, count:(body.entries || []).length});
+    }
+    if(action === 'set_photo'){
+      const url = savePhotoToDrive(body.key, body.value);
+      return json({ok:true, url});
+    }
+    if(action === 'delete_photo'){
+      deletePhotoFromDrive(body.key);
+      return json({ok:true});
     }
     // ไม่มี action ระบุ แต่มี machines/parts/tools/cranes/vehicles = payload แบบเดิม
     // จากปุ่ม "ซิงก์ชีทที่อ่านง่ายเดี๋ยวนี้" -> เขียนลงชีทที่มนุษย์อ่านได้เท่านั้น
@@ -160,6 +179,58 @@ function kvExportAll(){
     out[data[i][0]] = {value:data[i][2], shared:!!data[i][1], updated_at:data[i][3]};
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// รูปภาพ — เก็บไฟล์จริงไว้ใน Google Drive แทนการยัด base64 ลงเซลล์ Sheet
+// (เซลล์มีขีดจำกัดขนาดตัวอักษร ~50,000 ตัว ซึ่งรูปภาพเกินได้ง่ายมาก)
+// ใน AppData จะเก็บแค่ "URL" ของรูปแทน ซึ่งสั้นและโหลดเร็วกว่ามาก
+// ---------------------------------------------------------------------------
+const PHOTO_FOLDER_NAME = 'MachineManagerPhotos';
+
+function getPhotoFolder(){
+  const it = DriveApp.getFoldersByName(PHOTO_FOLDER_NAME);
+  if(it.hasNext()) return it.next();
+  return DriveApp.createFolder(PHOTO_FOLDER_NAME);
+}
+
+function sanitizeFileBase(key){
+  return String(key).replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+function savePhotoToDrive(key, dataUrl){
+  const m = /^data:(.+?);base64,(.+)$/.exec(dataUrl || '');
+  if(!m) throw new Error('invalid_data_url');
+  const mime = m[1];
+  const bytes = Utilities.base64Decode(m[2]);
+  const ext = (mime.split('/')[1] || 'jpg').split('+')[0];
+  const base = sanitizeFileBase(key);
+  const blob = Utilities.newBlob(bytes, mime, base + '.' + ext);
+
+  const folder = getPhotoFolder();
+  // ลบไฟล์เก่าคีย์เดียวกันก่อน กันสะสมไฟล์ซ้ำทุกครั้งที่แก้ไขรูป
+  const existing = folder.getFiles();
+  while(existing.hasNext()){
+    const f = existing.next();
+    if(f.getName().indexOf(base + '.') === 0) f.setTrashed(true);
+  }
+
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  const url = 'https://lh3.googleusercontent.com/d/' + file.getId();
+  kvSet(key, url, false); // เก็บ URL ไว้ใน AppData ด้วย เพื่อให้ export/pullAll ของอุปกรณ์อื่นดึงไปได้
+  return url;
+}
+
+function deletePhotoFromDrive(key){
+  const base = sanitizeFileBase(key);
+  const folder = getPhotoFolder();
+  const it = folder.getFiles();
+  while(it.hasNext()){
+    const f = it.next();
+    if(f.getName().indexOf(base + '.') === 0) f.setTrashed(true);
+  }
+  kvDelete(key, false);
 }
 
 // ---------------------------------------------------------------------------

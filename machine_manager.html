@@ -964,20 +964,26 @@
     </div>
 
     <div class="subpage" id="sub-maint">
+      <div class="section-title" style="margin-top:0;">ตาราง PM ประจำปี (รายเดือน)</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--text-dim);">ปี</label>
+        <select id="pm12_yearSelect" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;"></select>
+      </div>
+      <table class="data-table"><thead><tr><th style="width:70px;">เดือน</th><th>วันที่ทำ PM</th><th>ประเภทงาน PM</th><th>ช่างผู้ตรวจเช็ค</th><th>ผู้อนุมัติรับทราบ</th></tr></thead><tbody id="pm12Body"></tbody></table>
+      <div class="modal-actions" style="border-top:none;justify-content:flex-start;">
+        <button class="btn btn-primary js-guest-hide" id="pm12_saveBtn">💾 บันทึกตาราง PM ปีนี้</button>
+      </div>
+
+      <div class="section-title">ประวัติงานซ่อมบำรุง (CM) / ค่าใช้จ่ายอื่นๆ</div>
       <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th></tr></thead><tbody id="maintBody"></tbody></table>
 
-      <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกบำรุงรักษา</div>
+      <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกงานซ่อมบำรุง (CM) / ตรวจสอบ / ค่าใช้จ่าย</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="m_date"></div>
-        <div class="field"><label>ประเภทงาน</label><select id="m_type"><option value="pm">PM ป้องกัน</option><option value="cm">CM แก้ไข/ซ่อม</option><option value="insp">ตรวจสอบ</option></select></div>
+        <div class="field"><label>ประเภทงาน</label><select id="m_type"><option value="cm">CM แก้ไข/ซ่อม</option><option value="pm">PM ป้องกัน</option><option value="insp">ตรวจสอบ</option></select></div>
         <div class="field"><label>รายละเอียด</label><input id="m_desc" placeholder="รายละเอียดงาน..."></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="m_cost" min="0"></div>
         <div class="field"><label>ผู้ดำเนินการ</label><input id="m_tech"></div>
-      </div>
-
-      <div class="maint-add-full">
-        <label style="font-size:12px;color:var(--text-dim);">เช็คลิสต์มาตรฐาน</label>
-        <div class="checklist" id="checklistBox"></div>
       </div>
 
       <div class="maint-add-full">
@@ -987,7 +993,7 @@
       </div>
 
       <div class="modal-actions" style="border-top:none;">
-        <button class="btn btn-primary js-guest-hide" id="addMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
+        <button class="btn btn-primary js-guest-hide" id="addMaintBtn">💾 บันทึกรายการ</button>
       </div>
     </div>
 
@@ -1263,7 +1269,41 @@
   const MAINT_LABEL = {pm:'PM ป้องกัน', cm:'CM แก้ไข', insp:'ตรวจสอบ'};
   const PRIORITY_LABEL = {critical:'วิกฤต', high:'สูง', medium:'ปานกลาง', low:'ต่ำ'};
   const PRIORITY_WEIGHT = {critical:0, high:1, medium:2, low:3};
-  const CHECKLIST_TEMPLATE = ['ตรวจสอบเสียงผิดปกติ','ตรวจสอบระดับน้ำมันหล่อลื่น','ตรวจสอบสายไฟ/จุดต่อ','ทำความสะอาดตัวเครื่อง','ตรวจสอบระดับการสั่นสะเทือน','ตรวจสอบระบบความปลอดภัย'];
+  const DEFAULT_CHECKLIST_TEMPLATE = [
+    {title:'1. ความสะอาดและสภาพทั่วไป', items:['ตรวจสอบความสะอาดตัวเครื่องและบริเวณโดยรอบ','ตรวจสอบสภาพฝาครอบเครื่อง (Covers/Guards)','ตรวจสอบป้ายเตือนและป้ายความปลอดภัย','ตรวจสอบการรั่วไหลของน้ำมัน/สารหล่อเย็น']},
+    {title:'2. ระบบสไปนเดิลและแกนขับเคลื่อน', items:['ตรวจสอบเสียงและการสั่นสะเทือนของสไปนเดิล','ตรวจสอบอุณหภูมิสไปนเดิลขณะทำงาน','ตรวจสอบความแม่นยำการเคลื่อนที่แกน X/Y/Z','ตรวจสอบ Ball Screw และ Linear Guide','ตรวจสอบ Limit Switch / Home Position']},
+    {title:'3. ระบบหล่อลื่นและสารหล่อเย็น', items:['ตรวจสอบระดับน้ำมันหล่อลื่น (Way Lube)','ตรวจสอบการทำงานของปั๊มหล่อลื่นอัตโนมัติ','ตรวจสอบระดับและความเข้มข้นสารหล่อเย็น (Coolant)','ตรวจสอบการอุดตันของหัวฉีดสารหล่อเย็น','ตรวจสอบความสะอาดถังพักสารหล่อเย็น']},
+    {title:'4. ระบบไฟฟ้าและตู้ควบคุม', items:['ตรวจสอบสภาพตู้คอนโทรลและพัดลมระบายความร้อน','ตรวจสอบสายไฟและขั้วต่อ (Connector/Terminal)','ตรวจสอบจอแสดงผล/แผงควบคุม (HMI/Operator Panel)','ตรวจสอบปุ่ม Emergency Stop','ตรวจสอบแบตเตอรี่สำรอง (Backup Battery)']},
+    {title:'5. ระบบลมและไฮดรอลิก', items:['ตรวจสอบแรงดันลมระบบนิวเมติก','ตรวจสอบการรั่วไหลของสายลม/ข้อต่อ','ตรวจสอบระดับน้ำมันไฮดรอลิก','ตรวจสอบตัวกรองลม/ดักน้ำ (Air Filter/Regulator)']},
+    {title:'6. ระบบเปลี่ยนเครื่องมืออัตโนมัติ (ATC)', items:['ตรวจสอบการทำงานของแขนเปลี่ยนเครื่องมือ','ตรวจสอบสภาพ Tool Holder / Collet','ตรวจสอบตำแหน่ง Tool Magazine']},
+    {title:'7. ระบบความปลอดภัย', items:['ตรวจสอบประตูนิรภัย/Interlock Switch','ตรวจสอบม่านแสงนิรภัย (Light Curtain) ถ้ามี','ตรวจสอบไฟสัญญาณเตือน (Signal Tower)','ตรวจสอบถังดับเพลิงใกล้จุดปฏิบัติงาน']}
+  ];
+
+  function renderChecklistBox(elId, template){
+    const box = $(elId);
+    if(!box) return;
+    const list = template || DEFAULT_CHECKLIST_TEMPLATE;
+    let html = '';
+    list.forEach((cat,ci)=>{
+      html += `<div style="grid-column:1/-1;font-weight:600;color:var(--amber);font-size:11px;text-transform:uppercase;letter-spacing:.3px;margin-top:${ci===0?'0':'10px'};padding-bottom:4px;border-bottom:1px solid var(--border);">${escapeHtml(cat.title)}</div>`;
+      cat.items.forEach((label,ii)=>{
+        html += `<label><input type="checkbox" data-cat="${ci}" data-idx="${ii}"> ${escapeHtml(label)}</label>`;
+      });
+    });
+    box.innerHTML = html;
+  }
+
+  function collectChecklistBox(elId, template){
+    const out = [];
+    const list = template || DEFAULT_CHECKLIST_TEMPLATE;
+    list.forEach((cat,ci)=>{
+      cat.items.forEach((label,ii)=>{
+        const cb = document.querySelector('#'+elId+' input[data-cat="'+ci+'"][data-idx="'+ii+'"]');
+        out.push({category:cat.title, label, checked: cb ? cb.checked : false});
+      });
+    });
+    return out;
+  }
   const DUE_SOON_DAYS = 7;
 
   let machines = [];
@@ -1848,7 +1888,7 @@
       }
 
       $('m_date').value = todayStr();
-      $('checklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-idx="${i}"> ${escapeHtml(c)}</label>`).join('');
+      await renderPm12(id, pm12CurrentYear || new Date().getFullYear());
       tempPartRows = [];
       renderPartRows();
       await renderMaintTable(id);
@@ -2187,10 +2227,9 @@
   $('addMaintBtn').addEventListener('click', async ()=>{
     if(!currentDetailId) return;
     const date = $('m_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = CHECKLIST_TEMPLATE.map((label,i)=>{ const cb = document.querySelector('#checklistBox input[data-idx="'+i+'"]'); return {label, checked: cb ? cb.checked : false}; });
     const partsUsed = tempPartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
-    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, desc:$('m_desc').value.trim(), cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), checklist, partsUsed};
+    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, desc:$('m_desc').value.trim(), cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), partsUsed};
     const list = await loadList(maintCache,'maint_', currentDetailId);
     list.push(record);
     await saveList(maintCache,'maint_', currentDetailId, list);
@@ -2644,7 +2683,7 @@
       }
 
       $('tm_date').value = todayStr();
-      $('toolChecklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-toolidx="${i}"> ${escapeHtml(c)}</label>`).join('');
+      renderChecklistBox('toolChecklistBox');
       tempToolPartRows = [];
       renderToolPartRows();
       await renderToolMaintTable(id);
@@ -2713,7 +2752,7 @@
   $('addToolMaintBtn').addEventListener('click', async ()=>{
     if(!currentToolDetailId) return;
     const date = $('tm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = CHECKLIST_TEMPLATE.map((label,i)=>{ const cb = document.querySelector('#toolChecklistBox input[data-toolidx="'+i+'"]'); return {label, checked: cb ? cb.checked : false}; });
+    const checklist = collectChecklistBox('toolChecklistBox');
     const partsUsed = tempToolPartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
     const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, desc:$('tm_desc').value.trim(), cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), checklist, partsUsed};
@@ -3535,7 +3574,7 @@
       }
 
       $('vm_date').value = todayStr();
-      $('vehicleChecklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-vhidx="${i}"> ${escapeHtml(c)}</label>`).join('');
+      renderChecklistBox('vehicleChecklistBox');
       tempVehiclePartRows = [];
       renderVehiclePartRows();
       await renderVehicleMaintTable(id);
@@ -3603,7 +3642,7 @@
   $('addVehicleMaintBtn').addEventListener('click', async ()=>{
     if(!currentVehicleDetailId) return;
     const date = $('vm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = CHECKLIST_TEMPLATE.map((label,i)=>{ const cb = document.querySelector('#vehicleChecklistBox input[data-vhidx="'+i+'"]'); return {label, checked: cb ? cb.checked : false}; });
+    const checklist = collectChecklistBox('vehicleChecklistBox');
     const partsUsed = tempVehiclePartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
     const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, desc:$('vm_desc').value.trim(), cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), checklist, partsUsed};
@@ -3974,6 +4013,73 @@
   $('typeFilter').addEventListener('change', renderGrid);
   $('priorityFilter').addEventListener('change', renderGrid);
   $('sortBy').addEventListener('change', renderGrid);
+
+  // ===== PM 12-MONTH TABLE (per machine, per year) =====
+  const PM12_MONTH_LABELS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  let pm12Cache = {};
+  let pm12CurrentMachineId = null;
+  let pm12CurrentYear = new Date().getFullYear();
+  let pm12EditingRows = [];
+
+  function pm12EmptyRows(){
+    return Array.from({length:12}, (_,i)=>({month:i+1, date:'', type:'', tech:'', approver:''}));
+  }
+  function pm12YearOptions(){
+    const now = new Date().getFullYear();
+    const years = [];
+    for(let y=now-2; y<=now+1; y++) years.push(y);
+    if(pm12CurrentYear && !years.includes(pm12CurrentYear)) years.push(pm12CurrentYear);
+    return years.sort((a,b)=>a-b);
+  }
+  async function loadPm12(machineId, year){
+    const cacheKey = machineId+'_'+year;
+    if(pm12Cache[cacheKey]) return pm12Cache[cacheKey];
+    let rows = null;
+    try{
+      const r = await window.storage.get('pm12_'+cacheKey, false);
+      rows = r ? JSON.parse(r.value) : null;
+    }catch(e){ rows = null; }
+    if(!rows || rows.length !== 12) rows = pm12EmptyRows();
+    pm12Cache[cacheKey] = rows;
+    return rows;
+  }
+  async function savePm12(machineId, year, rows){
+    const cacheKey = machineId+'_'+year;
+    pm12Cache[cacheKey] = rows;
+    try{ await window.storage.set('pm12_'+cacheKey, JSON.stringify(rows), false); toast('บันทึกตาราง PM ประจำปีแล้ว'); }
+    catch(e){ toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); }
+  }
+  function pm12RenderTable(){
+    $('pm12Body').innerHTML = pm12EditingRows.map((row,i)=>`
+      <tr>
+        <td style="font-weight:600;white-space:nowrap;">${PM12_MONTH_LABELS[i]}</td>
+        <td><input type="date" data-pm12field="date" data-i="${i}" value="${row.date||''}" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:5px;font-size:12.5px;"></td>
+        <td><input type="text" data-pm12field="type" data-i="${i}" value="${escapeHtml(row.type||'')}" placeholder="เช่น PM ป้องกันประจำเดือน" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:5px;font-size:12.5px;"></td>
+        <td><input type="text" data-pm12field="tech" data-i="${i}" value="${escapeHtml(row.tech||'')}" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:5px;font-size:12.5px;"></td>
+        <td><input type="text" data-pm12field="approver" data-i="${i}" value="${escapeHtml(row.approver||'')}" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:5px;font-size:12.5px;"></td>
+      </tr>`).join('');
+    $('pm12Body').querySelectorAll('input[data-pm12field]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const i = Number(inp.dataset.i), field = inp.dataset.pm12field;
+        pm12EditingRows[i][field] = inp.value;
+      });
+    });
+  }
+  async function renderPm12(machineId, year){
+    pm12CurrentMachineId = machineId;
+    pm12CurrentYear = year;
+    pm12EditingRows = JSON.parse(JSON.stringify(await loadPm12(machineId, year)));
+    $('pm12_yearSelect').innerHTML = pm12YearOptions().map(y=>`<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('');
+    pm12RenderTable();
+  }
+  $('pm12_yearSelect').addEventListener('change', async ()=>{
+    if(!pm12CurrentMachineId) return;
+    await renderPm12(pm12CurrentMachineId, Number($('pm12_yearSelect').value));
+  });
+  $('pm12_saveBtn').addEventListener('click', async ()=>{
+    if(!pm12CurrentMachineId){ toast('กรุณาเปิดหน้ารายละเอียดเครื่องจักรก่อน'); return; }
+    await savePm12(pm12CurrentMachineId, pm12CurrentYear, pm12EditingRows);
+  });
 
   // ===== INIT =====
   (async function init(){

@@ -2,17 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ระบบจัดการเครื่องจักร</title>
-<meta name="description" content="ระบบจัดการเก็บข้อมูลเครื่องจักร บำรุงรักษา อะไหล่ และแจ้งเตือน PM">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#12161b">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="เครื่องจักร">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -986,11 +976,6 @@
       </div>
 
       <div class="maint-add-full">
-        <label style="font-size:12px;color:var(--text-dim);">เช็คลิสต์มาตรฐาน</label>
-        <div class="checklist" id="checklistBox"></div>
-      </div>
-
-      <div class="maint-add-full">
         <label style="font-size:12px;color:var(--text-dim);">อะไหล่ที่ใช้ในงานนี้</label>
         <div id="partRows"></div>
         <button type="button" class="btn btn-sm" id="addPartRowBtn">＋ เพิ่มอะไหล่</button>
@@ -1265,11 +1250,6 @@
       };
     })();
   }
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(()=>{});
-    });
-  }
 })();
 </script>
 <script>
@@ -1278,7 +1258,41 @@
   const MAINT_LABEL = {pm:'PM ป้องกัน', cm:'CM แก้ไข', insp:'ตรวจสอบ'};
   const PRIORITY_LABEL = {critical:'วิกฤต', high:'สูง', medium:'ปานกลาง', low:'ต่ำ'};
   const PRIORITY_WEIGHT = {critical:0, high:1, medium:2, low:3};
-  const CHECKLIST_TEMPLATE = ['ตรวจสอบเสียงผิดปกติ','ตรวจสอบระดับน้ำมันหล่อลื่น','ตรวจสอบสายไฟ/จุดต่อ','ทำความสะอาดตัวเครื่อง','ตรวจสอบระดับการสั่นสะเทือน','ตรวจสอบระบบความปลอดภัย'];
+  const DEFAULT_CHECKLIST_TEMPLATE = [
+    {title:'1. ความสะอาดและสภาพทั่วไป', items:['ตรวจสอบความสะอาดตัวเครื่องและบริเวณโดยรอบ','ตรวจสอบสภาพฝาครอบเครื่อง (Covers/Guards)','ตรวจสอบป้ายเตือนและป้ายความปลอดภัย','ตรวจสอบการรั่วไหลของน้ำมัน/สารหล่อเย็น']},
+    {title:'2. ระบบสไปนเดิลและแกนขับเคลื่อน', items:['ตรวจสอบเสียงและการสั่นสะเทือนของสไปนเดิล','ตรวจสอบอุณหภูมิสไปนเดิลขณะทำงาน','ตรวจสอบความแม่นยำการเคลื่อนที่แกน X/Y/Z','ตรวจสอบ Ball Screw และ Linear Guide','ตรวจสอบ Limit Switch / Home Position']},
+    {title:'3. ระบบหล่อลื่นและสารหล่อเย็น', items:['ตรวจสอบระดับน้ำมันหล่อลื่น (Way Lube)','ตรวจสอบการทำงานของปั๊มหล่อลื่นอัตโนมัติ','ตรวจสอบระดับและความเข้มข้นสารหล่อเย็น (Coolant)','ตรวจสอบการอุดตันของหัวฉีดสารหล่อเย็น','ตรวจสอบความสะอาดถังพักสารหล่อเย็น']},
+    {title:'4. ระบบไฟฟ้าและตู้ควบคุม', items:['ตรวจสอบสภาพตู้คอนโทรลและพัดลมระบายความร้อน','ตรวจสอบสายไฟและขั้วต่อ (Connector/Terminal)','ตรวจสอบจอแสดงผล/แผงควบคุม (HMI/Operator Panel)','ตรวจสอบปุ่ม Emergency Stop','ตรวจสอบแบตเตอรี่สำรอง (Backup Battery)']},
+    {title:'5. ระบบลมและไฮดรอลิก', items:['ตรวจสอบแรงดันลมระบบนิวเมติก','ตรวจสอบการรั่วไหลของสายลม/ข้อต่อ','ตรวจสอบระดับน้ำมันไฮดรอลิก','ตรวจสอบตัวกรองลม/ดักน้ำ (Air Filter/Regulator)']},
+    {title:'6. ระบบเปลี่ยนเครื่องมืออัตโนมัติ (ATC)', items:['ตรวจสอบการทำงานของแขนเปลี่ยนเครื่องมือ','ตรวจสอบสภาพ Tool Holder / Collet','ตรวจสอบตำแหน่ง Tool Magazine']},
+    {title:'7. ระบบความปลอดภัย', items:['ตรวจสอบประตูนิรภัย/Interlock Switch','ตรวจสอบม่านแสงนิรภัย (Light Curtain) ถ้ามี','ตรวจสอบไฟสัญญาณเตือน (Signal Tower)','ตรวจสอบถังดับเพลิงใกล้จุดปฏิบัติงาน']}
+  ];
+
+  function renderChecklistBox(elId, template){
+    const box = $(elId);
+    if(!box) return;
+    const list = template || DEFAULT_CHECKLIST_TEMPLATE;
+    let html = '';
+    list.forEach((cat,ci)=>{
+      html += `<div style="grid-column:1/-1;font-weight:600;color:var(--amber);font-size:11px;text-transform:uppercase;letter-spacing:.3px;margin-top:${ci===0?'0':'10px'};padding-bottom:4px;border-bottom:1px solid var(--border);">${escapeHtml(cat.title)}</div>`;
+      cat.items.forEach((label,ii)=>{
+        html += `<label><input type="checkbox" data-cat="${ci}" data-idx="${ii}"> ${escapeHtml(label)}</label>`;
+      });
+    });
+    box.innerHTML = html;
+  }
+
+  function collectChecklistBox(elId, template){
+    const out = [];
+    const list = template || DEFAULT_CHECKLIST_TEMPLATE;
+    list.forEach((cat,ci)=>{
+      cat.items.forEach((label,ii)=>{
+        const cb = document.querySelector('#'+elId+' input[data-cat="'+ci+'"][data-idx="'+ii+'"]');
+        out.push({category:cat.title, label, checked: cb ? cb.checked : false});
+      });
+    });
+    return out;
+  }
   const DUE_SOON_DAYS = 7;
 
   let machines = [];
@@ -1863,7 +1877,6 @@
       }
 
       $('m_date').value = todayStr();
-      $('checklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-idx="${i}"> ${escapeHtml(c)}</label>`).join('');
       tempPartRows = [];
       renderPartRows();
       await renderMaintTable(id);
@@ -2202,10 +2215,9 @@
   $('addMaintBtn').addEventListener('click', async ()=>{
     if(!currentDetailId) return;
     const date = $('m_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = CHECKLIST_TEMPLATE.map((label,i)=>{ const cb = document.querySelector('#checklistBox input[data-idx="'+i+'"]'); return {label, checked: cb ? cb.checked : false}; });
     const partsUsed = tempPartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
-    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, desc:$('m_desc').value.trim(), cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), checklist, partsUsed};
+    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, desc:$('m_desc').value.trim(), cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), partsUsed};
     const list = await loadList(maintCache,'maint_', currentDetailId);
     list.push(record);
     await saveList(maintCache,'maint_', currentDetailId, list);
@@ -2659,7 +2671,7 @@
       }
 
       $('tm_date').value = todayStr();
-      $('toolChecklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-toolidx="${i}"> ${escapeHtml(c)}</label>`).join('');
+      renderChecklistBox('toolChecklistBox');
       tempToolPartRows = [];
       renderToolPartRows();
       await renderToolMaintTable(id);
@@ -2728,7 +2740,7 @@
   $('addToolMaintBtn').addEventListener('click', async ()=>{
     if(!currentToolDetailId) return;
     const date = $('tm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = CHECKLIST_TEMPLATE.map((label,i)=>{ const cb = document.querySelector('#toolChecklistBox input[data-toolidx="'+i+'"]'); return {label, checked: cb ? cb.checked : false}; });
+    const checklist = collectChecklistBox('toolChecklistBox');
     const partsUsed = tempToolPartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
     const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, desc:$('tm_desc').value.trim(), cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), checklist, partsUsed};
@@ -3550,7 +3562,7 @@
       }
 
       $('vm_date').value = todayStr();
-      $('vehicleChecklistBox').innerHTML = CHECKLIST_TEMPLATE.map((c,i)=>`<label><input type="checkbox" data-vhidx="${i}"> ${escapeHtml(c)}</label>`).join('');
+      renderChecklistBox('vehicleChecklistBox');
       tempVehiclePartRows = [];
       renderVehiclePartRows();
       await renderVehicleMaintTable(id);
@@ -3618,7 +3630,7 @@
   $('addVehicleMaintBtn').addEventListener('click', async ()=>{
     if(!currentVehicleDetailId) return;
     const date = $('vm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = CHECKLIST_TEMPLATE.map((label,i)=>{ const cb = document.querySelector('#vehicleChecklistBox input[data-vhidx="'+i+'"]'); return {label, checked: cb ? cb.checked : false}; });
+    const checklist = collectChecklistBox('vehicleChecklistBox');
     const partsUsed = tempVehiclePartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
     const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, desc:$('vm_desc').value.trim(), cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), checklist, partsUsed};

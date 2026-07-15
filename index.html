@@ -215,6 +215,7 @@
         <select id="roleSelect"><option value="guest">ผู้เยี่ยมชม (อ่านอย่างเดียว)</option><option value="tech">ช่างเทคนิค</option><option value="admin">ผู้ดูแลระบบ</option></select>
       </div>
       <input type="file" id="csvImportInput" accept=".csv" style="display:none;">
+      <button class="btn" id="goPmChecklistBtn">📋 PM Checklist System</button>
       <button class="btn" id="syncBtn">🔄 ซิงก์ Google Sheet</button>
     </div>
   </div>
@@ -496,6 +497,7 @@
     </div>
 
     <div class="modal-actions">
+      <button class="btn" id="goPmChecklistVehicle">📋 ตรวจเช็ค PM</button>
       <button class="btn btn-danger" id="deleteVehicleFromDetail">🗑 ลบยานพาหนะนี้</button>
       <button class="btn btn-primary" id="editVehicleFromDetail">แก้ไขข้อมูล</button>
     </div>
@@ -668,6 +670,7 @@
     </div>
 
     <div class="modal-actions">
+      <button class="btn" id="goPmChecklistCrane">📋 ตรวจเช็ค PM</button>
       <button class="btn btn-danger" id="deleteCraneFromDetail">🗑 ลบเครน/ปั้นจั่นนี้</button>
       <button class="btn btn-primary" id="editCraneFromDetail">แก้ไขข้อมูล</button>
     </div>
@@ -792,6 +795,7 @@
     </div>
 
     <div class="modal-actions">
+      <button class="btn" id="goPmChecklistTool">📋 ตรวจเช็ค PM</button>
       <button class="btn btn-danger" id="deleteToolFromDetail">🗑 ลบเครื่องมือ/อุปกรณ์นี้</button>
       <button class="btn btn-primary" id="editToolFromDetail">แก้ไขข้อมูล</button>
     </div>
@@ -1022,6 +1026,7 @@
     </div>
 
     <div class="modal-actions">
+      <button class="btn" id="goPmChecklistMachine">📋 ตรวจเช็ค PM</button>
       <button class="btn btn-danger" id="deleteFromDetail">🗑 ลบเครื่องจักรนี้</button>
       <button class="btn btn-primary" id="editFromDetail">แก้ไขข้อมูล</button>
     </div>
@@ -2344,6 +2349,7 @@
   });
 
   $('editFromDetail').addEventListener('click', ()=>{ const m = machines.find(x=>x.id===currentDetailId); closeDetail(); openForm(m); });
+  $('goPmChecklistMachine').addEventListener('click', ()=>{ const m = machines.find(x=>x.id===currentDetailId); if(m) window.open('pm-checklist.html?asset='+encodeURIComponent(m.code), '_blank'); });
   $('deleteFromDetail').addEventListener('click', ()=>{ askDelete(currentDetailId); });
 
   // ===== DELETE =====
@@ -2789,6 +2795,7 @@
   });
 
   $('editToolFromDetail').addEventListener('click', ()=>{ const t = tools.find(x=>x.id===currentToolDetailId); closeToolDetail(); openToolForm(t); });
+  $('goPmChecklistTool').addEventListener('click', ()=>{ const t = tools.find(x=>x.id===currentToolDetailId); if(t) window.open('pm-checklist.html?asset='+encodeURIComponent(t.code), '_blank'); });
   $('deleteToolFromDetail').addEventListener('click', ()=>{ askDeleteTool(currentToolDetailId); });
 
   // ---- tool CSV export/import ----
@@ -3229,6 +3236,7 @@
   });
 
   $('editCraneFromDetail').addEventListener('click', ()=>{ const c = cranes.find(x=>x.id===currentCraneDetailId); closeCraneDetail(); openCraneForm(c); });
+  $('goPmChecklistCrane').addEventListener('click', ()=>{ const c = cranes.find(x=>x.id===currentCraneDetailId); if(c) window.open('pm-checklist.html?asset='+encodeURIComponent(c.code), '_blank'); });
   $('deleteCraneFromDetail').addEventListener('click', ()=>{ askDeleteCrane(currentCraneDetailId); });
 
   function askDeleteCrane(id){
@@ -3679,6 +3687,7 @@
   });
 
   $('editVehicleFromDetail').addEventListener('click', ()=>{ const v = vehicles.find(x=>x.id===currentVehicleDetailId); closeVehicleDetail(); openVehicleForm(v); });
+  $('goPmChecklistVehicle').addEventListener('click', ()=>{ const v = vehicles.find(x=>x.id===currentVehicleDetailId); if(v) window.open('pm-checklist.html?asset='+encodeURIComponent(v.code), '_blank'); });
   $('deleteVehicleFromDetail').addEventListener('click', ()=>{ askDeleteVehicle(currentVehicleDetailId); });
 
   function askDeleteVehicle(id){
@@ -3906,6 +3915,7 @@
     }
   }
   $('syncBtn').addEventListener('click', ()=>{ $('syncOverlay').classList.add('show'); });
+  $('goPmChecklistBtn').addEventListener('click', ()=>{ window.open('pm-checklist.html', '_blank'); });
   $('saveSyncBtn').addEventListener('click', async ()=>{ await saveSyncSettings(); toast('บันทึกการตั้งค่าซิงก์เรียบร้อย'); });
   $('syncNowBtn').addEventListener('click', async ()=>{ await saveSyncSettings(); await syncToSheet(false); });
 

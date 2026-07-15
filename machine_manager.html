@@ -3833,7 +3833,10 @@
     await loadCranes();
     await loadVehicles();
     renderAll(); renderToolsPage(); renderCranesPage(); renderVehiclesPage();
-    if(currentDetailId) openDetail(currentDetailId);
+    // หมายเหตุ: ตอนซิงก์แบบเงียบ (พื้นหลัง ทุก 25 วินาที) จะไม่เปิด/รีเซ็ตหน้าต่างรายละเอียด
+    // ที่เปิดค้างอยู่ซ้ำ เพราะจะทำให้กระโดดกลับไปแท็บ "ข้อมูลทั่วไป" และล้างฟอร์มที่กำลังกรอกอยู่
+    // โดยไม่ได้ตั้งใจ ยังคงอัปเดตข้อมูลเบื้องหลังตามปกติ ผู้ใช้แค่ต้องปิด-เปิดหน้าต่างใหม่เพื่อดูข้อมูลล่าสุด
+    if(currentDetailId && !silent) openDetail(currentDetailId);
     if(!silent) toast('ดึงข้อมูลล่าสุดจากคลาวด์เรียบร้อย');
   }
 

@@ -357,6 +357,7 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
         </button>
         <button class="btn" id="btnImportCsv">⬆ นำเข้าจาก Machine Manager (CSV)</button>
       </div>
+      <button class="btn" id="btnExportAssetsCsv" style="margin-top:8px;">⬇ ส่งออกรายการเป็น CSV</button>
       <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
       <p style="font-size:11px;color:var(--text-faint);margin:8px 0 0;">ใช้ไฟล์ CSV ที่ส่งออกจากปุ่ม "ส่งออก CSV" ในเว็บ Machine Manager ของแท็บที่ตรงกัน (เครื่องจักร/เครื่องมือ/เครน/ยานพาหนะ) — รายการที่มีรหัสซ้ำกับที่มีอยู่แล้วจะถูกข้าม ไม่ทับข้อมูลเช็คลิสต์ที่ปรับแต่งไว้</p>
       <div class="divider-text">พิมพ์ป้าย QR</div>
@@ -1096,6 +1097,28 @@ async function renderSummaryReport(body){
   document.getElementById('rpTo').addEventListener('change', refresh);
   await refresh();
 }
+function exportAssetsCsv(){
+  var rows = [['ประเภท','รหัส','ชื่อ','แผนก/สถานที่','รอบบำรุงรักษา(ครั้ง/ปี)','เอกสารเลขที่','Revision','หมวดหมู่','รายการตรวจ','เกณฑ์/มาตรฐาน','วิธีตรวจสอบ']];
+  state.assets.forEach(function(a){
+    if(a.checklist && a.checklist.length){
+      a.checklist.forEach(function(cat){
+        cat.items.forEach(function(item){
+          rows.push([ASSET_TYPES[a.type].label, a.code, a.name, a.department||'', a.timesPerYear||'', a.docNo||'', a.revision||'', cat.title, item.name, item.crit, item.method||'']);
+        });
+      });
+    }else{
+      rows.push([ASSET_TYPES[a.type].label, a.code, a.name, a.department||'', a.timesPerYear||'', a.docNo||'', a.revision||'', '', '', '', '']);
+    }
+  });
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c==null?'':c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pm_checklist_assets_'+todayStr()+'.csv'; a.click();
+  showToast('ส่งออกรายการทั้งหมด '+state.assets.length+' รายการเป็น CSV แล้ว', true);
+}
+document.getElementById('btnExportAssetsCsv').addEventListener('click', function(){
+  if(state.assets.length===0){ showToast('ยังไม่มีรายการให้ส่งออก'); return; }
+  exportAssetsCsv();
+});
 function exportRecordsCsv(filtered){
   var rows = [['วันที่','ประเภท','รหัส','ชื่อ','ความถี่','ผู้ตรวจ','ผู้อนุมัติ','จำนวนรายการ','ไม่ผ่าน','เอกสารเลขที่','Rev']];
   filtered.forEach(function(x){

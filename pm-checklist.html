@@ -611,6 +611,24 @@ async function lastInspectionAny(assetId){
   return sorted[0];
 }
 function effectiveCycleDays(a){ return a.cycleDays || FREQ_DAYS[a.frequency] || 30; }
+function assetFreqLabel(a){
+  if(a.timesPerYear) return a.timesPerYear+' ครั้ง/ปี';
+  return 'ทุก '+effectiveCycleDays(a)+' วัน';
+}
+var TIMES_PER_YEAR_OPTIONS = [1,2,3,4,6,12];
+function daysFromTimesPerYear(n){ return Math.round(365/n); }
+function timesPerYearFromDays(days){
+  days = Number(days) || 30;
+  var best = TIMES_PER_YEAR_OPTIONS[0], bestDiff = Infinity;
+  TIMES_PER_YEAR_OPTIONS.forEach(function(n){
+    var diff = Math.abs(daysFromTimesPerYear(n) - days);
+    if(diff < bestDiff){ bestDiff = diff; best = n; }
+  });
+  return best;
+}
+function timesPerYearLabel(n){
+  return n+' ครั้ง/ปี (ทุก '+daysFromTimesPerYear(n)+' วัน)';
+}
 
 /* navigation */
 function showScreen(id){
@@ -692,7 +710,7 @@ async function renderDashList(){
       '<div class="nameplate">'+ASSET_TYPES[a.type].icon+'</div>'+
       '<div class="asset-info">'+
         '<p class="name">'+esc(a.name)+'</p>'+
-        '<p class="meta">'+esc(a.code)+(a.department?(' · '+esc(a.department)):'')+' · ทุก '+effectiveCycleDays(a)+' วัน</p>'+
+        '<p class="meta">'+esc(a.code)+(a.department?(' · '+esc(a.department)):'')+' · '+assetFreqLabel(a)+'</p>'+
         '<span class="freq-chip '+cls+'"><span class="dot"></span>'+label+'</span>'+
       '</div>'+
       '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
@@ -1221,7 +1239,7 @@ function renderManageList(){
     var card = document.createElement('div'); card.className='card';
     card.innerHTML =
       '<p style="margin:0 0 2px;font-size:14px;font-weight:600;">'+ASSET_TYPES[a.type].icon+' '+esc(a.name)+'</p>'+
-      '<p style="margin:0 0 10px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);">'+esc(a.code)+' · '+totalItems(a)+' รายการตรวจ · ทุก '+effectiveCycleDays(a)+' วัน</p>'+
+      '<p style="margin:0 0 10px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);">'+esc(a.code)+' · '+totalItems(a)+' รายการตรวจ · '+assetFreqLabel(a)+'</p>'+
       '<div class="btn-row">'+
         '<button class="btn btn-sm" data-act="edit">แก้ไขเช็คลิสต์</button>'+
         '<button class="btn btn-sm" data-act="qr">ดู QR</button>'+
@@ -1250,7 +1268,9 @@ document.getElementById('btnAddAsset').addEventListener('click', function(){
     '<div class="field"><label>รหัส *</label><input type="text" id="newCode" placeholder="เช่น MCH-002"></div>'+
     '<div class="field"><label>ชื่อ *</label><input type="text" id="newName" placeholder="ชื่อเครื่องจักร/อุปกรณ์"></div>'+
     '<div class="field"><label>แผนก/สถานที่</label><input type="text" id="newDept" placeholder="ไม่บังคับ"></div>'+
-    '<div class="field"><label>รอบบำรุงรักษา (วัน)</label><input type="number" id="newCycleDays" min="1" placeholder="เช่น 30 — ใส่ตัวเลขวันเดียวกับที่ตั้งไว้ใน Machine Manager" value="30"></div>'+
+    '<div class="field"><label>รอบบำรุงรักษา</label><select id="newTimesPerYear">'+
+      TIMES_PER_YEAR_OPTIONS.map(function(n){ return '<option value="'+n+'"'+(n===4?' selected':'')+'>'+timesPerYearLabel(n)+'</option>'; }).join('')+
+    '</select></div>'+
     '<div class="btn-row"><button class="btn btn-ghost" id="newCancel">ยกเลิก</button><button class="btn btn-primary" id="newSave">เพิ่มรายการ</button></div>'
   );
   document.getElementById('newCancel').onclick = closeModal;
@@ -1259,11 +1279,12 @@ document.getElementById('btnAddAsset').addEventListener('click', function(){
     var code = document.getElementById('newCode').value.trim();
     var name = document.getElementById('newName').value.trim();
     var dept = document.getElementById('newDept').value.trim();
-    var cycleDays = parseInt(document.getElementById('newCycleDays').value, 10) || 30;
+    var timesPerYear = parseInt(document.getElementById('newTimesPerYear').value, 10) || 4;
+    var cycleDays = daysFromTimesPerYear(timesPerYear);
     if(!code || !name){ showToast('กรุณากรอกรหัสและชื่อ'); return; }
     if(state.assets.some(function(a){return a.id===code;})){ showToast('รหัสนี้มีอยู่แล้ว'); return; }
     var tpl = DEFAULT_TEMPLATES[type];
-    var asset = { id: code, type:type, code:code, name:name, department:dept, cycleDays:cycleDays, frequency:cycleDaysToFreq(cycleDays),
+    var asset = { id: code, type:type, code:code, name:name, department:dept, timesPerYear:timesPerYear, cycleDays:cycleDays, frequency:cycleDaysToFreq(cycleDays),
       docNo: tpl.docNo, revision: tpl.revision, checklist: JSON.parse(JSON.stringify(tpl.categories)) };
     state.assets.push(asset); await saveAssets();
     closeModal(); state.mgrType = type; renderMgrTypeTabs(); renderManageList(); renderDashboard();
@@ -1271,13 +1292,50 @@ document.getElementById('btnAddAsset').addEventListener('click', function(){
     openAssetEditor(code);
   };
 });
+function checklistSignature(checklist){
+  return JSON.stringify((checklist||[]).map(function(c){
+    return {t:(c.title||'').trim(), items:(c.items||[]).map(function(i){return (i.name||'').trim()+'|'+(i.crit||'').trim()+'|'+(i.method||'').trim();})};
+  }));
+}
+function suggestNextDocNo(type, excludeId){
+  var tpl = DEFAULT_TEMPLATES[type];
+  var m = (tpl.docNo||'FM-QA-PM-X01').match(/^(.*?)(\d+)$/);
+  var prefix = m ? m[1] : tpl.docNo+'-';
+  var width = m ? m[2].length : 2;
+  var used = {};
+  state.assets.forEach(function(a){ if(a.id!==excludeId && a.type===type) used[a.docNo]=true; });
+  for(var n=1;n<999;n++){
+    var candidate = prefix + String(n).padStart(width,'0');
+    if(!used[candidate]) return candidate;
+  }
+  return prefix+'99';
+}
+function checkDocNoConflict(editState, assetId){
+  var conflicts = state.assets.filter(function(x){
+    return x.id!==assetId && x.type===editState.type && x.docNo===editState.docNo && x.revision===editState.revision &&
+      checklistSignature(x.checklist) !== checklistSignature(editState.checklist);
+  });
+  if(conflicts.length===0) return true;
+  var codes = conflicts.map(function(c){return c.code;}).join(', ');
+  var suggestion = suggestNextDocNo(editState.type, assetId);
+  var useNew = confirm(
+    'เอกสารเลขที่ "'+editState.docNo+'" Rev.'+editState.revision+' ซ้ำกับ '+conflicts.length+' รายการ ('+codes+') แต่รายการตรวจ (เช็คลิสต์) ไม่เหมือนกัน\n\n'+
+    'ตามหลัก ISO 9001 เอกสารที่เนื้อหาต่างกันควรมีเลขที่/Revision แยกกัน เพื่อให้ตรวจสอบย้อนกลับได้ถูกต้อง\n\n'+
+    'กด "ตกลง" เพื่อเปลี่ยนเป็นเลขที่แนะนำ "'+suggestion+'" อัตโนมัติ\n'+
+    'กด "ยกเลิก" เพื่อบันทึกด้วยเลขเดิมต่อไป (ไม่แนะนำ)'
+  );
+  if(useNew){ editState.docNo = suggestion; document.getElementById('edDocNo').value = suggestion; }
+  return true;
+}
 function openAssetEditor(assetId){
   var a = getAsset(assetId);
   var editState = JSON.parse(JSON.stringify(a));
   renderEditorScreen();
   function renderEditorScreen(){
     var html = '<div class="field-2col"><div class="field"><label>ชื่อ</label><input type="text" id="edName" value="'+esc(editState.name)+'"></div><div class="field"><label>แผนก/สถานที่</label><input type="text" id="edDept" value="'+esc(editState.department||'')+'"></div></div>'+
-      '<div class="field-2col"><div class="field"><label>รอบบำรุงรักษา (วัน)</label><input type="number" min="1" id="edCycleDays" value="'+esc(editState.cycleDays||30)+'"></div>'+
+      '<div class="field-2col"><div class="field"><label>รอบบำรุงรักษา</label><select id="edTimesPerYear">'+
+      TIMES_PER_YEAR_OPTIONS.map(function(n){ return '<option value="'+n+'"'+(n===(editState.timesPerYear||timesPerYearFromDays(editState.cycleDays))?' selected':'')+'>'+timesPerYearLabel(n)+'</option>'; }).join('')+
+      '</select></div>'+
       '<div class="field"><label>เอกสารเลขที่ / Rev</label><div style="display:flex;gap:6px;"><input type="text" id="edDocNo" value="'+esc(editState.docNo||'')+'" style="flex:2;"><input type="text" id="edRevision" value="'+esc(editState.revision||'00')+'" style="flex:1;"></div></div></div>'+
       '<div id="edCats"></div>'+
       '<button type="button" class="btn btn-sm" id="edAddCat" style="margin-bottom:16px;">+ เพิ่มหมวดหมู่</button>'+
@@ -1311,10 +1369,12 @@ function openAssetEditor(assetId){
     document.getElementById('edSave').onclick = async function(){
       editState.name = document.getElementById('edName').value.trim() || a.name;
       editState.department = document.getElementById('edDept').value.trim();
-      editState.cycleDays = parseInt(document.getElementById('edCycleDays').value, 10) || 30;
+      editState.timesPerYear = parseInt(document.getElementById('edTimesPerYear').value, 10) || 4;
+      editState.cycleDays = daysFromTimesPerYear(editState.timesPerYear);
       editState.frequency = cycleDaysToFreq(editState.cycleDays);
       editState.docNo = document.getElementById('edDocNo').value.trim();
       editState.revision = document.getElementById('edRevision').value.trim();
+      checkDocNoConflict(editState, assetId);
       var idx = state.assets.findIndex(function(x){return x.id===assetId;});
       state.assets[idx] = editState; await saveAssets();
       closeModal(); renderManageList(); renderDashboard(); showToast('บันทึกแล้ว', true);
@@ -1467,9 +1527,11 @@ document.getElementById('csvFileInput').addEventListener('change', function(e){
         if(!code || !name) return;
         if(state.assets.some(function(a){return a.id===code;})){ skipped++; return; }
         var location = (r[map.location]||'').trim();
-        var cycleDays = parseInt(r[map.cycle], 10) || 30;
+        var rawCycleDays = parseInt(r[map.cycle], 10) || 91;
+        var timesPerYear = timesPerYearFromDays(rawCycleDays);
+        var cycleDays = daysFromTimesPerYear(timesPerYear);
         state.assets.push({
-          id: code, type: type, code: code, name: name, department: location, cycleDays: cycleDays, frequency: cycleDaysToFreq(cycleDays),
+          id: code, type: type, code: code, name: name, department: location, timesPerYear: timesPerYear, cycleDays: cycleDays, frequency: cycleDaysToFreq(cycleDays),
           docNo: tpl.docNo, revision: tpl.revision, checklist: JSON.parse(JSON.stringify(tpl.categories))
         });
         added++;

@@ -142,7 +142,28 @@ p.page-sub{font-size:12.5px;color:var(--text-dim);margin:0 0 18px;}
 .qr-card{background:#fff;color:#111;border-radius:10px;padding:16px;text-align:center;margin-bottom:12px;}
 .qr-card .qname{font-family:var(--mono);font-weight:600;font-size:14px;margin-top:10px;color:#111;}
 .qr-card .qmeta{font-size:11px;color:#555;margin-top:2px;}
-@media print{ #app > .topbar, #app > .bottomnav, .no-print{display:none !important;} body{background:#fff;} .qr-card{break-inside:avoid;border:1px dashed #999;} }
+@media print{
+  #app > .topbar, #app > .bottomnav, .no-print{display:none !important;}
+  body,#app{background:#fff !important;color:#111 !important;}
+  #app{max-width:100%;}
+  .content{padding:0 !important;}
+  .card,.record-row,.item-row,.asset-header,.stat-card,.cat-editor,table.plain,.matrix-wrap{
+    background:#fff !important;border:1px solid #ccc !important;color:#111 !important;box-shadow:none !important;
+  }
+  .category-title{color:#111 !important;border-bottom-color:#ccc !important;}
+  .category-title .n{background:#eee !important;color:#111 !important;}
+  .item-name,.item-crit,.item-method,.asset-header .name,.stat-card .n,.stat-card .l,.doc-strip,table.plain td,table.plain th{color:#111 !important;}
+  .asset-header .code{color:#7a5b16 !important;}
+  .badge.pass,.rbtn.pass.sel{background:#e3f3ea !important;color:#1c6b45 !important;border-color:#8fcaa8 !important;}
+  .badge.fail,.rbtn.fail.sel{background:#fbe6e3 !important;color:#a3311f !important;border-color:#e59c8c !important;}
+  .badge.open{background:#fbe6e3 !important;color:#a3311f !important;}
+  .badge.closed{background:#e3f3ea !important;color:#1c6b45 !important;}
+  .rbtn.na.sel{background:#eee !important;color:#444 !important;border-color:#999 !important;}
+  .mcell.done{background:#e3f3ea !important;color:#1c6b45 !important;}
+  .mcell.overdue{background:#fbe6e3 !important;color:#a3311f !important;}
+  .mcell.upcoming,.mcell.na{background:#f2f2f2 !important;color:#888 !important;}
+  .qr-card{break-inside:avoid;border:1px dashed #999;}
+}
 .cat-editor{background:var(--panel-2);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:10px;}
 .mini-item{display:flex;gap:6px;margin-bottom:6px;align-items:flex-start;}
 .mini-item input{flex:1;padding:8px 10px;font-size:12px;}
@@ -300,6 +321,7 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
     <div class="screen" id="screen-detail">
       <p class="eyebrow">รายละเอียดผลตรวจ</p>
       <h1 class="page-title" id="detailTitle"></h1>
+      <button class="btn no-print" id="btnPrintDetail" style="margin-bottom:14px;max-width:220px;">🖨 พิมพ์ใบตรวจเช็คนี้</button>
       <div id="detailBody"></div>
     </div>
 
@@ -936,6 +958,7 @@ function openDetail(r){
   body.innerHTML = html;
   showScreen('detail');
 }
+document.getElementById('btnPrintDetail').addEventListener('click', function(){ window.print(); });
 
 /* reports */
 function switchReportTab(tab){
@@ -978,8 +1001,9 @@ async function renderSummaryReport(body){
       '<div class="card"><p style="margin:0 0 8px;font-size:12.5px;color:var(--text-dim);">จำนวนครั้งตรวจแยกตามประเภท</p>'+
       TYPE_ORDER.map(function(t){ return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px;"><span>'+ASSET_TYPES[t].icon+' '+ASSET_TYPES[t].label+'</span><span style="font-family:var(--mono);">'+byType[t]+'</span></div>'; }).join('')+
       '</div>'+
-      '<button class="btn" id="btnExportSummaryCsv" style="margin-top:12px;">ส่งออก CSV (สำหรับ Audit)</button>';
+      '<div class="btn-row" style="margin-top:12px;"><button class="btn" id="btnExportSummaryCsv">ส่งออก CSV (สำหรับ Audit)</button><button class="btn no-print" id="btnPrintSummary">🖨 พิมพ์รายงาน</button></div>';
     document.getElementById('btnExportSummaryCsv').onclick = function(){ exportRecordsCsv(filtered); };
+    document.getElementById('btnPrintSummary').onclick = function(){ window.print(); };
   }
   document.getElementById('rpFrom').addEventListener('change', refresh);
   document.getElementById('rpTo').addEventListener('change', refresh);
@@ -1008,7 +1032,7 @@ async function renderCapaReport(body){
   if(capaItems.length===0){ out.innerHTML = '<div class="empty"><div class="icon">✓</div><p>ไม่พบข้อบกพร่องที่บันทึกไว้</p></div>'; return; }
   var openCount = capaItems.filter(function(c){return c.item.correctiveStatus!=='closed';}).length;
   out.innerHTML = '<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">พบทั้งหมด '+capaItems.length+' รายการ · ยังเปิดอยู่ '+openCount+' รายการ</p>'+
-    '<button class="btn" id="btnExportCapaCsv" style="margin-bottom:14px;">ส่งออก CSV</button>';
+    '<div class="btn-row" style="margin-bottom:14px;"><button class="btn" id="btnExportCapaCsv">ส่งออก CSV</button><button class="btn no-print" id="btnPrintCapa">🖨 พิมพ์รายงาน</button></div>';
   capaItems.forEach(function(c, idx){
     var row = document.createElement('div'); row.className='card';
     row.innerHTML =
@@ -1024,6 +1048,7 @@ async function renderCapaReport(body){
     out.appendChild(row);
   });
   document.getElementById('btnExportCapaCsv').onclick = function(){ exportCapaCsv(capaItems); };
+  document.getElementById('btnPrintCapa').onclick = function(){ window.print(); };
   out.querySelectorAll('[data-close-capa]').forEach(function(btn){
     btn.addEventListener('click', function(){
       var idx = Number(btn.getAttribute('data-close-capa'));

@@ -964,7 +964,7 @@
     </div>
 
     <div class="subpage" id="sub-maint">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th></tr></thead><tbody id="maintBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th><th></th></tr></thead><tbody id="maintBody"></tbody></table>
 
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกบำรุงรักษา</div>
       <div class="maint-add">
@@ -1316,7 +1316,7 @@
     }
   }
 
-  let currentDetailId = null, pendingDeleteId = null, pendingDeleteType = 'machine', currentRole = 'guest';
+  let currentDetailId = null, pendingDeleteId = null, pendingDeleteType = 'machine', pendingDeleteMaintMachineId = null, currentRole = 'guest';
   let tempPartRows = [];
   let charts = {};
 
@@ -1909,7 +1909,11 @@
         <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
         <td>${escapeHtml(r.tech||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
+    $('maintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
+      btn.addEventListener('click', ()=> askDeleteMaintRecord(id, btn.getAttribute('data-delmaint')));
+    });
   }
 
   // ===== GLOBAL PARTS WAREHOUSE =====
@@ -2349,6 +2353,11 @@
     $('confirmText').textContent = `คุณต้องการลบ "${m.name}" (${m.code}) ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`;
     $('confirmOverlay').classList.add('show');
   }
+  function askDeleteMaintRecord(machineId, recordId){
+    pendingDeleteId = recordId; pendingDeleteType = 'maintRecord'; pendingDeleteMaintMachineId = machineId;
+    $('confirmText').textContent = `คุณต้องการลบประวัติการบำรุงรักษารายการนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`;
+    $('confirmOverlay').classList.add('show');
+  }
   function askDeleteTool(id){
     const t = tools.find(x=>x.id===id); if(!t) return;
     pendingDeleteId = id; pendingDeleteType = 'tool';
@@ -2357,6 +2366,17 @@
   }
   $('confirmDeleteBtn').addEventListener('click', async ()=>{
     if(!pendingDeleteId) return;
+    if(pendingDeleteType === 'maintRecord'){
+      const mid = pendingDeleteMaintMachineId;
+      const list = await loadList(maintCache,'maint_', mid);
+      const updated = list.filter(r=>r.id!==pendingDeleteId);
+      await saveList(maintCache,'maint_', mid, updated);
+      $('confirmOverlay').classList.remove('show');
+      pendingDeleteId=null; pendingDeleteType=null; pendingDeleteMaintMachineId=null;
+      await renderMaintTable(mid);
+      toast('ลบประวัติการบำรุงรักษาแล้ว');
+      return;
+    }
     if(pendingDeleteType === 'tool'){
       tools = tools.filter(t=>t.id!==pendingDeleteId);
       await saveTools();

@@ -604,6 +604,13 @@ async function lastInspection(assetId, freq){
   f.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
   return f[0];
 }
+async function lastInspectionAny(assetId){
+  var list = await loadRecords(assetId);
+  if(list.length===0) return null;
+  var sorted = list.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  return sorted[0];
+}
+function effectiveCycleDays(a){ return a.cycleDays || FREQ_DAYS[a.frequency] || 30; }
 
 /* navigation */
 function showScreen(id){
@@ -637,11 +644,11 @@ async function renderDashStats(){
   var totalOverdue = 0, totalOk = 0, totalAssets = state.assets.length, openCapa = 0;
   for(var i=0;i<state.assets.length;i++){
     var a = state.assets[i];
-    var last = await lastInspection(a.id, a.frequency);
+    var last = await lastInspectionAny(a.id);
     if(!last) totalOverdue++;
     else{
       var days = Math.floor((new Date()-new Date(last.date))/86400000);
-      if(days > FREQ_DAYS[a.frequency]) totalOverdue++; else totalOk++;
+      if(days > effectiveCycleDays(a)) totalOverdue++; else totalOk++;
     }
     var recs = await loadRecords(a.id);
     recs.forEach(function(r){
@@ -673,11 +680,11 @@ async function renderDashList(){
   wrap.innerHTML = '';
   for(var i=0;i<list.length;i++){
     var a = list[i];
-    var last = await lastInspection(a.id, a.frequency);
+    var last = await lastInspectionAny(a.id);
     var cls='due', label='ยังไม่เคยตรวจ';
     if(last){
       var days = Math.floor((new Date()-new Date(last.date))/86400000);
-      if(days <= FREQ_DAYS[a.frequency]){ cls='ok'; label=fmtDate(last.date); } else { cls='overdue'; label='เกินกำหนด · '+fmtDate(last.date); }
+      if(days <= effectiveCycleDays(a)){ cls='ok'; label=fmtDate(last.date); } else { cls='overdue'; label='เกินกำหนด · '+fmtDate(last.date); }
     }
     var card = document.createElement('div');
     card.className='card asset-card';
@@ -685,7 +692,7 @@ async function renderDashList(){
       '<div class="nameplate">'+ASSET_TYPES[a.type].icon+'</div>'+
       '<div class="asset-info">'+
         '<p class="name">'+esc(a.name)+'</p>'+
-        '<p class="meta">'+esc(a.code)+(a.department?(' · '+esc(a.department)):'')+' · '+FREQ_LABEL[a.frequency]+'</p>'+
+        '<p class="meta">'+esc(a.code)+(a.department?(' · '+esc(a.department)):'')+' · ทุก '+effectiveCycleDays(a)+' วัน</p>'+
         '<span class="freq-chip '+cls+'"><span class="dot"></span>'+label+'</span>'+
       '</div>'+
       '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
@@ -1166,7 +1173,7 @@ async function renderMatrixReport(body){
     for(var i=0;i<list.length;i++){
       var a = list[i];
       var recs = await loadRecords(a.id);
-      var intervalMonths = FREQ_MONTHS[a.frequency] || 1;
+      var intervalMonths = Math.max(1, Math.min(12, Math.round(effectiveCycleDays(a)/30)));
       html += '<tr><td>'+ASSET_TYPES[a.type].icon+' '+esc(a.name)+'<div style="font-family:var(--mono);font-size:9.5px;color:var(--text-faint);">'+esc(a.code)+'</div></td>';
       for(var mo=0; mo<12; mo++){
         var monthStr = year+'-'+String(mo+1).padStart(2,'0');
@@ -1214,7 +1221,7 @@ function renderManageList(){
     var card = document.createElement('div'); card.className='card';
     card.innerHTML =
       '<p style="margin:0 0 2px;font-size:14px;font-weight:600;">'+ASSET_TYPES[a.type].icon+' '+esc(a.name)+'</p>'+
-      '<p style="margin:0 0 10px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);">'+esc(a.code)+' · '+totalItems(a)+' รายการตรวจ · '+FREQ_LABEL[a.frequency]+'</p>'+
+      '<p style="margin:0 0 10px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);">'+esc(a.code)+' · '+totalItems(a)+' รายการตรวจ · ทุก '+effectiveCycleDays(a)+' วัน</p>'+
       '<div class="btn-row">'+
         '<button class="btn btn-sm" data-act="edit">แก้ไขเช็คลิสต์</button>'+
         '<button class="btn btn-sm" data-act="qr">ดู QR</button>'+
@@ -1243,7 +1250,7 @@ document.getElementById('btnAddAsset').addEventListener('click', function(){
     '<div class="field"><label>รหัส *</label><input type="text" id="newCode" placeholder="เช่น MCH-002"></div>'+
     '<div class="field"><label>ชื่อ *</label><input type="text" id="newName" placeholder="ชื่อเครื่องจักร/อุปกรณ์"></div>'+
     '<div class="field"><label>แผนก/สถานที่</label><input type="text" id="newDept" placeholder="ไม่บังคับ"></div>'+
-    '<div class="field"><label>ความถี่การตรวจ PM</label><select id="newFreq"><option value="daily">ประจำวัน</option><option value="weekly">ประจำสัปดาห์</option><option value="monthly" selected>ประจำเดือน</option><option value="quarterly">ประจำไตรมาส</option><option value="yearly">ประจำปี</option></select></div>'+
+    '<div class="field"><label>รอบบำรุงรักษา (วัน)</label><input type="number" id="newCycleDays" min="1" placeholder="เช่น 30 — ใส่ตัวเลขวันเดียวกับที่ตั้งไว้ใน Machine Manager" value="30"></div>'+
     '<div class="btn-row"><button class="btn btn-ghost" id="newCancel">ยกเลิก</button><button class="btn btn-primary" id="newSave">เพิ่มรายการ</button></div>'
   );
   document.getElementById('newCancel').onclick = closeModal;
@@ -1252,11 +1259,11 @@ document.getElementById('btnAddAsset').addEventListener('click', function(){
     var code = document.getElementById('newCode').value.trim();
     var name = document.getElementById('newName').value.trim();
     var dept = document.getElementById('newDept').value.trim();
-    var freq = document.getElementById('newFreq').value;
+    var cycleDays = parseInt(document.getElementById('newCycleDays').value, 10) || 30;
     if(!code || !name){ showToast('กรุณากรอกรหัสและชื่อ'); return; }
     if(state.assets.some(function(a){return a.id===code;})){ showToast('รหัสนี้มีอยู่แล้ว'); return; }
     var tpl = DEFAULT_TEMPLATES[type];
-    var asset = { id: code, type:type, code:code, name:name, department:dept, frequency:freq,
+    var asset = { id: code, type:type, code:code, name:name, department:dept, cycleDays:cycleDays, frequency:cycleDaysToFreq(cycleDays),
       docNo: tpl.docNo, revision: tpl.revision, checklist: JSON.parse(JSON.stringify(tpl.categories)) };
     state.assets.push(asset); await saveAssets();
     closeModal(); state.mgrType = type; renderMgrTypeTabs(); renderManageList(); renderDashboard();
@@ -1270,9 +1277,8 @@ function openAssetEditor(assetId){
   renderEditorScreen();
   function renderEditorScreen(){
     var html = '<div class="field-2col"><div class="field"><label>ชื่อ</label><input type="text" id="edName" value="'+esc(editState.name)+'"></div><div class="field"><label>แผนก/สถานที่</label><input type="text" id="edDept" value="'+esc(editState.department||'')+'"></div></div>'+
-      '<div class="field-2col"><div class="field"><label>ความถี่ PM</label><select id="edFreq">'+
-      Object.keys(FREQ_LABEL).map(function(f){return '<option value="'+f+'"'+(editState.frequency===f?' selected':'')+'>'+FREQ_LABEL[f]+'</option>';}).join('')+
-      '</select></div><div class="field"><label>เอกสารเลขที่ / Rev</label><div style="display:flex;gap:6px;"><input type="text" id="edDocNo" value="'+esc(editState.docNo||'')+'" style="flex:2;"><input type="text" id="edRevision" value="'+esc(editState.revision||'00')+'" style="flex:1;"></div></div></div>'+
+      '<div class="field-2col"><div class="field"><label>รอบบำรุงรักษา (วัน)</label><input type="number" min="1" id="edCycleDays" value="'+esc(editState.cycleDays||30)+'"></div>'+
+      '<div class="field"><label>เอกสารเลขที่ / Rev</label><div style="display:flex;gap:6px;"><input type="text" id="edDocNo" value="'+esc(editState.docNo||'')+'" style="flex:2;"><input type="text" id="edRevision" value="'+esc(editState.revision||'00')+'" style="flex:1;"></div></div></div>'+
       '<div id="edCats"></div>'+
       '<button type="button" class="btn btn-sm" id="edAddCat" style="margin-bottom:16px;">+ เพิ่มหมวดหมู่</button>'+
       '<div class="btn-row"><button type="button" class="btn btn-ghost" id="edCancel">ปิด</button><button type="button" class="btn btn-primary" id="edSave">บันทึก</button></div>';
@@ -1305,7 +1311,8 @@ function openAssetEditor(assetId){
     document.getElementById('edSave').onclick = async function(){
       editState.name = document.getElementById('edName').value.trim() || a.name;
       editState.department = document.getElementById('edDept').value.trim();
-      editState.frequency = document.getElementById('edFreq').value;
+      editState.cycleDays = parseInt(document.getElementById('edCycleDays').value, 10) || 30;
+      editState.frequency = cycleDaysToFreq(editState.cycleDays);
       editState.docNo = document.getElementById('edDocNo').value.trim();
       editState.revision = document.getElementById('edRevision').value.trim();
       var idx = state.assets.findIndex(function(x){return x.id===assetId;});
@@ -1460,9 +1467,9 @@ document.getElementById('csvFileInput').addEventListener('change', function(e){
         if(!code || !name) return;
         if(state.assets.some(function(a){return a.id===code;})){ skipped++; return; }
         var location = (r[map.location]||'').trim();
-        var freq = cycleDaysToFreq(r[map.cycle]);
+        var cycleDays = parseInt(r[map.cycle], 10) || 30;
         state.assets.push({
-          id: code, type: type, code: code, name: name, department: location, frequency: freq,
+          id: code, type: type, code: code, name: name, department: location, cycleDays: cycleDays, frequency: cycleDaysToFreq(cycleDays),
           docNo: tpl.docNo, revision: tpl.revision, checklist: JSON.parse(JSON.stringify(tpl.categories))
         });
         added++;

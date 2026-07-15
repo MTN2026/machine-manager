@@ -117,6 +117,12 @@ p.page-sub{font-size:12.5px;color:var(--text-dim);margin:0 0 18px;}
 .capa-box.show{display:block;}
 .capa-box label{display:block;font-size:10.5px;color:#f2a49c;margin-bottom:4px;}
 .capa-box input,.capa-box textarea{width:100%;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 9px;font-size:12px;margin-bottom:6px;}
+.capa-box input[type=file]{padding:6px;font-size:11px;}
+.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+.photo-thumb{position:relative;width:64px;height:64px;border-radius:7px;overflow:hidden;border:1px solid var(--border);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-thumb .rm{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.record-photo{width:100%;max-width:280px;border-radius:8px;border:1px solid var(--border);margin-top:8px;display:block;cursor:pointer;}
 .summary-bar{position:sticky;bottom:58px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin:16px 0;font-size:12px;}
 .summary-bar .fails{color:#f2a49c;font-family:var(--mono);}
 .record-row{background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:8px;}
@@ -564,8 +570,12 @@ async function loadRecords(assetId){
   catch(e){ state.records[assetId]=[]; return []; }
 }
 async function saveRecords(assetId){
-  try{ await window.storage.set('pmsys:records:'+assetId, JSON.stringify(state.records[assetId]||[]), true); }
-  catch(e){ showToast('บันทึกผลตรวจไม่สำเร็จ'); }
+  var payload = JSON.stringify(state.records[assetId]||[]);
+  if(payload.length > 4200000){
+    showToast('ข้อมูลของรายการนี้ใกล้เต็มพื้นที่จัดเก็บ (รูปภาพเยอะเกินไป) ลองลบรูปเก่าที่ไม่จำเป็นออกบ้าง');
+  }
+  try{ await window.storage.set('pmsys:records:'+assetId, payload, true); }
+  catch(e){ showToast('บันทึกผลตรวจไม่สำเร็จ — อาจเกินขนาดพื้นที่จัดเก็บต่อรายการ (5MB) ลองลบรูปเก่าบางส่วน'); }
 }
 async function loadSettings(){
   try{ var r = await window.storage.get('pmsys:settings', true); state.settings = r ? JSON.parse(r.value) : {sheetUrl:'',sheetEnabled:false}; }
@@ -803,6 +813,9 @@ async function startInspection(assetId){
           '<input type="text" data-capafield="owner" data-item="'+itemId+'" placeholder="ชื่อผู้รับผิดชอบ">'+
           '<label>กำหนดแล้วเสร็จ</label>'+
           '<input type="date" data-capafield="due" data-item="'+itemId+'">'+
+          '<label>รูปอะไหล่/จุดที่ชำรุด (ไม่บังคับ)</label>'+
+          '<input type="file" accept="image/*" capture="environment" data-photofield data-item="'+itemId+'">'+
+          '<div class="photo-preview" data-item="'+itemId+'"></div>'+
         '</div>';
       block.appendChild(row);
     });
@@ -842,9 +855,57 @@ async function startInspection(assetId){
       state.currentChecklist[itemId][field] = inp.value;
     });
   });
+  container.querySelectorAll('[data-photofield]').forEach(function(inp){
+    inp.addEventListener('change', async function(){
+      var itemId = inp.getAttribute('data-item');
+      var file = inp.files[0]; if(!file) return;
+      try{
+        var dataUrl = await compressImage(file, 900, 0.6);
+        state.currentChecklist[itemId] = state.currentChecklist[itemId] || {};
+        state.currentChecklist[itemId].photo = dataUrl;
+        renderPhotoPreview(itemId, container);
+      }catch(e){ showToast('แนบรูปไม่สำเร็จ ลองใหม่อีกครั้ง'); }
+      inp.value = '';
+    });
+  });
 
   updateSummary(a);
   showScreen('inspect');
+}
+function compressImage(file, maxDim, quality){
+  return new Promise(function(resolve, reject){
+    var reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = function(){
+      var img = new Image();
+      img.onerror = reject;
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w > h){ h = Math.round(h*maxDim/w); w = maxDim; }
+          else{ w = Math.round(w*maxDim/h); h = maxDim; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderPhotoPreview(itemId, scope){
+  var wrap = (scope||document).querySelector('.photo-preview[data-item="'+itemId+'"]');
+  if(!wrap) return;
+  var v = state.currentChecklist[itemId];
+  if(v && v.photo){
+    wrap.innerHTML = '<div class="photo-thumb"><img src="'+v.photo+'"><button type="button" class="rm" data-rmphoto="'+itemId+'">✕</button></div>';
+    wrap.querySelector('[data-rmphoto]').addEventListener('click', function(){
+      delete state.currentChecklist[itemId].photo;
+      renderPhotoPreview(itemId, scope);
+    });
+  }else{ wrap.innerHTML = ''; }
 }
 function updateSummary(a){
   var total = totalItems(a), checked=0, fails=0;
@@ -869,7 +930,7 @@ document.getElementById('btnSubmitRecord').addEventListener('click', async funct
       results.push({
         resultId: uid(), category:cat.title, name:item.name, crit:item.crit, method:item.method||'',
         result: v.result||null, note: v.note||'',
-        correctiveAction: v.action||'', correctiveOwner: v.owner||'', correctiveDue: v.due||'',
+        correctiveAction: v.action||'', correctiveOwner: v.owner||'', correctiveDue: v.due||'', photo: v.photo||'',
         correctiveStatus: (v.result==='fail') ? 'open' : null, closedDate:'', closedNote:''
       });
     });
@@ -951,6 +1012,7 @@ function openDetail(r){
         '<p style="margin:0 0 4px;font-size:11.5px;color:#f2a49c;">แก้ไข: '+esc(item.correctiveAction||'—')+'</p>'+
         '<p style="margin:0 0 4px;font-size:11.5px;color:#f2a49c;">ผู้รับผิดชอบ: '+esc(item.correctiveOwner||'—')+' · กำหนด: '+fmtDate(item.correctiveDue)+'</p>'+
         '<span class="badge '+(item.correctiveStatus==='closed'?'closed':'open')+'">'+(item.correctiveStatus==='closed'?'ปิดแล้ว':'ยังเปิดอยู่')+'</span>'+
+        (item.photo ? ('<img class="record-photo" src="'+item.photo+'" onclick="window.open(this.src)">') : '')+
         '</div>') : '')+
       '</div>';
   });
@@ -1043,8 +1105,9 @@ async function renderCapaReport(body){
       '<p style="margin:0 0 4px;font-size:11.5px;color:var(--text-dim);">'+ASSET_TYPES[c.asset.type].icon+' '+esc(c.asset.name)+' · '+fmtDate(c.record.date)+'</p>'+
       '<p style="margin:0 0 4px;font-size:12px;">แก้ไข: '+esc(c.item.correctiveAction||'—')+'</p>'+
       '<p style="margin:0 0 8px;font-size:11.5px;color:var(--text-dim);">ผู้รับผิดชอบ: '+esc(c.item.correctiveOwner||'—')+' · กำหนด: '+fmtDate(c.item.correctiveDue)+'</p>'+
-      (c.item.correctiveStatus==='closed' ? ('<p style="margin:0;font-size:11px;color:var(--green);">ปิดเมื่อ '+fmtDate(c.item.closedDate)+(c.item.closedNote?(' — '+esc(c.item.closedNote)):'')+'</p>') :
-      '<button class="btn btn-sm" data-close-capa="'+idx+'">ทำเครื่องหมายว่าแก้ไขแล้ว</button>');
+      (c.item.photo ? ('<img class="record-photo" src="'+c.item.photo+'" onclick="window.open(this.src)">') : '')+
+      (c.item.correctiveStatus==='closed' ? ('<p style="margin:8px 0 0;font-size:11px;color:var(--green);">ปิดเมื่อ '+fmtDate(c.item.closedDate)+(c.item.closedNote?(' — '+esc(c.item.closedNote)):'')+'</p>') :
+      '<button class="btn btn-sm" data-close-capa="'+idx+'" style="margin-top:8px;">ทำเครื่องหมายว่าแก้ไขแล้ว</button>');
     out.appendChild(row);
   });
   document.getElementById('btnExportCapaCsv').onclick = function(){ exportCapaCsv(capaItems); };

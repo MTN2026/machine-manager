@@ -465,7 +465,7 @@
     </div>
 
     <div class="subpage" id="vehiclesub-maint">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th></tr></thead><tbody id="vehicleMaintBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th><th></th></tr></thead><tbody id="vehicleMaintBody"></tbody></table>
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกบำรุงรักษา</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="vm_date"></div>
@@ -473,10 +473,6 @@
         <div class="field"><label>รายละเอียด</label><input id="vm_desc" placeholder="รายละเอียดงาน..."></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="vm_cost" min="0"></div>
         <div class="field"><label>ผู้ดำเนินการ</label><input id="vm_tech"></div>
-      </div>
-      <div class="maint-add-full">
-        <label style="font-size:12px;color:var(--text-dim);">เช็คลิสต์มาตรฐาน</label>
-        <div class="checklist" id="vehicleChecklistBox"></div>
       </div>
       <div class="maint-add-full">
         <label style="font-size:12px;color:var(--text-dim);">อะไหล่ที่ใช้ในงานนี้</label>
@@ -640,7 +636,7 @@
     </div>
 
     <div class="subpage" id="cranesub-maint">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th></tr></thead><tbody id="craneMaintBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th><th></th></tr></thead><tbody id="craneMaintBody"></tbody></table>
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกการตรวจสอบ/บำรุงรักษา</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="crm_date"></div>
@@ -648,6 +644,11 @@
         <div class="field"><label>รายละเอียด</label><input id="crm_desc" placeholder="รายละเอียดงาน..."></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="crm_cost" min="0"></div>
         <div class="field"><label>ผู้ดำเนินการ</label><input id="crm_tech"></div>
+      </div>
+      <div class="maint-add-full">
+        <label style="font-size:12px;color:var(--text-dim);">อะไหล่ที่ใช้ในงานนี้</label>
+        <div id="cranePartRows"></div>
+        <button type="button" class="btn btn-sm" id="addCranePartRowBtn">＋ เพิ่มอะไหล่</button>
       </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addCraneMaintBtn">💾 บันทึกรายการ</button>
@@ -763,7 +764,7 @@
     </div>
 
     <div class="subpage" id="toolsub-maint">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th></tr></thead><tbody id="toolMaintBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th><th>อะไหล่ที่ใช้</th><th>ค่าใช้จ่าย</th><th>ผู้ดำเนินการ</th><th></th></tr></thead><tbody id="toolMaintBody"></tbody></table>
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกบำรุงรักษา</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="tm_date"></div>
@@ -771,10 +772,6 @@
         <div class="field"><label>รายละเอียด</label><input id="tm_desc" placeholder="รายละเอียดงาน..."></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="tm_cost" min="0"></div>
         <div class="field"><label>ผู้ดำเนินการ</label><input id="tm_tech"></div>
-      </div>
-      <div class="maint-add-full">
-        <label style="font-size:12px;color:var(--text-dim);">เช็คลิสต์มาตรฐาน</label>
-        <div class="checklist" id="toolChecklistBox"></div>
       </div>
       <div class="maint-add-full">
         <label style="font-size:12px;color:var(--text-dim);">อะไหล่ที่ใช้ในงานนี้</label>
@@ -1263,41 +1260,6 @@
   const MAINT_LABEL = {pm:'PM ป้องกัน', cm:'CM แก้ไข', insp:'ตรวจสอบ'};
   const PRIORITY_LABEL = {critical:'วิกฤต', high:'สูง', medium:'ปานกลาง', low:'ต่ำ'};
   const PRIORITY_WEIGHT = {critical:0, high:1, medium:2, low:3};
-  const DEFAULT_CHECKLIST_TEMPLATE = [
-    {title:'1. ความสะอาดและสภาพทั่วไป', items:['ตรวจสอบความสะอาดตัวเครื่องและบริเวณโดยรอบ','ตรวจสอบสภาพฝาครอบเครื่อง (Covers/Guards)','ตรวจสอบป้ายเตือนและป้ายความปลอดภัย','ตรวจสอบการรั่วไหลของน้ำมัน/สารหล่อเย็น']},
-    {title:'2. ระบบสไปนเดิลและแกนขับเคลื่อน', items:['ตรวจสอบเสียงและการสั่นสะเทือนของสไปนเดิล','ตรวจสอบอุณหภูมิสไปนเดิลขณะทำงาน','ตรวจสอบความแม่นยำการเคลื่อนที่แกน X/Y/Z','ตรวจสอบ Ball Screw และ Linear Guide','ตรวจสอบ Limit Switch / Home Position']},
-    {title:'3. ระบบหล่อลื่นและสารหล่อเย็น', items:['ตรวจสอบระดับน้ำมันหล่อลื่น (Way Lube)','ตรวจสอบการทำงานของปั๊มหล่อลื่นอัตโนมัติ','ตรวจสอบระดับและความเข้มข้นสารหล่อเย็น (Coolant)','ตรวจสอบการอุดตันของหัวฉีดสารหล่อเย็น','ตรวจสอบความสะอาดถังพักสารหล่อเย็น']},
-    {title:'4. ระบบไฟฟ้าและตู้ควบคุม', items:['ตรวจสอบสภาพตู้คอนโทรลและพัดลมระบายความร้อน','ตรวจสอบสายไฟและขั้วต่อ (Connector/Terminal)','ตรวจสอบจอแสดงผล/แผงควบคุม (HMI/Operator Panel)','ตรวจสอบปุ่ม Emergency Stop','ตรวจสอบแบตเตอรี่สำรอง (Backup Battery)']},
-    {title:'5. ระบบลมและไฮดรอลิก', items:['ตรวจสอบแรงดันลมระบบนิวเมติก','ตรวจสอบการรั่วไหลของสายลม/ข้อต่อ','ตรวจสอบระดับน้ำมันไฮดรอลิก','ตรวจสอบตัวกรองลม/ดักน้ำ (Air Filter/Regulator)']},
-    {title:'6. ระบบเปลี่ยนเครื่องมืออัตโนมัติ (ATC)', items:['ตรวจสอบการทำงานของแขนเปลี่ยนเครื่องมือ','ตรวจสอบสภาพ Tool Holder / Collet','ตรวจสอบตำแหน่ง Tool Magazine']},
-    {title:'7. ระบบความปลอดภัย', items:['ตรวจสอบประตูนิรภัย/Interlock Switch','ตรวจสอบม่านแสงนิรภัย (Light Curtain) ถ้ามี','ตรวจสอบไฟสัญญาณเตือน (Signal Tower)','ตรวจสอบถังดับเพลิงใกล้จุดปฏิบัติงาน']}
-  ];
-
-  function renderChecklistBox(elId, template){
-    const box = $(elId);
-    if(!box) return;
-    const list = template || DEFAULT_CHECKLIST_TEMPLATE;
-    let html = '';
-    list.forEach((cat,ci)=>{
-      html += `<div style="grid-column:1/-1;font-weight:600;color:var(--amber);font-size:11px;text-transform:uppercase;letter-spacing:.3px;margin-top:${ci===0?'0':'10px'};padding-bottom:4px;border-bottom:1px solid var(--border);">${escapeHtml(cat.title)}</div>`;
-      cat.items.forEach((label,ii)=>{
-        html += `<label><input type="checkbox" data-cat="${ci}" data-idx="${ii}"> ${escapeHtml(label)}</label>`;
-      });
-    });
-    box.innerHTML = html;
-  }
-
-  function collectChecklistBox(elId, template){
-    const out = [];
-    const list = template || DEFAULT_CHECKLIST_TEMPLATE;
-    list.forEach((cat,ci)=>{
-      cat.items.forEach((label,ii)=>{
-        const cb = document.querySelector('#'+elId+' input[data-cat="'+ci+'"][data-idx="'+ii+'"]');
-        out.push({category:cat.title, label, checked: cb ? cb.checked : false});
-      });
-    });
-    return out;
-  }
   const DUE_SOON_DAYS = 7;
 
   let machines = [];
@@ -1321,7 +1283,7 @@
     }
   }
 
-  let currentDetailId = null, pendingDeleteId = null, pendingDeleteType = 'machine', pendingDeleteMaintMachineId = null, currentRole = 'guest';
+  let currentDetailId = null, pendingDeleteId = null, pendingDeleteType = 'machine', pendingDeleteMaintMachineId = null, pendingDeleteMaintKind = 'machine', currentRole = 'guest';
   let tempPartRows = [];
   let charts = {};
 
@@ -2359,10 +2321,16 @@
     $('confirmText').textContent = `คุณต้องการลบ "${m.name}" (${m.code}) ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`;
     $('confirmOverlay').classList.add('show');
   }
-  function askDeleteMaintRecord(machineId, recordId){
-    pendingDeleteId = recordId; pendingDeleteType = 'maintRecord'; pendingDeleteMaintMachineId = machineId;
+  function askDeleteMaintRecord(assetId, recordId, kind){
+    pendingDeleteId = recordId; pendingDeleteType = 'maintRecord'; pendingDeleteMaintMachineId = assetId; pendingDeleteMaintKind = kind || 'machine';
     $('confirmText').textContent = `คุณต้องการลบประวัติการบำรุงรักษารายการนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`;
     $('confirmOverlay').classList.add('show');
+  }
+  function getMaintKindConfig(kind){
+    if(kind==='tool') return { cache: toolMaintCache, prefix: 'toolmaint_', render: renderToolMaintTable };
+    if(kind==='crane') return { cache: craneMaintCache, prefix: 'cranemaint_', render: renderCraneMaintTable };
+    if(kind==='vehicle') return { cache: vehicleMaintCache, prefix: 'vehiclemaint_', render: renderVehicleMaintTable };
+    return { cache: maintCache, prefix: 'maint_', render: renderMaintTable };
   }
   function askDeleteTool(id){
     const t = tools.find(x=>x.id===id); if(!t) return;
@@ -2374,12 +2342,13 @@
     if(!pendingDeleteId) return;
     if(pendingDeleteType === 'maintRecord'){
       const mid = pendingDeleteMaintMachineId;
-      const list = await loadList(maintCache,'maint_', mid);
+      const cfg = getMaintKindConfig(pendingDeleteMaintKind);
+      const list = await loadList(cfg.cache, cfg.prefix, mid);
       const updated = list.filter(r=>r.id!==pendingDeleteId);
-      await saveList(maintCache,'maint_', mid, updated);
+      await saveList(cfg.cache, cfg.prefix, mid, updated);
       $('confirmOverlay').classList.remove('show');
-      pendingDeleteId=null; pendingDeleteType=null; pendingDeleteMaintMachineId=null;
-      await renderMaintTable(mid);
+      pendingDeleteId=null; pendingDeleteType=null; pendingDeleteMaintMachineId=null; pendingDeleteMaintKind='machine';
+      await cfg.render(mid);
       toast('ลบประวัติการบำรุงรักษาแล้ว');
       return;
     }
@@ -2697,7 +2666,6 @@
       }
 
       $('tm_date').value = todayStr();
-      renderChecklistBox('toolChecklistBox');
       tempToolPartRows = [];
       renderToolPartRows();
       await renderToolMaintTable(id);
@@ -2760,16 +2728,19 @@
         <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
         <td>${escapeHtml(r.tech||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
+    $('toolMaintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
+      btn.addEventListener('click', ()=> askDeleteMaintRecord(id, btn.getAttribute('data-delmaint'), 'tool'));
+    });
   }
 
   $('addToolMaintBtn').addEventListener('click', async ()=>{
     if(!currentToolDetailId) return;
     const date = $('tm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = collectChecklistBox('toolChecklistBox');
     const partsUsed = tempToolPartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
-    const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, desc:$('tm_desc').value.trim(), cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), checklist, partsUsed};
+    const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, desc:$('tm_desc').value.trim(), cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), partsUsed};
     const list = await loadList(toolMaintCache,'toolmaint_', currentToolDetailId);
     list.push(record);
     await saveList(toolMaintCache,'toolmaint_', currentToolDetailId, list);
@@ -2865,7 +2836,7 @@
 
   // ===== CRANES / HOISTS (separate registry with Thai crane-inspection compliance fields) =====
   const CRANE_STATUS_LABEL = {run:'พร้อมใช้งาน', maint:'ซ่อมบำรุง', down:'ชำรุด/เสีย', retired:'ปลดระวาง'};
-  let cranes = [], craneMaintCache = {}, currentCraneDetailId = null;
+  let cranes = [], craneMaintCache = {}, currentCraneDetailId = null, tempCranePartRows = [];
 
   async function loadCranes(){
     try{ const r = await window.storage.get('cranes_list', false); cranes = r && r.value ? JSON.parse(r.value) : []; }
@@ -3163,6 +3134,8 @@
       $('cri_date').value = todayStr();
       await renderCraneIncidentTable(id);
       $('crm_date').value = todayStr();
+      tempCranePartRows = [];
+      renderCranePartRows();
       await renderCraneMaintTable(id);
 
       const isTech = currentRole!=='admin';
@@ -3174,6 +3147,22 @@
   }
   function closeCraneDetail(){ $('craneDetailOverlay').classList.remove('show'); currentCraneDetailId=null; }
 
+  function renderCranePartRows(){
+    $('cranePartRows').innerHTML = tempCranePartRows.map((row,i)=>`
+      <div class="partrow">
+        <select data-cpi="${i}" class="cpr-part">
+          <option value="">เลือกอะไหล่...</option>
+          ${partsCatalog.map(p=>`<option value="${p.id}" ${row.partId===p.id?'selected':''}>${escapeHtml(p.name)} (คงเหลือ ${p.qty})</option>`).join('')}
+        </select>
+        <input type="number" min="1" class="cpr-qty" data-cpi="${i}" value="${row.qty||1}">
+        <button type="button" class="btn btn-sm btn-danger cpr-del" data-cpi="${i}">✕</button>
+      </div>`).join('');
+    $('cranePartRows').querySelectorAll('.cpr-part').forEach(sel=>sel.addEventListener('change', e=>{ tempCranePartRows[e.target.dataset.cpi].partId = e.target.value; const p=partsCatalog.find(x=>x.id===e.target.value); tempCranePartRows[e.target.dataset.cpi].name = p?p.name:''; }));
+    $('cranePartRows').querySelectorAll('.cpr-qty').forEach(inp=>inp.addEventListener('input', e=>{ tempCranePartRows[e.target.dataset.cpi].qty = Number(e.target.value)||1; }));
+    $('cranePartRows').querySelectorAll('.cpr-del').forEach(btn=>btn.addEventListener('click', e=>{ tempCranePartRows.splice(Number(e.target.dataset.cpi),1); renderCranePartRows(); }));
+  }
+  $('addCranePartRowBtn').addEventListener('click', ()=>{ tempCranePartRows.push({partId:'', name:'', qty:1}); renderCranePartRows(); });
+
   async function renderCraneMaintTable(id){
     const list = await loadList(craneMaintCache,'cranemaint_', id);
     const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
@@ -3182,23 +3171,38 @@
         <td>${fmtDate(r.date)}</td>
         <td><span class="tag ${r.type}">${MAINT_LABEL[r.type]}</span></td>
         <td>${escapeHtml(r.desc||'—')}</td>
+        <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
         <td>${escapeHtml(r.tech||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการตรวจสอบ/บำรุงรักษา</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการตรวจสอบ/บำรุงรักษา</td></tr>`;
+    $('craneMaintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
+      btn.addEventListener('click', ()=> askDeleteMaintRecord(id, btn.getAttribute('data-delmaint'), 'crane'));
+    });
   }
 
   $('addCraneMaintBtn').addEventListener('click', async ()=>{
     if(!currentCraneDetailId) return;
     const date = $('crm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const record = {id:'r_'+Date.now(), date, type:$('crm_type').value, desc:$('crm_desc').value.trim(), cost:$('crm_cost').value?Number($('crm_cost').value):null, tech:$('crm_tech').value.trim()};
+    const partsUsed = tempCranePartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
+    const record = {id:'r_'+Date.now(), date, type:$('crm_type').value, desc:$('crm_desc').value.trim(), cost:$('crm_cost').value?Number($('crm_cost').value):null, tech:$('crm_tech').value.trim(), partsUsed};
     const list = await loadList(craneMaintCache,'cranemaint_', currentCraneDetailId);
     list.push(record);
     await saveList(craneMaintCache,'cranemaint_', currentCraneDetailId, list);
 
+    if(partsUsed.length){
+      let insufficient = false;
+      for(const pu of partsUsed){
+        const res = await recordPartTx({partId:pu.partId, type:'out', qty:pu.qty, date, machineId:currentCraneDetailId, person:$('crm_tech').value.trim(), note:'ใช้ในงานตรวจสอบ/บำรุงรักษาเครน/ปั้นจั่น: '+($('crm_desc').value.trim()||'-')});
+        if(!res.ok) insufficient = true;
+      }
+      if(insufficient) toast('คำเตือน: อะไหล่บางรายการคงเหลือไม่พอ สต๊อกถูกปรับเป็น 0');
+    }
+
     const c = cranes.find(x=>x.id===currentCraneDetailId);
     if(c && (!c.lastMaint || date >= c.lastMaint)){ c.lastMaint = date; if(c.cycle) c.nextMaint = addDays(date, c.cycle); await saveCranes(); }
 
-    $('crm_desc').value=''; $('crm_cost').value=''; $('crm_tech').value='';
+    $('crm_desc').value=''; $('crm_cost').value=''; $('crm_tech').value=''; tempCranePartRows=[];
     renderCranesPage();
     await renderCraneMaintTable(currentCraneDetailId);
     await openCraneDetail(currentCraneDetailId);
@@ -3590,7 +3594,6 @@
       }
 
       $('vm_date').value = todayStr();
-      renderChecklistBox('vehicleChecklistBox');
       tempVehiclePartRows = [];
       renderVehiclePartRows();
       await renderVehicleMaintTable(id);
@@ -3652,16 +3655,19 @@
         <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
         <td>${escapeHtml(r.tech||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
+    $('vehicleMaintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
+      btn.addEventListener('click', ()=> askDeleteMaintRecord(id, btn.getAttribute('data-delmaint'), 'vehicle'));
+    });
   }
 
   $('addVehicleMaintBtn').addEventListener('click', async ()=>{
     if(!currentVehicleDetailId) return;
     const date = $('vm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
-    const checklist = collectChecklistBox('vehicleChecklistBox');
     const partsUsed = tempVehiclePartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
 
-    const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, desc:$('vm_desc').value.trim(), cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), checklist, partsUsed};
+    const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, desc:$('vm_desc').value.trim(), cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), partsUsed};
     const list = await loadList(vehicleMaintCache,'vehiclemaint_', currentVehicleDetailId);
     list.push(record);
     await saveList(vehicleMaintCache,'vehiclemaint_', currentVehicleDetailId, list);

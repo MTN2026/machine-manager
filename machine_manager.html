@@ -453,6 +453,9 @@
     <div class="subtabs">
       <button class="subtab active" data-vehiclesubtab="general">ข้อมูลทั่วไป</button>
       <button class="subtab" data-vehiclesubtab="maint">บำรุงรักษา</button>
+      <button class="subtab" data-vehiclesubtab="parts">อะไหล่</button>
+      <button class="subtab" data-vehiclesubtab="files">ไฟล์แนบ</button>
+      <button class="subtab" data-vehiclesubtab="loc">ตำแหน่ง</button>
       <button class="subtab" data-vehiclesubtab="qr">QR Code</button>
     </div>
 
@@ -481,6 +484,33 @@
       </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addVehicleMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="vehiclesub-parts">
+      <div class="partsbar"><button class="btn btn-sm btn-primary js-admin-only" id="issueForVehicleBtn">📦 เบิกอะไหล่สำหรับยานพาหนะนี้</button></div>
+      <div class="section-title" style="margin-top:0;">ประวัติการเบิก-จ่ายอะไหล่ของยานพาหนะนี้</div>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="vehiclePartsTxBody"></tbody></table>
+    </div>
+
+    <div class="subpage" id="vehiclesub-files">
+      <form class="attachform js-guest-hide" id="vehicleAttachForm">
+        <div class="field"><label>ไฟล์ (สูงสุด 3MB)</label><input type="file" id="va_file"></div>
+        <div class="field"><label>หมวดหมู่</label><select id="va_cat"><option value="manual">คู่มือการใช้งาน</option><option value="warranty">ใบรับประกัน</option><option value="other">อื่นๆ</option></select></div>
+        <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
+      </form>
+      <div id="vehicleAttachList"></div>
+    </div>
+
+    <div class="subpage" id="vehiclesub-loc">
+      <div class="detail-item" style="margin-bottom:14px;"><div class="k">ตำแหน่งปัจจุบัน</div><div class="v" id="vehicleLocCurrent">—</div></div>
+      <div class="section-title">ประวัติการย้ายตำแหน่ง</div>
+      <ul class="lochist" id="vehicleLocHistList"></ul>
+      <div class="locform">
+        <div class="field"><label>วันที่ย้าย</label><input type="date" id="vl_date"></div>
+        <div class="field"><label>ตำแหน่งใหม่</label><input id="vl_loc"></div>
+        <div class="field"><label>หมายเหตุ</label><input id="vl_note"></div>
+        <button type="button" class="btn btn-sm btn-primary js-guest-hide" id="addVehicleLocBtn">＋ บันทึก</button>
       </div>
     </div>
 
@@ -624,7 +654,11 @@
 
     <div class="subtabs">
       <button class="subtab active" data-cranesubtab="general">ข้อมูลทั่วไป</button>
-      <button class="subtab" data-cranesubtab="maint">การตรวจสอบ/บำรุงรักษา</button>
+      <button class="subtab" data-cranesubtab="maint">บำรุงรักษา</button>
+      <button class="subtab" data-cranesubtab="parts">อะไหล่</button>
+      <button class="subtab" data-cranesubtab="files">ไฟล์แนบ</button>
+      <button class="subtab" data-cranesubtab="loc">ตำแหน่ง</button>
+      <button class="subtab" data-cranesubtab="qr">QR Code</button>
       <button class="subtab" data-cranesubtab="incident">อุบัติเหตุ/เหตุการณ์</button>
     </div>
 
@@ -652,6 +686,41 @@
       </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addCraneMaintBtn">💾 บันทึกรายการ</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="cranesub-parts">
+      <div class="partsbar"><button class="btn btn-sm btn-primary js-admin-only" id="issueForCraneBtn">📦 เบิกอะไหล่สำหรับเครนนี้</button></div>
+      <div class="section-title" style="margin-top:0;">ประวัติการเบิก-จ่ายอะไหล่ของเครนนี้</div>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="cranePartsTxBody"></tbody></table>
+    </div>
+
+    <div class="subpage" id="cranesub-files">
+      <form class="attachform js-guest-hide" id="craneAttachForm">
+        <div class="field"><label>ไฟล์ (สูงสุด 3MB)</label><input type="file" id="cra_file"></div>
+        <div class="field"><label>หมวดหมู่</label><select id="cra_cat"><option value="manual">คู่มือการใช้งาน</option><option value="warranty">ใบรับประกัน</option><option value="other">อื่นๆ</option></select></div>
+        <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
+      </form>
+      <div id="craneAttachList"></div>
+    </div>
+
+    <div class="subpage" id="cranesub-loc">
+      <div class="detail-item" style="margin-bottom:14px;"><div class="k">ตำแหน่งปัจจุบัน</div><div class="v" id="craneLocCurrent">—</div></div>
+      <div class="section-title">ประวัติการย้ายตำแหน่ง</div>
+      <ul class="lochist" id="craneLocHistList"></ul>
+      <div class="locform">
+        <div class="field"><label>วันที่ย้าย</label><input type="date" id="crl_date"></div>
+        <div class="field"><label>ตำแหน่งใหม่</label><input id="crl_loc"></div>
+        <div class="field"><label>หมายเหตุ</label><input id="crl_note"></div>
+        <button type="button" class="btn btn-sm btn-primary js-guest-hide" id="addCraneLocBtn">＋ บันทึก</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="cranesub-qr">
+      <div class="qrbox">
+        <div id="craneQrcanvas"></div>
+        <p style="color:var(--text-dim);font-size:12.5px;">สแกนเพื่อดูรหัสเครน/ปั้นจั่นและเปิดหน้ารายละเอียดอย่างรวดเร็ว</p>
+        <button class="btn btn-primary" id="downloadCraneQrBtn">⬇ ดาวน์โหลด QR Code</button>
       </div>
     </div>
 
@@ -752,6 +821,9 @@
     <div class="subtabs">
       <button class="subtab active" data-toolsubtab="general">ข้อมูลทั่วไป</button>
       <button class="subtab" data-toolsubtab="maint">บำรุงรักษา</button>
+      <button class="subtab" data-toolsubtab="parts">อะไหล่</button>
+      <button class="subtab" data-toolsubtab="files">ไฟล์แนบ</button>
+      <button class="subtab" data-toolsubtab="loc">ตำแหน่ง</button>
       <button class="subtab" data-toolsubtab="qr">QR Code</button>
     </div>
 
@@ -780,6 +852,33 @@
       </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addToolMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="toolsub-parts">
+      <div class="partsbar"><button class="btn btn-sm btn-primary js-admin-only" id="issueForToolBtn">📦 เบิกอะไหล่สำหรับเครื่องมือนี้</button></div>
+      <div class="section-title" style="margin-top:0;">ประวัติการเบิก-จ่ายอะไหล่ของเครื่องมือนี้</div>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="toolPartsTxBody"></tbody></table>
+    </div>
+
+    <div class="subpage" id="toolsub-files">
+      <form class="attachform js-guest-hide" id="toolAttachForm">
+        <div class="field"><label>ไฟล์ (สูงสุด 3MB)</label><input type="file" id="ta_file"></div>
+        <div class="field"><label>หมวดหมู่</label><select id="ta_cat"><option value="manual">คู่มือการใช้งาน</option><option value="warranty">ใบรับประกัน</option><option value="other">อื่นๆ</option></select></div>
+        <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
+      </form>
+      <div id="toolAttachList"></div>
+    </div>
+
+    <div class="subpage" id="toolsub-loc">
+      <div class="detail-item" style="margin-bottom:14px;"><div class="k">ตำแหน่งปัจจุบัน</div><div class="v" id="toolLocCurrent">—</div></div>
+      <div class="section-title">ประวัติการย้ายตำแหน่ง</div>
+      <ul class="lochist" id="toolLocHistList"></ul>
+      <div class="locform">
+        <div class="field"><label>วันที่ย้าย</label><input type="date" id="tl_date"></div>
+        <div class="field"><label>ตำแหน่งใหม่</label><input id="tl_loc"></div>
+        <div class="field"><label>หมายเหตุ</label><input id="tl_note"></div>
+        <button type="button" class="btn btn-sm btn-primary js-guest-hide" id="addToolLocBtn">＋ บันทึก</button>
       </div>
     </div>
 
@@ -1901,7 +2000,12 @@
   }
 
   function populateMachineSelect(sel, selectedId){
-    sel.innerHTML = '<option value="">ไม่ระบุ / งานทั่วไป</option>' + machines.map(m=>`<option value="${m.id}" ${m.id===selectedId?'selected':''}>${escapeHtml(m.code)} · ${escapeHtml(m.name)}</option>`).join('');
+    let html = '<option value="">ไม่ระบุ / งานทั่วไป</option>';
+    if(machines.length){ html += '<optgroup label="เครื่องจักร">' + machines.map(m=>`<option value="${m.id}" ${m.id===selectedId?'selected':''}>${escapeHtml(m.code)} · ${escapeHtml(m.name)}</option>`).join('') + '</optgroup>'; }
+    if(typeof tools!=='undefined' && tools.length){ html += '<optgroup label="เครื่องมือ/อุปกรณ์">' + tools.map(t=>`<option value="${t.id}" ${t.id===selectedId?'selected':''}>${escapeHtml(t.code)} · ${escapeHtml(t.name)}</option>`).join('') + '</optgroup>'; }
+    if(typeof cranes!=='undefined' && cranes.length){ html += '<optgroup label="เครน/ปั้นจั่น">' + cranes.map(c=>`<option value="${c.id}" ${c.id===selectedId?'selected':''}>${escapeHtml(c.code)} · ${escapeHtml(c.name)}</option>`).join('') + '</optgroup>'; }
+    if(typeof vehicles!=='undefined' && vehicles.length){ html += '<optgroup label="ยานพาหนะ">' + vehicles.map(v=>`<option value="${v.id}" ${v.id===selectedId?'selected':''}>${escapeHtml(v.code)} · ${escapeHtml(v.name)}</option>`).join('') + '</optgroup>'; }
+    sel.innerHTML = html;
   }
 
   const TX_TYPE_LABEL = {out:'เบิกออก', in:'รับเข้า', scrap:'ของเสีย/ตัดทิ้ง', adjust:'ปรับยอด'};
@@ -2028,9 +2132,9 @@
     }));
   }
 
-  function renderPartsTxBody(filterMachineId){
+  function renderPartsTxBody(filterMachineId, targetElId){
     const list = filterMachineId ? partsTx.filter(t=>t.machineId===filterMachineId) : partsTx.slice(0,100);
-    const targetId = filterMachineId ? 'machinePartsTxBody' : 'partsTxBody';
+    const targetId = targetElId || (filterMachineId ? 'machinePartsTxBody' : 'partsTxBody');
     const cols = filterMachineId ? 7 : 8;
     $(targetId).innerHTML = list.length ? list.map(t=>`
       <tr>
@@ -2145,7 +2249,10 @@
     if(!res.ok) toast('คำเตือน: จำนวนคงเหลือไม่พอ สต๊อกถูกปรับเป็น 0');
     $('partTxOverlay').classList.remove('show');
     renderPartsPage(); renderLowStockAlerts();
-    if(currentDetailId) renderPartsTxBody(currentDetailId);
+    if(currentDetailId) renderPartsTxBody(currentDetailId, 'machinePartsTxBody');
+    if(typeof currentToolDetailId!=='undefined' && currentToolDetailId) renderPartsTxBody(currentToolDetailId, 'toolPartsTxBody');
+    if(typeof currentCraneDetailId!=='undefined' && currentCraneDetailId) renderPartsTxBody(currentCraneDetailId, 'cranePartsTxBody');
+    if(typeof currentVehicleDetailId!=='undefined' && currentVehicleDetailId) renderPartsTxBody(currentVehicleDetailId, 'vehiclePartsTxBody');
     toast('บันทึกรายการเรียบร้อย');
   });
   $('issueForMachineBtn').addEventListener('click', ()=>{
@@ -2669,6 +2776,9 @@
       tempToolPartRows = [];
       renderToolPartRows();
       await renderToolMaintTable(id);
+      renderPartsTxBody(id, 'toolPartsTxBody');
+      await renderToolFiles(id);
+      await renderToolLoc(id);
       renderToolQr(t);
 
       const isTech = currentRole!=='admin';
@@ -2763,6 +2873,69 @@
     await openToolDetail(currentToolDetailId);
     document.querySelector('[data-toolsubtab="maint"]').click();
     toast('เพิ่มประวัติบำรุงรักษาเรียบร้อย');
+  });
+
+  $('issueForToolBtn').addEventListener('click', ()=>{
+    if(partsCatalog.length===0){ toast('ยังไม่มีอะไหล่ในคลัง กรุณาเพิ่มก่อนที่แท็บ "คลังอะไหล่"'); return; }
+    openPartTx(partsCatalog[0].id, currentToolDetailId);
+    toast('เลือกอะไหล่ในฟอร์ม แล้วกดบันทึกเพื่อเบิกให้เครื่องมือนี้');
+  });
+
+  async function renderToolFiles(id){
+    const list = await loadList(filesCache,'files_', id);
+    const catLabel = {manual:'คู่มือการใช้งาน', warranty:'ใบรับประกัน', other:'อื่นๆ'};
+    $('toolAttachList').innerHTML = list.length ? list.map(f=>`
+      <div class="attach-item">
+        <div><div>${escapeHtml(f.name)}</div><div class="meta">${catLabel[f.cat]||'อื่นๆ'} · ${(f.size/1024).toFixed(0)} KB · ${fmtDate(f.date)}</div></div>
+        <div style="display:flex;gap:8px;">
+          <a class="btn btn-sm" href="${f.dataUrl}" download="${escapeHtml(f.name)}">⬇ ดาวน์โหลด</a>
+          <button class="btn btn-sm btn-danger" data-delfile="${f.id}">ลบ</button>
+        </div>
+      </div>`).join('') : `<div class="ap-empty">ยังไม่มีไฟล์แนบ</div>`;
+    $('toolAttachList').querySelectorAll('[data-delfile]').forEach(btn=>btn.addEventListener('click', async ()=>{
+      let list2 = await loadList(filesCache,'files_', id);
+      list2 = list2.filter(x=>x.id!==btn.dataset.delfile);
+      await saveList(filesCache,'files_', id, list2);
+      await renderToolFiles(id);
+      toast('ลบไฟล์เรียบร้อย');
+    }));
+  }
+  $('toolAttachForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    if(!currentToolDetailId) return;
+    const file = $('ta_file').files[0];
+    if(!file){ toast('กรุณาเลือกไฟล์'); return; }
+    if(file.size > 3*1024*1024){ toast('ไฟล์ใหญ่เกินไป (จำกัด 3MB)'); return; }
+    const dataUrl = await readAsDataURL(file);
+    const list = await loadList(filesCache,'files_', currentToolDetailId);
+    list.push({id:'f_'+Date.now(), name:file.name, cat:$('ta_cat').value, dataUrl, size:file.size, date:todayStr()});
+    await saveList(filesCache,'files_', currentToolDetailId, list);
+    $('ta_file').value='';
+    await renderToolFiles(currentToolDetailId);
+    toast('อัปโหลดไฟล์เรียบร้อย');
+  });
+
+  async function renderToolLoc(id){
+    const t = tools.find(x=>x.id===id);
+    $('toolLocCurrent').textContent = (t && t.location) || '—';
+    const list = await loadList(locCache,'loc_', id);
+    const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+    $('toolLocHistList').innerHTML = sorted.length ? sorted.map(r=>`<li><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</li>`).join('') : `<li style="color:var(--text-faint);">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('tl_date').value = todayStr();
+  }
+  $('addToolLocBtn').addEventListener('click', async ()=>{
+    if(!currentToolDetailId) return;
+    const date = $('tl_date').value, loc = $('tl_loc').value.trim();
+    if(!date||!loc){ toast('กรุณากรอกวันที่และตำแหน่งใหม่'); return; }
+    const list = await loadList(locCache,'loc_', currentToolDetailId);
+    list.push({date, loc, note:$('tl_note').value.trim()});
+    await saveList(locCache,'loc_', currentToolDetailId, list);
+    const t = tools.find(x=>x.id===currentToolDetailId); if(t) t.location = loc;
+    await saveTools();
+    $('tl_loc').value=''; $('tl_note').value='';
+    await renderToolLoc(currentToolDetailId);
+    renderToolsPage();
+    toast('บันทึกการย้ายตำแหน่งเรียบร้อย');
   });
 
   $('editToolFromDetail').addEventListener('click', ()=>{ const t = tools.find(x=>x.id===currentToolDetailId); closeToolDetail(); openToolForm(t); });
@@ -3137,6 +3310,10 @@
       tempCranePartRows = [];
       renderCranePartRows();
       await renderCraneMaintTable(id);
+      renderPartsTxBody(id, 'cranePartsTxBody');
+      await renderCraneFiles(id);
+      await renderCraneLoc(id);
+      renderCraneQr(c);
 
       const isTech = currentRole!=='admin';
       $('deleteCraneFromDetail').style.display = isTech ? 'none':'';
@@ -3208,6 +3385,89 @@
     await openCraneDetail(currentCraneDetailId);
     document.querySelector('[data-cranesubtab="maint"]').click();
     toast('เพิ่มประวัติการตรวจสอบเรียบร้อย');
+  });
+
+  function renderCraneQr(c){
+    $('craneQrcanvas').innerHTML = '';
+    try{
+      if(typeof QRCode === 'undefined') throw new Error('ไลบรารี QR Code โหลดไม่สำเร็จ');
+      const due = getDueInfo(c);
+      const asciiSafe = (s, n) => { let out=String(s||'').replace(/[^\x20-\x7E]/g,'').replace(/\s+/g,' ').trim(); if(!out) out='-'; return out.length>n?out.slice(0,n-1)+'.':out; };
+      const dueAscii = asciiSafe(due.text, 30);
+      const lines = [asciiSafe(c.name,40)||'Crane','Code: '+asciiSafe(c.code,20),'Location: '+asciiSafe(c.location,30),'Next Maint: '+(dueAscii==='-'?asciiSafe(c.nextMaint,20):dueAscii)];
+      new QRCode($('craneQrcanvas'), {text: lines.join('\n'), width:220, height:220, colorDark:'#12161b', colorLight:'#ffffff', correctLevel:(QRCode.CorrectLevel && QRCode.CorrectLevel.L)||1});
+    }catch(err){
+      $('craneQrcanvas').innerHTML = '<div class="hint" style="color:var(--red);">ไม่สามารถสร้าง QR Code ได้<br>รายละเอียด: '+escapeHtml(err && err.message ? err.message : String(err))+'</div>';
+    }
+  }
+  $('downloadCraneQrBtn').addEventListener('click', ()=>{
+    const canvas = $('craneQrcanvas').querySelector('canvas');
+    if(!canvas){ toast('ไม่พบ QR Code'); return; }
+    const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = 'qr_'+(currentCraneDetailId||'crane')+'.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
+  $('issueForCraneBtn').addEventListener('click', ()=>{
+    if(partsCatalog.length===0){ toast('ยังไม่มีอะไหล่ในคลัง กรุณาเพิ่มก่อนที่แท็บ "คลังอะไหล่"'); return; }
+    openPartTx(partsCatalog[0].id, currentCraneDetailId);
+    toast('เลือกอะไหล่ในฟอร์ม แล้วกดบันทึกเพื่อเบิกให้เครนนี้');
+  });
+
+  async function renderCraneFiles(id){
+    const list = await loadList(filesCache,'files_', id);
+    const catLabel = {manual:'คู่มือการใช้งาน', warranty:'ใบรับประกัน', other:'อื่นๆ'};
+    $('craneAttachList').innerHTML = list.length ? list.map(f=>`
+      <div class="attach-item">
+        <div><div>${escapeHtml(f.name)}</div><div class="meta">${catLabel[f.cat]||'อื่นๆ'} · ${(f.size/1024).toFixed(0)} KB · ${fmtDate(f.date)}</div></div>
+        <div style="display:flex;gap:8px;">
+          <a class="btn btn-sm" href="${f.dataUrl}" download="${escapeHtml(f.name)}">⬇ ดาวน์โหลด</a>
+          <button class="btn btn-sm btn-danger" data-delfile="${f.id}">ลบ</button>
+        </div>
+      </div>`).join('') : `<div class="ap-empty">ยังไม่มีไฟล์แนบ</div>`;
+    $('craneAttachList').querySelectorAll('[data-delfile]').forEach(btn=>btn.addEventListener('click', async ()=>{
+      let list2 = await loadList(filesCache,'files_', id);
+      list2 = list2.filter(x=>x.id!==btn.dataset.delfile);
+      await saveList(filesCache,'files_', id, list2);
+      await renderCraneFiles(id);
+      toast('ลบไฟล์เรียบร้อย');
+    }));
+  }
+  $('craneAttachForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    if(!currentCraneDetailId) return;
+    const file = $('cra_file').files[0];
+    if(!file){ toast('กรุณาเลือกไฟล์'); return; }
+    if(file.size > 3*1024*1024){ toast('ไฟล์ใหญ่เกินไป (จำกัด 3MB)'); return; }
+    const dataUrl = await readAsDataURL(file);
+    const list = await loadList(filesCache,'files_', currentCraneDetailId);
+    list.push({id:'f_'+Date.now(), name:file.name, cat:$('cra_cat').value, dataUrl, size:file.size, date:todayStr()});
+    await saveList(filesCache,'files_', currentCraneDetailId, list);
+    $('cra_file').value='';
+    await renderCraneFiles(currentCraneDetailId);
+    toast('อัปโหลดไฟล์เรียบร้อย');
+  });
+
+  async function renderCraneLoc(id){
+    const c = cranes.find(x=>x.id===id);
+    $('craneLocCurrent').textContent = (c && c.location) || '—';
+    const list = await loadList(locCache,'loc_', id);
+    const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+    $('craneLocHistList').innerHTML = sorted.length ? sorted.map(r=>`<li><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</li>`).join('') : `<li style="color:var(--text-faint);">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('crl_date').value = todayStr();
+  }
+  $('addCraneLocBtn').addEventListener('click', async ()=>{
+    if(!currentCraneDetailId) return;
+    const date = $('crl_date').value, loc = $('crl_loc').value.trim();
+    if(!date||!loc){ toast('กรุณากรอกวันที่และตำแหน่งใหม่'); return; }
+    const list = await loadList(locCache,'loc_', currentCraneDetailId);
+    list.push({date, loc, note:$('crl_note').value.trim()});
+    await saveList(locCache,'loc_', currentCraneDetailId, list);
+    const c = cranes.find(x=>x.id===currentCraneDetailId); if(c) c.location = loc;
+    await saveCranes();
+    $('crl_loc').value=''; $('crl_note').value='';
+    await renderCraneLoc(currentCraneDetailId);
+    renderCranesPage();
+    toast('บันทึกการย้ายตำแหน่งเรียบร้อย');
   });
 
   const CRANE_SEVERITY_LABEL = {near:'เกือบเกิดเหตุ', minor:'เล็กน้อย', major:'รุนแรง'};
@@ -3597,6 +3857,9 @@
       tempVehiclePartRows = [];
       renderVehiclePartRows();
       await renderVehicleMaintTable(id);
+      renderPartsTxBody(id, 'vehiclePartsTxBody');
+      await renderVehicleFiles(id);
+      await renderVehicleLoc(id);
       renderVehicleQr(v);
 
       const isTech = currentRole!=='admin';
@@ -3690,6 +3953,69 @@
     await openVehicleDetail(currentVehicleDetailId);
     document.querySelector('[data-vehiclesubtab="maint"]').click();
     toast('เพิ่มประวัติบำรุงรักษาเรียบร้อย');
+  });
+
+  $('issueForVehicleBtn').addEventListener('click', ()=>{
+    if(partsCatalog.length===0){ toast('ยังไม่มีอะไหล่ในคลัง กรุณาเพิ่มก่อนที่แท็บ "คลังอะไหล่"'); return; }
+    openPartTx(partsCatalog[0].id, currentVehicleDetailId);
+    toast('เลือกอะไหล่ในฟอร์ม แล้วกดบันทึกเพื่อเบิกให้ยานพาหนะนี้');
+  });
+
+  async function renderVehicleFiles(id){
+    const list = await loadList(filesCache,'files_', id);
+    const catLabel = {manual:'คู่มือการใช้งาน', warranty:'ใบรับประกัน', other:'อื่นๆ'};
+    $('vehicleAttachList').innerHTML = list.length ? list.map(f=>`
+      <div class="attach-item">
+        <div><div>${escapeHtml(f.name)}</div><div class="meta">${catLabel[f.cat]||'อื่นๆ'} · ${(f.size/1024).toFixed(0)} KB · ${fmtDate(f.date)}</div></div>
+        <div style="display:flex;gap:8px;">
+          <a class="btn btn-sm" href="${f.dataUrl}" download="${escapeHtml(f.name)}">⬇ ดาวน์โหลด</a>
+          <button class="btn btn-sm btn-danger" data-delfile="${f.id}">ลบ</button>
+        </div>
+      </div>`).join('') : `<div class="ap-empty">ยังไม่มีไฟล์แนบ</div>`;
+    $('vehicleAttachList').querySelectorAll('[data-delfile]').forEach(btn=>btn.addEventListener('click', async ()=>{
+      let list2 = await loadList(filesCache,'files_', id);
+      list2 = list2.filter(x=>x.id!==btn.dataset.delfile);
+      await saveList(filesCache,'files_', id, list2);
+      await renderVehicleFiles(id);
+      toast('ลบไฟล์เรียบร้อย');
+    }));
+  }
+  $('vehicleAttachForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    if(!currentVehicleDetailId) return;
+    const file = $('va_file').files[0];
+    if(!file){ toast('กรุณาเลือกไฟล์'); return; }
+    if(file.size > 3*1024*1024){ toast('ไฟล์ใหญ่เกินไป (จำกัด 3MB)'); return; }
+    const dataUrl = await readAsDataURL(file);
+    const list = await loadList(filesCache,'files_', currentVehicleDetailId);
+    list.push({id:'f_'+Date.now(), name:file.name, cat:$('va_cat').value, dataUrl, size:file.size, date:todayStr()});
+    await saveList(filesCache,'files_', currentVehicleDetailId, list);
+    $('va_file').value='';
+    await renderVehicleFiles(currentVehicleDetailId);
+    toast('อัปโหลดไฟล์เรียบร้อย');
+  });
+
+  async function renderVehicleLoc(id){
+    const v = vehicles.find(x=>x.id===id);
+    $('vehicleLocCurrent').textContent = (v && v.location) || '—';
+    const list = await loadList(locCache,'loc_', id);
+    const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+    $('vehicleLocHistList').innerHTML = sorted.length ? sorted.map(r=>`<li><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</li>`).join('') : `<li style="color:var(--text-faint);">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('vl_date').value = todayStr();
+  }
+  $('addVehicleLocBtn').addEventListener('click', async ()=>{
+    if(!currentVehicleDetailId) return;
+    const date = $('vl_date').value, loc = $('vl_loc').value.trim();
+    if(!date||!loc){ toast('กรุณากรอกวันที่และตำแหน่งใหม่'); return; }
+    const list = await loadList(locCache,'loc_', currentVehicleDetailId);
+    list.push({date, loc, note:$('vl_note').value.trim()});
+    await saveList(locCache,'loc_', currentVehicleDetailId, list);
+    const v = vehicles.find(x=>x.id===currentVehicleDetailId); if(v) v.location = loc;
+    await saveVehicles();
+    $('vl_loc').value=''; $('vl_note').value='';
+    await renderVehicleLoc(currentVehicleDetailId);
+    renderVehiclesPage();
+    toast('บันทึกการย้ายตำแหน่งเรียบร้อย');
   });
 
   $('editVehicleFromDetail').addEventListener('click', ()=>{ const v = vehicles.find(x=>x.id===currentVehicleDetailId); closeVehicleDetail(); openVehicleForm(v); });

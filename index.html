@@ -243,6 +243,10 @@
       <div class="ap-head"><span>⏳ แจ้งเตือนอะไหล่ใกล้/หมดอายุ</span><span id="apExpiryCount" style="color:var(--text-dim);font-family:var(--font-mono);"></span></div>
       <div id="alertExpiryList"></div>
     </div>
+    <div class="alertpanel">
+      <div class="ap-head"><span>📄 แจ้งเตือนใบอนุญาต/ใบรับรองใกล้หมดอายุ</span><span id="apPermitCount" style="color:var(--text-dim);font-family:var(--font-mono);"></span></div>
+      <div id="alertPermitList"></div>
+    </div>
     <div class="section-title" style="margin-top:4px;">ภาพรวมคลังและทรัพย์สินอื่น</div>
     <div class="stats" id="overviewCards" style="grid-template-columns:repeat(4,1fr);"></div>
     <div class="chartgrid">
@@ -457,6 +461,7 @@
       <button class="subtab" data-vehiclesubtab="files">ไฟล์แนบ</button>
       <button class="subtab" data-vehiclesubtab="loc">ตำแหน่ง</button>
       <button class="subtab" data-vehiclesubtab="qr">QR Code</button>
+      <button class="subtab" data-vehiclesubtab="incident">อุบัติเหตุ/เหตุการณ์</button>
     </div>
 
     <div class="subpage active" id="vehiclesub-general">
@@ -482,6 +487,18 @@
         <div id="vehiclePartRows"></div>
         <button type="button" class="btn btn-sm" id="addVehiclePartRowBtn">＋ เพิ่มอะไหล่</button>
       </div>
+      <div class="maint-add-full">
+        <label style="font-size:12px;color:var(--text-dim);">ความปลอดภัยและสิ่งแวดล้อม (ISO 45001 / ISO 14001)</label>
+        <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+          <input type="checkbox" id="vm_loto" style="width:18px;height:18px;">
+          <label for="vm_loto" style="font-size:13px;margin:0;">🔒 ดำเนินการ Lockout-Tagout (LOTO) ก่อนเริ่มงานแล้ว</label>
+        </div>
+        <div class="maint-add" style="margin-top:2px;">
+          <div class="field"><label>ของเสียที่เกิดขึ้น</label><select id="vm_wastetype"><option value="">ไม่มี</option><option value="oil">น้ำมันใช้แล้ว</option><option value="rag">ผ้า/วัสดุเปื้อนน้ำมัน</option><option value="battery">แบตเตอรี่เก่า</option><option value="chemical">สารเคมี/น้ำยา</option><option value="other">อื่นๆ</option></select></div>
+          <div class="field"><label>ปริมาณ</label><input type="text" id="vm_wasteqty" placeholder="เช่น 5 ลิตร"></div>
+          <div class="field"><label>วิธีกำจัด</label><input type="text" id="vm_wastedisposal" placeholder="เช่น ส่งบริษัทกำจัดของเสีย"></div>
+        </div>
+      </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addVehicleMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
       </div>
@@ -500,6 +517,14 @@
         <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
       </form>
       <div id="vehicleAttachList"></div>
+      <div class="section-title" style="margin-top:20px;">ใบอนุญาต/ใบรับรอง (ISO 45001 ข้อ 6.1.3)</div>
+      <div id="vehiclePermitList"></div>
+      <div class="maint-add js-guest-hide" style="margin-top:10px;">
+        <div class="field"><label>ชื่อใบอนุญาต/ใบรับรอง</label><input id="vehiclepermit_name" placeholder="เช่น ใบขับขี่/ภาษี/พรบ."></div>
+        <div class="field"><label>เลขที่</label><input id="vehiclepermit_number"></div>
+        <div class="field"><label>วันหมดอายุ</label><input type="date" id="vehiclepermit_expiry"></div>
+      </div>
+      <button type="button" class="btn btn-sm js-guest-hide" id="addVehiclePermitBtn" style="margin-top:6px;">＋ เพิ่มใบอนุญาต/ใบรับรอง</button>
     </div>
 
     <div class="subpage" id="vehiclesub-loc">
@@ -519,6 +544,21 @@
         <div id="vehicleQrcanvas"></div>
         <p style="color:var(--text-dim);font-size:12.5px;">สแกนเพื่อดูรหัสยานพาหนะและเปิดหน้ารายละเอียดอย่างรวดเร็ว</p>
         <button class="btn btn-primary" id="downloadVehicleQrBtn">⬇ ดาวน์โหลด QR Code</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="vehiclesub-incident">
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="vehicleIncidentBody"></tbody></table>
+      <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
+      <div class="maint-add">
+        <div class="field"><label>วันที่</label><input type="date" id="vi_date"></div>
+        <div class="field"><label>ความรุนแรง</label><select id="vi_severity"><option value="near">เกือบเกิดเหตุ (Near Miss)</option><option value="minor">เล็กน้อย (Minor)</option><option value="major">รุนแรง (Major)</option></select></div>
+        <div class="field full"><label>รายละเอียดเหตุการณ์</label><input id="vi_desc" placeholder="อธิบายสิ่งที่เกิดขึ้น..."></div>
+        <div class="field full"><label>มาตรการแก้ไข/ป้องกัน (Corrective Action)</label><input id="vi_action" placeholder="สิ่งที่ดำเนินการแก้ไข/ป้องกันไม่ให้เกิดซ้ำ..."></div>
+        <div class="field"><label>ผู้รายงาน</label><input id="vi_reporter"></div>
+      </div>
+      <div class="modal-actions" style="border-top:none;">
+        <button class="btn btn-primary js-guest-hide" id="addVehicleIncidentBtn">💾 บันทึกเหตุการณ์</button>
       </div>
     </div>
 
@@ -684,6 +724,18 @@
         <div id="cranePartRows"></div>
         <button type="button" class="btn btn-sm" id="addCranePartRowBtn">＋ เพิ่มอะไหล่</button>
       </div>
+      <div class="maint-add-full">
+        <label style="font-size:12px;color:var(--text-dim);">ความปลอดภัยและสิ่งแวดล้อม (ISO 45001 / ISO 14001)</label>
+        <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+          <input type="checkbox" id="crm_loto" style="width:18px;height:18px;">
+          <label for="crm_loto" style="font-size:13px;margin:0;">🔒 ดำเนินการ Lockout-Tagout (LOTO) ก่อนเริ่มงานแล้ว</label>
+        </div>
+        <div class="maint-add" style="margin-top:2px;">
+          <div class="field"><label>ของเสียที่เกิดขึ้น</label><select id="crm_wastetype"><option value="">ไม่มี</option><option value="oil">น้ำมันใช้แล้ว</option><option value="rag">ผ้า/วัสดุเปื้อนน้ำมัน</option><option value="battery">แบตเตอรี่เก่า</option><option value="chemical">สารเคมี/น้ำยา</option><option value="other">อื่นๆ</option></select></div>
+          <div class="field"><label>ปริมาณ</label><input type="text" id="crm_wasteqty" placeholder="เช่น 5 ลิตร"></div>
+          <div class="field"><label>วิธีกำจัด</label><input type="text" id="crm_wastedisposal" placeholder="เช่น ส่งบริษัทกำจัดของเสีย"></div>
+        </div>
+      </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addCraneMaintBtn">💾 บันทึกรายการ</button>
       </div>
@@ -702,6 +754,14 @@
         <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
       </form>
       <div id="craneAttachList"></div>
+      <div class="section-title" style="margin-top:20px;">ใบอนุญาต/ใบรับรอง (ISO 45001 ข้อ 6.1.3)</div>
+      <div id="cranePermitList"></div>
+      <div class="maint-add js-guest-hide" style="margin-top:10px;">
+        <div class="field"><label>ชื่อใบอนุญาต/ใบรับรอง</label><input id="cranepermit_name" placeholder="เช่น ใบอนุญาตผู้บังคับปั้นจั่น"></div>
+        <div class="field"><label>เลขที่</label><input id="cranepermit_number"></div>
+        <div class="field"><label>วันหมดอายุ</label><input type="date" id="cranepermit_expiry"></div>
+      </div>
+      <button type="button" class="btn btn-sm js-guest-hide" id="addCranePermitBtn" style="margin-top:6px;">＋ เพิ่มใบอนุญาต/ใบรับรอง</button>
     </div>
 
     <div class="subpage" id="cranesub-loc">
@@ -825,6 +885,7 @@
       <button class="subtab" data-toolsubtab="files">ไฟล์แนบ</button>
       <button class="subtab" data-toolsubtab="loc">ตำแหน่ง</button>
       <button class="subtab" data-toolsubtab="qr">QR Code</button>
+      <button class="subtab" data-toolsubtab="incident">อุบัติเหตุ/เหตุการณ์</button>
     </div>
 
     <div class="subpage active" id="toolsub-general">
@@ -850,6 +911,18 @@
         <div id="toolPartRows"></div>
         <button type="button" class="btn btn-sm" id="addToolPartRowBtn">＋ เพิ่มอะไหล่</button>
       </div>
+      <div class="maint-add-full">
+        <label style="font-size:12px;color:var(--text-dim);">ความปลอดภัยและสิ่งแวดล้อม (ISO 45001 / ISO 14001)</label>
+        <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+          <input type="checkbox" id="tm_loto" style="width:18px;height:18px;">
+          <label for="tm_loto" style="font-size:13px;margin:0;">🔒 ดำเนินการ Lockout-Tagout (LOTO) ก่อนเริ่มงานแล้ว</label>
+        </div>
+        <div class="maint-add" style="margin-top:2px;">
+          <div class="field"><label>ของเสียที่เกิดขึ้น</label><select id="tm_wastetype"><option value="">ไม่มี</option><option value="oil">น้ำมันใช้แล้ว</option><option value="rag">ผ้า/วัสดุเปื้อนน้ำมัน</option><option value="battery">แบตเตอรี่เก่า</option><option value="chemical">สารเคมี/น้ำยา</option><option value="other">อื่นๆ</option></select></div>
+          <div class="field"><label>ปริมาณ</label><input type="text" id="tm_wasteqty" placeholder="เช่น 5 ลิตร"></div>
+          <div class="field"><label>วิธีกำจัด</label><input type="text" id="tm_wastedisposal" placeholder="เช่น ส่งบริษัทกำจัดของเสีย"></div>
+        </div>
+      </div>
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addToolMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
       </div>
@@ -868,6 +941,14 @@
         <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
       </form>
       <div id="toolAttachList"></div>
+      <div class="section-title" style="margin-top:20px;">ใบอนุญาต/ใบรับรอง (ISO 45001 ข้อ 6.1.3)</div>
+      <div id="toolPermitList"></div>
+      <div class="maint-add js-guest-hide" style="margin-top:10px;">
+        <div class="field"><label>ชื่อใบอนุญาต/ใบรับรอง</label><input id="toolpermit_name" placeholder="เช่น ใบรับรองผู้ใช้งานเครื่องมือ"></div>
+        <div class="field"><label>เลขที่</label><input id="toolpermit_number"></div>
+        <div class="field"><label>วันหมดอายุ</label><input type="date" id="toolpermit_expiry"></div>
+      </div>
+      <button type="button" class="btn btn-sm js-guest-hide" id="addToolPermitBtn" style="margin-top:6px;">＋ เพิ่มใบอนุญาต/ใบรับรอง</button>
     </div>
 
     <div class="subpage" id="toolsub-loc">
@@ -887,6 +968,21 @@
         <div id="toolQrcanvas"></div>
         <p style="color:var(--text-dim);font-size:12.5px;">สแกนเพื่อดูรหัสเครื่องมือ/อุปกรณ์และเปิดหน้ารายละเอียดอย่างรวดเร็ว</p>
         <button class="btn btn-primary" id="downloadToolQrBtn">⬇ ดาวน์โหลด QR Code</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="toolsub-incident">
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="toolIncidentBody"></tbody></table>
+      <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
+      <div class="maint-add">
+        <div class="field"><label>วันที่</label><input type="date" id="ti_date"></div>
+        <div class="field"><label>ความรุนแรง</label><select id="ti_severity"><option value="near">เกือบเกิดเหตุ (Near Miss)</option><option value="minor">เล็กน้อย (Minor)</option><option value="major">รุนแรง (Major)</option></select></div>
+        <div class="field full"><label>รายละเอียดเหตุการณ์</label><input id="ti_desc" placeholder="อธิบายสิ่งที่เกิดขึ้น..."></div>
+        <div class="field full"><label>มาตรการแก้ไข/ป้องกัน (Corrective Action)</label><input id="ti_action" placeholder="สิ่งที่ดำเนินการแก้ไข/ป้องกันไม่ให้เกิดซ้ำ..."></div>
+        <div class="field"><label>ผู้รายงาน</label><input id="ti_reporter"></div>
+      </div>
+      <div class="modal-actions" style="border-top:none;">
+        <button class="btn btn-primary js-guest-hide" id="addToolIncidentBtn">💾 บันทึกเหตุการณ์</button>
       </div>
     </div>
 
@@ -1053,6 +1149,7 @@
       <button class="subtab" data-subtab="files">ไฟล์แนบ</button>
       <button class="subtab" data-subtab="loc">ตำแหน่ง</button>
       <button class="subtab" data-subtab="qr">QR Code</button>
+      <button class="subtab" data-subtab="incident">อุบัติเหตุ/เหตุการณ์</button>
     </div>
 
     <div class="subpage active" id="sub-general">
@@ -1081,6 +1178,19 @@
         <button type="button" class="btn btn-sm" id="addPartRowBtn">＋ เพิ่มอะไหล่</button>
       </div>
 
+      <div class="maint-add-full">
+        <label style="font-size:12px;color:var(--text-dim);">ความปลอดภัยและสิ่งแวดล้อม (ISO 45001 / ISO 14001)</label>
+        <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+          <input type="checkbox" id="m_loto" style="width:18px;height:18px;">
+          <label for="m_loto" style="font-size:13px;margin:0;">🔒 ดำเนินการ Lockout-Tagout (LOTO) ก่อนเริ่มงานแล้ว</label>
+        </div>
+        <div class="maint-add" style="margin-top:2px;">
+          <div class="field"><label>ของเสียที่เกิดขึ้น</label><select id="m_wastetype"><option value="">ไม่มี</option><option value="oil">น้ำมันใช้แล้ว</option><option value="rag">ผ้า/วัสดุเปื้อนน้ำมัน</option><option value="battery">แบตเตอรี่เก่า</option><option value="chemical">สารเคมี/น้ำยา</option><option value="other">อื่นๆ</option></select></div>
+          <div class="field"><label>ปริมาณ</label><input type="text" id="m_wasteqty" placeholder="เช่น 5 ลิตร"></div>
+          <div class="field"><label>วิธีกำจัด</label><input type="text" id="m_wastedisposal" placeholder="เช่น ส่งบริษัทกำจัดของเสีย"></div>
+        </div>
+      </div>
+
       <div class="modal-actions" style="border-top:none;">
         <button class="btn btn-primary js-guest-hide" id="addMaintBtn">💾 บันทึกรายการบำรุงรักษา</button>
       </div>
@@ -1099,6 +1209,14 @@
         <button type="submit" class="btn btn-sm btn-primary">⬆ อัปโหลด</button>
       </form>
       <div id="attachList"></div>
+      <div class="section-title" style="margin-top:20px;">ใบอนุญาต/ใบรับรอง (ISO 45001 ข้อ 6.1.3)</div>
+      <div id="permitList"></div>
+      <div class="maint-add js-guest-hide" style="margin-top:10px;">
+        <div class="field"><label>ชื่อใบอนุญาต/ใบรับรอง</label><input id="permit_name" placeholder="เช่น ใบอนุญาตทำงานที่อับอากาศ"></div>
+        <div class="field"><label>เลขที่</label><input id="permit_number"></div>
+        <div class="field"><label>วันหมดอายุ</label><input type="date" id="permit_expiry"></div>
+      </div>
+      <button type="button" class="btn btn-sm js-guest-hide" id="addPermitBtn" style="margin-top:6px;">＋ เพิ่มใบอนุญาต/ใบรับรอง</button>
     </div>
 
     <div class="subpage" id="sub-loc">
@@ -1118,6 +1236,21 @@
         <div id="qrcanvas"></div>
         <p style="color:var(--text-dim);font-size:12.5px;">สแกนเพื่อดูรหัสเครื่องจักรและเปิดหน้ารายละเอียดอย่างรวดเร็ว</p>
         <button class="btn btn-primary" id="downloadQrBtn">⬇ ดาวน์โหลด QR Code</button>
+      </div>
+    </div>
+
+    <div class="subpage" id="sub-incident">
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="machineIncidentBody"></tbody></table>
+      <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
+      <div class="maint-add">
+        <div class="field"><label>วันที่</label><input type="date" id="mi_date"></div>
+        <div class="field"><label>ความรุนแรง</label><select id="mi_severity"><option value="near">เกือบเกิดเหตุ (Near Miss)</option><option value="minor">เล็กน้อย (Minor)</option><option value="major">รุนแรง (Major)</option></select></div>
+        <div class="field full"><label>รายละเอียดเหตุการณ์</label><input id="mi_desc" placeholder="อธิบายสิ่งที่เกิดขึ้น..."></div>
+        <div class="field full"><label>มาตรการแก้ไข/ป้องกัน (Corrective Action)</label><input id="mi_action" placeholder="สิ่งที่ดำเนินการแก้ไข/ป้องกันไม่ให้เกิดซ้ำ..."></div>
+        <div class="field"><label>ผู้รายงาน</label><input id="mi_reporter"></div>
+      </div>
+      <div class="modal-actions" style="border-top:none;">
+        <button class="btn btn-primary js-guest-hide" id="addMachineIncidentBtn">💾 บันทึกเหตุการณ์</button>
       </div>
     </div>
 
@@ -1428,6 +1561,63 @@
     return {overdue: d<0, soon: d>=0 && d<=DUE_SOON_DAYS, text: fmtDate(m.nextMaint)+(d<0?' (เลยกำหนด)': d<=DUE_SOON_DAYS? ' (อีก '+d+' วัน)':'')};
   }
 
+  // ===== PERMITS / CERTIFICATES REGISTRY (shared across all asset types, ISO 45001 6.1.3) =====
+  let permitCache = {};
+  async function renderPermits(id, listElId){
+    const list = await loadList(permitCache, 'permits_', id);
+    const sorted = [...list].sort((a,b)=>(a.expiry||'').localeCompare(b.expiry||''));
+    $(listElId).innerHTML = sorted.length ? sorted.map(p=>{
+      const overdue = p.expiry && new Date(p.expiry) < new Date();
+      const d = p.expiry ? daysBetween(todayStr(), p.expiry) : null;
+      const soon = !overdue && d!==null && d<=DUE_SOON_DAYS;
+      const statusHtml = overdue ? '<span style="color:var(--red);">หมดอายุแล้ว</span>' : soon ? '<span style="color:var(--amber);">ใกล้หมดอายุ (อีก '+d+' วัน)</span>' : '<span style="color:var(--green);">ปกติ</span>';
+      return `<div class="attach-item">
+        <div><div>${escapeHtml(p.name)}</div><div class="meta">เลขที่ ${escapeHtml(p.number||'-')} · หมดอายุ ${fmtDate(p.expiry)} · ${statusHtml}</div></div>
+        <button class="btn btn-sm btn-danger js-guest-hide" data-delpermit="${p.id}">ลบ</button>
+      </div>`;
+    }).join('') : `<div class="ap-empty">ยังไม่มีใบอนุญาต/ใบรับรอง</div>`;
+    $(listElId).querySelectorAll('[data-delpermit]').forEach(btn=>btn.addEventListener('click', async ()=>{
+      let list2 = await loadList(permitCache, 'permits_', id);
+      list2 = list2.filter(x=>x.id!==btn.dataset.delpermit);
+      await saveList(permitCache, 'permits_', id, list2);
+      await renderPermits(id, listElId);
+      toast('ลบใบอนุญาต/ใบรับรองแล้ว');
+    }));
+    applyRoleUI();
+  }
+  function wirePermitForm(addBtnId, nameId, numberId, expiryId, listElId, getCurrentId){
+    $(addBtnId).addEventListener('click', async ()=>{
+      const id = getCurrentId();
+      if(!id) return;
+      const name = $(nameId).value.trim();
+      if(!name){ toast('กรุณากรอกชื่อใบอนุญาต/ใบรับรอง'); return; }
+      const list = await loadList(permitCache, 'permits_', id);
+      list.push({id:'pm_'+Date.now(), name, number:$(numberId).value.trim(), expiry:$(expiryId).value});
+      await saveList(permitCache, 'permits_', id, list);
+      $(nameId).value=''; $(numberId).value=''; $(expiryId).value='';
+      await renderPermits(id, listElId);
+      toast('เพิ่มใบอนุญาต/ใบรับรองแล้ว');
+    });
+  }
+  async function getAllPermitAlerts(){
+    const allAssets = [
+      ...machines.map(a=>({...a, _kind:'machine'})),
+      ...(typeof tools!=='undefined'?tools:[]).map(a=>({...a, _kind:'tool'})),
+      ...(typeof cranes!=='undefined'?cranes:[]).map(a=>({...a, _kind:'crane'})),
+      ...(typeof vehicles!=='undefined'?vehicles:[]).map(a=>({...a, _kind:'vehicle'}))
+    ];
+    const alerts = [];
+    for(const a of allAssets){
+      const list = await loadList(permitCache, 'permits_', a.id);
+      list.forEach(p=>{
+        if(!p.expiry) return;
+        const d = daysBetween(todayStr(), p.expiry);
+        if(d <= DUE_SOON_DAYS){ alerts.push({asset:a, permit:p, days:d, overdue:d<0}); }
+      });
+    }
+    return alerts.sort((x,y)=>x.days-y.days);
+  }
+
   // ===== STORAGE =====
   async function loadMachines(){
     try{ const res = await window.storage.get('machines_list', false); machines = res && res.value ? JSON.parse(res.value) : []; }
@@ -1665,7 +1855,7 @@
   }
 
   async function renderDashboard(){
-    renderStats(); renderAlerts(); renderLowStockAlerts(); renderOverviewCards(); await renderCharts();
+    renderStats(); renderAlerts(); renderLowStockAlerts(); renderOverviewCards(); await renderCharts(); await renderPermitAlerts();
   }
 
   // ===== TYPE FILTER =====
@@ -1950,6 +2140,9 @@
       await renderFiles(id);
       await renderLoc(id);
       renderQr(m);
+      $('mi_date').value = todayStr();
+      await renderMachineIncidentTable(id);
+      await renderPermits(id, 'permitList');
 
       const isTech = currentRole!=='admin';
       $('deleteFromDetail').style.display = isTech ? 'none':'';
@@ -1964,6 +2157,40 @@
   function closeDetail(){ $('detailOverlay').classList.remove('show'); currentDetailId=null; }
 
   // ===== MAINTENANCE =====
+  const WASTE_LABEL = {oil:'น้ำมันใช้แล้ว', rag:'ผ้า/วัสดุเปื้อนน้ำมัน', battery:'แบตเตอรี่เก่า', chemical:'สารเคมี/น้ำยา', other:'อื่นๆ'};
+  function safetyBadges(r){
+    let out = '';
+    if(r.loto) out += '<span title="ดำเนินการ LOTO แล้ว" style="margin-left:4px;">🔒</span>';
+    if(r.wasteType) out += '<span title="ของเสีย: '+escapeHtml(WASTE_LABEL[r.wasteType]||r.wasteType)+(r.wasteQty?(' '+escapeHtml(r.wasteQty)):'')+(r.wasteDisposal?(' — '+escapeHtml(r.wasteDisposal)):'')+'" style="margin-left:4px;">♻️</span>';
+    return out;
+  }
+  const INCIDENT_SEVERITY_LABEL = {near:'เกือบเกิดเหตุ', minor:'เล็กน้อย', major:'รุนแรง'};
+  let machineIncidentCache = {};
+  async function renderMachineIncidentTable(id){
+    const list = await loadList(machineIncidentCache,'machineincident_', id);
+    const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+    $('machineIncidentBody').innerHTML = sorted.length ? sorted.map(r=>`
+      <tr>
+        <td>${fmtDate(r.date)}</td>
+        <td><span class="tag ${r.severity==='major'?'low':(r.severity==='minor'?'pm':'insp')}">${INCIDENT_SEVERITY_LABEL[r.severity]||r.severity}</span></td>
+        <td>${escapeHtml(r.desc||'—')}</td>
+        <td>${escapeHtml(r.action||'—')}</td>
+        <td>${escapeHtml(r.reporter||'—')}</td>
+      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+  }
+  $('addMachineIncidentBtn').addEventListener('click', async ()=>{
+    if(!currentDetailId) return;
+    const date = $('mi_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
+    const desc = $('mi_desc').value.trim(); if(!desc){ toast('กรุณากรอกรายละเอียดเหตุการณ์'); return; }
+    const record = {id:'inc_'+Date.now(), date, severity:$('mi_severity').value, desc, action:$('mi_action').value.trim(), reporter:$('mi_reporter').value.trim()};
+    const list = await loadList(machineIncidentCache,'machineincident_', currentDetailId);
+    list.push(record);
+    await saveList(machineIncidentCache,'machineincident_', currentDetailId, list);
+    $('mi_desc').value=''; $('mi_action').value=''; $('mi_reporter').value='';
+    await renderMachineIncidentTable(currentDetailId);
+    toast('บันทึกเหตุการณ์เรียบร้อย');
+  });
+  wirePermitForm('addPermitBtn','permit_name','permit_number','permit_expiry','permitList', ()=>currentDetailId);
   async function renderMaintTable(id){
     const list = await loadList(maintCache,'maint_', id);
     const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
@@ -1974,7 +2201,7 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
-        <td>${escapeHtml(r.tech||'—')}</td>
+        <td>${escapeHtml(r.tech||'—')}${safetyBadges(r)}</td>
         <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
       </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
     $('maintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
@@ -2065,6 +2292,24 @@
         document.querySelector('[data-maintab="parts"]').classList.add('active');
         $('page-parts').classList.add('active');
         renderPartsPage();
+      });
+    });
+  }
+
+  async function renderPermitAlerts(){
+    const alerts = await getAllPermitAlerts();
+    $('apPermitCount').textContent = alerts.length ? alerts.length+' รายการ' : '';
+    const KIND_LABEL = {machine:'เครื่องจักร', tool:'เครื่องมือ/อุปกรณ์', crane:'เครน/ปั้นจั่น', vehicle:'ยานพาหนะ'};
+    const KIND_OPENFN = {machine:openDetail, tool:openToolDetail, crane:openCraneDetail, vehicle:openVehicleDetail};
+    $('alertPermitList').innerHTML = alerts.length ? alerts.map(a=>`
+      <div class="ap-row" data-permitkind="${a.asset._kind}" data-permitid="${a.asset.id}">
+        <span>${escapeHtml(KIND_LABEL[a.asset._kind])} · ${escapeHtml(a.asset.code||'-')} · ${escapeHtml(a.permit.name)}</span>
+        <span class="pill ${a.overdue?'red':'amber'}">${a.overdue?'หมดอายุแล้ว '+Math.abs(a.days)+' วัน':'อีก '+a.days+' วันหมดอายุ'}</span>
+      </div>`).join('') : `<div class="ap-empty">ไม่มีใบอนุญาต/ใบรับรองที่ใกล้หรือหมดอายุ</div>`;
+    $('alertPermitList').querySelectorAll('.ap-row').forEach(row=>{
+      row.addEventListener('click', ()=>{
+        const fn = KIND_OPENFN[row.dataset.permitkind];
+        if(fn) fn(row.dataset.permitid);
       });
     });
   }
@@ -2294,8 +2539,10 @@
     if(!currentDetailId) return;
     const date = $('m_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
     const partsUsed = tempPartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
+    const loto = $('m_loto').checked;
+    const wasteType = $('m_wastetype').value, wasteQty = $('m_wasteqty').value.trim(), wasteDisposal = $('m_wastedisposal').value.trim();
 
-    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, desc:$('m_desc').value.trim(), cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), partsUsed};
+    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, desc:$('m_desc').value.trim(), cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(maintCache,'maint_', currentDetailId);
     list.push(record);
     await saveList(maintCache,'maint_', currentDetailId, list);
@@ -2313,7 +2560,7 @@
     const m = machines.find(x=>x.id===currentDetailId);
     if(m && (!m.lastMaint || date >= m.lastMaint)){ m.lastMaint = date; if(m.cycle) m.nextMaint = addDays(date, m.cycle); await saveMachines(); }
 
-    $('m_desc').value=''; $('m_cost').value=''; $('m_tech').value=''; tempPartRows=[];
+    $('m_desc').value=''; $('m_cost').value=''; $('m_tech').value=''; tempPartRows=[]; $('m_loto').checked=false; $('m_wastetype').value=''; $('m_wasteqty').value=''; $('m_wastedisposal').value='';
     renderAll(); renderPartsPage(); renderLowStockAlerts();
     await renderMaintTable(currentDetailId);
     renderPartsTxBody(currentDetailId);
@@ -2780,6 +3027,9 @@
       await renderToolFiles(id);
       await renderToolLoc(id);
       renderToolQr(t);
+      $('ti_date').value = todayStr();
+      await renderToolIncidentTable(id);
+      await renderPermits(id, 'toolPermitList');
 
       const isTech = currentRole!=='admin';
       $('deleteToolFromDetail').style.display = isTech ? 'none':'';
@@ -2837,7 +3087,7 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
-        <td>${escapeHtml(r.tech||'—')}</td>
+        <td>${escapeHtml(r.tech||'—')}${safetyBadges(r)}</td>
         <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
       </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
     $('toolMaintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
@@ -2849,8 +3099,10 @@
     if(!currentToolDetailId) return;
     const date = $('tm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
     const partsUsed = tempToolPartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
+    const loto = $('tm_loto').checked;
+    const wasteType = $('tm_wastetype').value, wasteQty = $('tm_wasteqty').value.trim(), wasteDisposal = $('tm_wastedisposal').value.trim();
 
-    const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, desc:$('tm_desc').value.trim(), cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), partsUsed};
+    const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, desc:$('tm_desc').value.trim(), cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(toolMaintCache,'toolmaint_', currentToolDetailId);
     list.push(record);
     await saveList(toolMaintCache,'toolmaint_', currentToolDetailId, list);
@@ -2867,13 +3119,40 @@
     const t = tools.find(x=>x.id===currentToolDetailId);
     if(t && (!t.lastMaint || date >= t.lastMaint)){ t.lastMaint = date; if(t.cycle) t.nextMaint = addDays(date, t.cycle); await saveTools(); }
 
-    $('tm_desc').value=''; $('tm_cost').value=''; $('tm_tech').value=''; tempToolPartRows=[];
+    $('tm_desc').value=''; $('tm_cost').value=''; $('tm_tech').value=''; tempToolPartRows=[]; $('tm_loto').checked=false; $('tm_wastetype').value=''; $('tm_wasteqty').value=''; $('tm_wastedisposal').value='';
     renderToolsPage();
     await renderToolMaintTable(currentToolDetailId);
     await openToolDetail(currentToolDetailId);
     document.querySelector('[data-toolsubtab="maint"]').click();
     toast('เพิ่มประวัติบำรุงรักษาเรียบร้อย');
   });
+
+  let toolIncidentCache = {};
+  async function renderToolIncidentTable(id){
+    const list = await loadList(toolIncidentCache,'toolincident_', id);
+    const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+    $('toolIncidentBody').innerHTML = sorted.length ? sorted.map(r=>`
+      <tr>
+        <td>${fmtDate(r.date)}</td>
+        <td><span class="tag ${r.severity==='major'?'low':(r.severity==='minor'?'pm':'insp')}">${INCIDENT_SEVERITY_LABEL[r.severity]||r.severity}</span></td>
+        <td>${escapeHtml(r.desc||'—')}</td>
+        <td>${escapeHtml(r.action||'—')}</td>
+        <td>${escapeHtml(r.reporter||'—')}</td>
+      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+  }
+  $('addToolIncidentBtn').addEventListener('click', async ()=>{
+    if(!currentToolDetailId) return;
+    const date = $('ti_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
+    const desc = $('ti_desc').value.trim(); if(!desc){ toast('กรุณากรอกรายละเอียดเหตุการณ์'); return; }
+    const record = {id:'inc_'+Date.now(), date, severity:$('ti_severity').value, desc, action:$('ti_action').value.trim(), reporter:$('ti_reporter').value.trim()};
+    const list = await loadList(toolIncidentCache,'toolincident_', currentToolDetailId);
+    list.push(record);
+    await saveList(toolIncidentCache,'toolincident_', currentToolDetailId, list);
+    $('ti_desc').value=''; $('ti_action').value=''; $('ti_reporter').value='';
+    await renderToolIncidentTable(currentToolDetailId);
+    toast('บันทึกเหตุการณ์เรียบร้อย');
+  });
+  wirePermitForm('addToolPermitBtn','toolpermit_name','toolpermit_number','toolpermit_expiry','toolPermitList', ()=>currentToolDetailId);
 
   $('issueForToolBtn').addEventListener('click', ()=>{
     if(partsCatalog.length===0){ toast('ยังไม่มีอะไหล่ในคลัง กรุณาเพิ่มก่อนที่แท็บ "คลังอะไหล่"'); return; }
@@ -3306,6 +3585,7 @@
 
       $('cri_date').value = todayStr();
       await renderCraneIncidentTable(id);
+      await renderPermits(id, 'cranePermitList');
       $('crm_date').value = todayStr();
       tempCranePartRows = [];
       renderCranePartRows();
@@ -3350,7 +3630,7 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
-        <td>${escapeHtml(r.tech||'—')}</td>
+        <td>${escapeHtml(r.tech||'—')}${safetyBadges(r)}</td>
         <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
       </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการตรวจสอบ/บำรุงรักษา</td></tr>`;
     $('craneMaintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
@@ -3362,7 +3642,9 @@
     if(!currentCraneDetailId) return;
     const date = $('crm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
     const partsUsed = tempCranePartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
-    const record = {id:'r_'+Date.now(), date, type:$('crm_type').value, desc:$('crm_desc').value.trim(), cost:$('crm_cost').value?Number($('crm_cost').value):null, tech:$('crm_tech').value.trim(), partsUsed};
+    const loto = $('crm_loto').checked;
+    const wasteType = $('crm_wastetype').value, wasteQty = $('crm_wasteqty').value.trim(), wasteDisposal = $('crm_wastedisposal').value.trim();
+    const record = {id:'r_'+Date.now(), date, type:$('crm_type').value, desc:$('crm_desc').value.trim(), cost:$('crm_cost').value?Number($('crm_cost').value):null, tech:$('crm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(craneMaintCache,'cranemaint_', currentCraneDetailId);
     list.push(record);
     await saveList(craneMaintCache,'cranemaint_', currentCraneDetailId, list);
@@ -3379,7 +3661,7 @@
     const c = cranes.find(x=>x.id===currentCraneDetailId);
     if(c && (!c.lastMaint || date >= c.lastMaint)){ c.lastMaint = date; if(c.cycle) c.nextMaint = addDays(date, c.cycle); await saveCranes(); }
 
-    $('crm_desc').value=''; $('crm_cost').value=''; $('crm_tech').value=''; tempCranePartRows=[];
+    $('crm_desc').value=''; $('crm_cost').value=''; $('crm_tech').value=''; tempCranePartRows=[]; $('crm_loto').checked=false; $('crm_wastetype').value=''; $('crm_wasteqty').value=''; $('crm_wastedisposal').value='';
     renderCranesPage();
     await renderCraneMaintTable(currentCraneDetailId);
     await openCraneDetail(currentCraneDetailId);
@@ -3498,6 +3780,7 @@
     await renderCraneIncidentTable(currentCraneDetailId);
     toast('บันทึกเหตุการณ์เรียบร้อย');
   });
+  wirePermitForm('addCranePermitBtn','cranepermit_name','cranepermit_number','cranepermit_expiry','cranePermitList', ()=>currentCraneDetailId);
 
   $('editCraneFromDetail').addEventListener('click', ()=>{ const c = cranes.find(x=>x.id===currentCraneDetailId); closeCraneDetail(); openCraneForm(c); });
   $('goPmChecklistCrane').addEventListener('click', ()=>{ const c = cranes.find(x=>x.id===currentCraneDetailId); if(c) window.open('pm-checklist.html?asset='+encodeURIComponent(c.code), '_blank'); });
@@ -3861,6 +4144,9 @@
       await renderVehicleFiles(id);
       await renderVehicleLoc(id);
       renderVehicleQr(v);
+      $('vi_date').value = todayStr();
+      await renderVehicleIncidentTable(id);
+      await renderPermits(id, 'vehiclePermitList');
 
       const isTech = currentRole!=='admin';
       $('deleteVehicleFromDetail').style.display = isTech ? 'none':'';
@@ -3917,7 +4203,7 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${(r.partsUsed&&r.partsUsed.length)? r.partsUsed.map(p=>escapeHtml(p.name)+' x'+p.qty).join(', ') : '—'}</td>
         <td>${fmtMoney(r.cost)}</td>
-        <td>${escapeHtml(r.tech||'—')}</td>
+        <td>${escapeHtml(r.tech||'—')}${safetyBadges(r)}</td>
         <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delmaint="${r.id}" title="ลบรายการนี้">🗑</button></td>
       </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการบำรุงรักษา</td></tr>`;
     $('vehicleMaintBody').querySelectorAll('[data-delmaint]').forEach(btn=>{
@@ -3929,8 +4215,10 @@
     if(!currentVehicleDetailId) return;
     const date = $('vm_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
     const partsUsed = tempVehiclePartRows.filter(r=>r.partId && r.qty>0).map(r=>({partId:r.partId, name:r.name, qty:r.qty}));
+    const loto = $('vm_loto').checked;
+    const wasteType = $('vm_wastetype').value, wasteQty = $('vm_wasteqty').value.trim(), wasteDisposal = $('vm_wastedisposal').value.trim();
 
-    const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, desc:$('vm_desc').value.trim(), cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), partsUsed};
+    const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, desc:$('vm_desc').value.trim(), cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(vehicleMaintCache,'vehiclemaint_', currentVehicleDetailId);
     list.push(record);
     await saveList(vehicleMaintCache,'vehiclemaint_', currentVehicleDetailId, list);
@@ -3947,13 +4235,40 @@
     const v = vehicles.find(x=>x.id===currentVehicleDetailId);
     if(v && (!v.lastMaint || date >= v.lastMaint)){ v.lastMaint = date; if(v.cycle) v.nextMaint = addDays(date, v.cycle); await saveVehicles(); }
 
-    $('vm_desc').value=''; $('vm_cost').value=''; $('vm_tech').value=''; tempVehiclePartRows=[];
+    $('vm_desc').value=''; $('vm_cost').value=''; $('vm_tech').value=''; tempVehiclePartRows=[]; $('vm_loto').checked=false; $('vm_wastetype').value=''; $('vm_wasteqty').value=''; $('vm_wastedisposal').value='';
     renderVehiclesPage();
     await renderVehicleMaintTable(currentVehicleDetailId);
     await openVehicleDetail(currentVehicleDetailId);
     document.querySelector('[data-vehiclesubtab="maint"]').click();
     toast('เพิ่มประวัติบำรุงรักษาเรียบร้อย');
   });
+
+  let vehicleIncidentCache = {};
+  async function renderVehicleIncidentTable(id){
+    const list = await loadList(vehicleIncidentCache,'vehicleincident_', id);
+    const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+    $('vehicleIncidentBody').innerHTML = sorted.length ? sorted.map(r=>`
+      <tr>
+        <td>${fmtDate(r.date)}</td>
+        <td><span class="tag ${r.severity==='major'?'low':(r.severity==='minor'?'pm':'insp')}">${INCIDENT_SEVERITY_LABEL[r.severity]||r.severity}</span></td>
+        <td>${escapeHtml(r.desc||'—')}</td>
+        <td>${escapeHtml(r.action||'—')}</td>
+        <td>${escapeHtml(r.reporter||'—')}</td>
+      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+  }
+  $('addVehicleIncidentBtn').addEventListener('click', async ()=>{
+    if(!currentVehicleDetailId) return;
+    const date = $('vi_date').value; if(!date){ toast('กรุณาระบุวันที่'); return; }
+    const desc = $('vi_desc').value.trim(); if(!desc){ toast('กรุณากรอกรายละเอียดเหตุการณ์'); return; }
+    const record = {id:'inc_'+Date.now(), date, severity:$('vi_severity').value, desc, action:$('vi_action').value.trim(), reporter:$('vi_reporter').value.trim()};
+    const list = await loadList(vehicleIncidentCache,'vehicleincident_', currentVehicleDetailId);
+    list.push(record);
+    await saveList(vehicleIncidentCache,'vehicleincident_', currentVehicleDetailId, list);
+    $('vi_desc').value=''; $('vi_action').value=''; $('vi_reporter').value='';
+    await renderVehicleIncidentTable(currentVehicleDetailId);
+    toast('บันทึกเหตุการณ์เรียบร้อย');
+  });
+  wirePermitForm('addVehiclePermitBtn','vehiclepermit_name','vehiclepermit_number','vehiclepermit_expiry','vehiclePermitList', ()=>currentVehicleDetailId);
 
   $('issueForVehicleBtn').addEventListener('click', ()=>{
     if(partsCatalog.length===0){ toast('ยังไม่มีอะไหล่ในคลัง กรุณาเพิ่มก่อนที่แท็บ "คลังอะไหล่"'); return; }

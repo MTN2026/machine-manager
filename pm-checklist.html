@@ -175,6 +175,10 @@ p.page-sub{font-size:12.5px;color:var(--text-dim);margin:0 0 18px;}
 .mini-item input{flex:1;padding:8px 10px;font-size:12px;}
 .mini-x{width:32px;height:32px;flex-shrink:0;border-radius:7px;background:var(--panel-3);border:1px solid var(--border);color:var(--text-faint);display:flex;align-items:center;justify-content:center;}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+.role-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text-dim);margin-bottom:14px;}
+.role-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);}
+.role-chip.tech .dot{background:var(--blue);} .role-chip.tech{color:var(--blue);border-color:var(--blue);}
+.role-chip.admin .dot{background:var(--amber);} .role-chip.admin{color:var(--amber);border-color:var(--amber);}
 table.plain{width:100%;border-collapse:collapse;font-size:11.5px;}
 table.plain th{text-align:left;color:var(--text-faint);font-weight:500;text-transform:uppercase;font-size:9.5px;letter-spacing:.3px;padding:6px 6px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);}
 table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
@@ -197,6 +201,9 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
     </div>
     <button class="icon-btn no-print" id="btnGoMachineManager" title="ไปที่ Machine Manager" style="text-decoration:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg>
+    </button>
+    <button class="icon-btn no-print" id="btnRole" title="เปลี่ยนบทบาทผู้ใช้">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </button>
     <button class="icon-btn no-print" id="btnBack" style="display:none" aria-label="ย้อนกลับ">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg>
@@ -302,7 +309,7 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
         <textarea id="fOverall" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
       </div>
 
-      <button class="btn btn-primary" id="btnSubmitRecord">
+      <button class="btn btn-primary js-guest-hide" id="btnSubmitRecord">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
         บันทึกผลตรวจเช็ค
       </button>
@@ -351,11 +358,11 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
       <div class="type-tabs" id="mgrTypeTabs"></div>
       <div id="manageList"></div>
       <div class="btn-row" style="margin-top:4px;">
-        <button class="btn btn-primary" id="btnAddAsset">
+        <button class="btn btn-primary js-admin-only" id="btnAddAsset">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
           เพิ่มรายการใหม่
         </button>
-        <button class="btn" id="btnImportCsv">⬆ นำเข้าจาก Machine Manager (CSV)</button>
+        <button class="btn js-admin-only" id="btnImportCsv">⬆ นำเข้าจาก Machine Manager (CSV)</button>
       </div>
       <div class="btn-row" style="margin-top:8px;">
         <button class="btn" id="btnExportAssetsCsv">⬇ ส่งออกรายการ (สรุป)</button>
@@ -374,8 +381,8 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
           <label for="sheetEnabled" style="font-size:13px;margin:0;">เปิดใช้งานการซิงค์อัตโนมัติ</label>
         </div>
         <div class="btn-row">
-          <button class="btn btn-sm" id="btnSaveSheetSettings">บันทึกการตั้งค่า</button>
-          <button class="btn btn-sm" id="btnTestSheet">ส่งข้อมูลทดสอบ</button>
+          <button class="btn btn-sm js-admin-only" id="btnSaveSheetSettings">บันทึกการตั้งค่า</button>
+          <button class="btn btn-sm js-admin-only" id="btnTestSheet">ส่งข้อมูลทดสอบ</button>
         </div>
         <button class="btn btn-ghost btn-sm" id="btnShowSheetGuide" style="margin-top:6px;">ดูวิธีเชื่อมต่อ Google Sheet</button>
       </div>
@@ -550,7 +557,7 @@ var state = {
   assets: [], records: {}, settings: {sheetUrl:'', sheetEnabled:false},
   currentType: 'all', currentAsset: null, currentChecklist: {},
   historyAsset: null, historyFreqFilter: 'all', stream: null,
-  reportTab: 'summary', mgrType: 'machine'
+  reportTab: 'summary', mgrType: 'machine', currentRole: 'guest'
 };
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
@@ -558,6 +565,53 @@ function todayStr(){ return new Date().toISOString().slice(0,10); }
 function fmtDate(s){ if(!s) return ''; var p=s.split('-'); return p.length===3 ? (p[2]+'/'+p[1]+'/'+p[0]) : s; }
 function esc(s){ s=(s==null?'':String(s)); return s.replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function showToast(msg, ok){ var t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(ok?' ok':''); setTimeout(function(){t.className='toast';},2300); }
+
+/* ---------- role / access control ---------- */
+var PIN_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // sha256("1234") - same PIN as Machine Manager
+var ROLE_LABEL = {guest:'ผู้เยี่ยมชม', tech:'ช่างเทคนิค', admin:'ผู้ดูแลระบบ'};
+async function sha256Hex(text){
+  try{
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+  }catch(e){ return null; }
+}
+function applyRoleUI(){
+  var isTech = state.currentRole !== 'admin';
+  var isGuest = state.currentRole === 'guest';
+  document.querySelectorAll('.js-admin-only').forEach(function(el){ el.style.display = isTech ? 'none' : ''; });
+  document.querySelectorAll('.js-guest-hide').forEach(function(el){ el.style.display = isGuest ? 'none' : ''; });
+}
+function openRoleModal(){
+  var chipClass = state.currentRole==='admin' ? 'admin' : (state.currentRole==='tech' ? 'tech' : '');
+  openModal(
+    '<p class="modal-title">บทบาทผู้ใช้งาน</p>'+
+    '<div class="role-chip '+chipClass+'"><span class="dot"></span>ตอนนี้: '+ROLE_LABEL[state.currentRole]+'</div>'+
+    '<div class="field"><label>เปลี่ยนเป็น</label><select id="roleSwitchSelect">'+
+      '<option value="guest"'+(state.currentRole==='guest'?' selected':'')+'>ผู้เยี่ยมชม (อ่านอย่างเดียว)</option>'+
+      '<option value="tech"'+(state.currentRole==='tech'?' selected':'')+'>ช่างเทคนิค (ตรวจเช็ค/บันทึกผล)</option>'+
+      '<option value="admin"'+(state.currentRole==='admin'?' selected':'')+'>ผู้ดูแลระบบ (จัดการรายการ/เช็คลิสต์)</option>'+
+    '</select></div>'+
+    '<div class="field" id="roleSwitchPinField" style="display:none;"><label>รหัส PIN</label><input type="password" id="roleSwitchPin" inputmode="numeric" placeholder="กรอกรหัส PIN"></div>'+
+    '<div class="btn-row"><button class="btn btn-ghost" id="roleSwitchCancel">ยกเลิก</button><button class="btn btn-primary" id="roleSwitchConfirm">ยืนยัน</button></div>'
+  );
+  var sel = document.getElementById('roleSwitchSelect');
+  function syncPinField(){ document.getElementById('roleSwitchPinField').style.display = sel.value==='guest' ? 'none' : ''; }
+  sel.addEventListener('change', syncPinField);
+  syncPinField();
+  document.getElementById('roleSwitchCancel').onclick = closeModal;
+  document.getElementById('roleSwitchConfirm').onclick = async function(){
+    var target = sel.value;
+    if(target === 'guest'){ state.currentRole = 'guest'; applyRoleUI(); closeModal(); showToast('เปลี่ยนเป็นผู้เยี่ยมชมแล้ว', true); return; }
+    var pin = document.getElementById('roleSwitchPin').value;
+    var hash = await sha256Hex(pin);
+    if(hash === PIN_HASH){
+      state.currentRole = target; applyRoleUI(); closeModal();
+      showToast('เปลี่ยนบทบาทเป็น '+ROLE_LABEL[target]+' แล้ว', true);
+    }else{
+      showToast('รหัส PIN ไม่ถูกต้อง');
+    }
+  };
+}
 
 /* storage */
 async function loadAssets(){
@@ -663,7 +717,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e){ i
 
 /* dashboard */
 async function renderDashStats(){
-  var totalOverdue = 0, totalOk = 0, totalAssets = state.assets.length, openCapa = 0;
+  var totalOverdue = 0, totalOk = 0, totalAssets = state.assets.length, openCapa = 0, calOverdue = 0;
   for(var i=0;i<state.assets.length;i++){
     var a = state.assets[i];
     var last = await lastInspectionAny(a.id);
@@ -672,6 +726,7 @@ async function renderDashStats(){
       var days = Math.floor((new Date()-new Date(last.date))/86400000);
       if(days > effectiveCycleDays(a)) totalOverdue++; else totalOk++;
     }
+    if(a.isMeasuringInstrument && a.calibrationDueDate && new Date(a.calibrationDueDate) < new Date()) calOverdue++;
     var recs = await loadRecords(a.id);
     recs.forEach(function(r){
       (r.results||[]).forEach(function(it){
@@ -683,7 +738,8 @@ async function renderDashStats(){
     '<div class="stat-card"><div class="n">'+totalAssets+'</div><div class="l">รายการทั้งหมด</div></div>'+
     '<div class="stat-card red"><div class="n">'+totalOverdue+'</div><div class="l">เกินกำหนด/ยังไม่เคยตรวจ</div></div>'+
     '<div class="stat-card green"><div class="n">'+totalOk+'</div><div class="l">ตรวจตามกำหนดแล้ว</div></div>'+
-    '<div class="stat-card amber"><div class="n">'+openCapa+'</div><div class="l">ข้อบกพร่องรอแก้ไข (CAPA)</div></div>';
+    '<div class="stat-card amber"><div class="n">'+openCapa+'</div><div class="l">ข้อบกพร่องรอแก้ไข (CAPA)</div></div>'+
+    (calOverdue>0 ? ('<div class="stat-card red"><div class="n">'+calOverdue+'</div><div class="l">เครื่องมือวัดเกินกำหนดสอบเทียบ</div></div>') : '');
 }
 function renderDashTypeTabs(){
   var html = '<button class="type-tab'+(state.currentType==='all'?' active':'')+'" data-type="all">ทั้งหมด</button>';
@@ -825,7 +881,7 @@ async function startInspection(assetId){
       var itemId = ci+'-'+ii;
       var row = document.createElement('div'); row.className='item-row';
       row.innerHTML =
-        '<p class="item-name">'+esc(item.name)+'</p>'+
+        '<p class="item-name">'+esc(item.name)+(item.envAspect?' <span style="font-size:10px;">🌱</span>':'')+'</p>'+
         '<p class="item-crit">เกณฑ์: '+esc(item.crit)+'</p>'+
         (item.method ? '<p class="item-method">วิธีตรวจสอบ: '+esc(item.method)+'</p>' : '')+
         '<div class="result-btns" data-item="'+itemId+'">'+
@@ -836,6 +892,8 @@ async function startInspection(assetId){
         '<span class="note-toggle" data-item="'+itemId+'">+ เพิ่มหมายเหตุ</span>'+
         '<textarea class="note-input" data-item="'+itemId+'" placeholder="หมายเหตุ"></textarea>'+
         '<div class="capa-box" data-item="'+itemId+'">'+
+          '<label>สาเหตุที่แท้จริง (Root Cause)</label>'+
+          '<textarea data-capafield="rootcause" data-item="'+itemId+'" placeholder="วิเคราะห์ว่าทำไมถึงเกิดปัญหานี้"></textarea>'+
           '<label>สิ่งที่ต้องแก้ไข (Corrective Action)</label>'+
           '<textarea data-capafield="action" data-item="'+itemId+'" placeholder="ระบุสิ่งที่ต้องดำเนินการแก้ไข"></textarea>'+
           '<label>ผู้รับผิดชอบ</label>'+
@@ -957,10 +1015,12 @@ document.getElementById('btnSubmitRecord').addEventListener('click', async funct
     cat.items.forEach(function(item, ii){
       var key = ci+'-'+ii, v = state.currentChecklist[key] || {};
       results.push({
-        resultId: uid(), category:cat.title, name:item.name, crit:item.crit, method:item.method||'',
+        resultId: uid(), category:cat.title, name:item.name, crit:item.crit, method:item.method||'', envAspect: !!item.envAspect,
         result: v.result||null, note: v.note||'',
+        rootCause: v.rootcause||'',
         correctiveAction: v.action||'', correctiveOwner: v.owner||'', correctiveDue: v.due||'', photo: v.photo||'',
-        correctiveStatus: (v.result==='fail') ? 'open' : null, closedDate:'', closedNote:''
+        correctiveStatus: (v.result==='fail') ? 'open' : null, closedDate:'', closedNote:'',
+        effectivenessCheckDate:'', effectivenessResult:'', effectivenessNote:''
       });
     });
   });
@@ -1035,12 +1095,14 @@ function openDetail(r){
   r.results.forEach(function(item){
     if(item.category !== lastCat){ html += '<p class="category-title" style="margin-top:16px;">'+esc(item.category)+'</p>'; lastCat = item.category; }
     var badge = item.result==='pass' ? '<span class="badge pass">ผ่าน</span>' : item.result==='fail' ? '<span class="badge fail">ไม่ผ่าน</span>' : item.result==='na' ? '<span class="badge" style="background:var(--panel-3);color:var(--text-dim);">N/A</span>' : '<span class="badge" style="background:var(--panel-3);color:var(--text-faint);">ยังไม่ตรวจ</span>';
-    html += '<div class="item-row"><p class="item-name">'+esc(item.name)+' '+badge+'</p>'+
+    html += '<div class="item-row"><p class="item-name">'+esc(item.name)+(item.envAspect?' <span style="font-size:10px;">🌱</span>':'')+' '+badge+'</p>'+
       (item.note?'<p class="item-crit">หมายเหตุ: '+esc(item.note)+'</p>':'')+
       (item.result==='fail' ? ('<div style="margin-top:6px;padding:8px;background:var(--red-dim);border-radius:6px;">'+
+        (item.rootCause ? ('<p style="margin:0 0 4px;font-size:11.5px;color:#f2a49c;">สาเหตุที่แท้จริง: '+esc(item.rootCause)+'</p>') : '')+
         '<p style="margin:0 0 4px;font-size:11.5px;color:#f2a49c;">แก้ไข: '+esc(item.correctiveAction||'—')+'</p>'+
         '<p style="margin:0 0 4px;font-size:11.5px;color:#f2a49c;">ผู้รับผิดชอบ: '+esc(item.correctiveOwner||'—')+' · กำหนด: '+fmtDate(item.correctiveDue)+'</p>'+
         '<span class="badge '+(item.correctiveStatus==='closed'?'closed':'open')+'">'+(item.correctiveStatus==='closed'?'ปิดแล้ว':'ยังเปิดอยู่')+'</span>'+
+        (item.effectivenessResult ? ('<p style="margin:6px 0 0;font-size:11px;color:'+(item.effectivenessResult==='effective'?'var(--green)':'#f2a49c')+';">ตรวจสอบประสิทธิผล ('+fmtDate(item.effectivenessCheckDate)+'): '+(item.effectivenessResult==='effective'?'มีประสิทธิผล':'ยังไม่มีประสิทธิผล')+(item.effectivenessNote?(' — '+esc(item.effectivenessNote)):'')+'</p>') : '')+
         (item.photo ? ('<img class="record-photo" src="'+item.photo+'" onclick="window.open(this.src)">') : '')+
         '</div>') : '')+
       '</div>';
@@ -1082,6 +1144,17 @@ async function renderSummaryReport(body){
     var byType = {};
     TYPE_ORDER.forEach(function(t){ byType[t] = filtered.filter(function(x){return x.asset.type===t;}).length; });
     var out = document.getElementById('rpSummaryOut');
+    var measuringAssets = state.assets.filter(function(a){return a.isMeasuringInstrument;});
+    var calSection = '';
+    if(measuringAssets.length){
+      calSection = '<div class="card"><p style="margin:0 0 8px;font-size:12.5px;color:var(--text-dim);">ทะเบียนสอบเทียบเครื่องมือวัด (ISO 9001 ข้อ 7.1.5)</p><table class="plain"><thead><tr><th>เครื่องมือ</th><th>สอบเทียบล่าสุด</th><th>ครบกำหนดถัดไป</th><th>สถานะ</th></tr></thead><tbody>'+
+        measuringAssets.map(function(a){
+          var overdue = a.calibrationDueDate && new Date(a.calibrationDueDate) < new Date();
+          var statusBadge = !a.calibrationDueDate ? '<span class="badge" style="background:var(--panel-3);color:var(--text-faint);">ไม่ระบุ</span>' : overdue ? '<span class="badge fail">เกินกำหนด</span>' : '<span class="badge pass">ปกติ</span>';
+          return '<tr><td>'+esc(a.name)+'<div style="font-family:var(--mono);font-size:9.5px;color:var(--text-faint);">'+esc(a.code)+'</div></td><td>'+fmtDate(a.calibrationDate)+'</td><td>'+fmtDate(a.calibrationDueDate)+'</td><td>'+statusBadge+'</td></tr>';
+        }).join('')+
+      '</tbody></table></div>';
+    }
     out.innerHTML =
       '<div class="stat-grid">'+
         '<div class="stat-card"><div class="n">'+totalInsp+'</div><div class="l">จำนวนครั้งที่ตรวจ</div></div>'+
@@ -1092,6 +1165,7 @@ async function renderSummaryReport(body){
       '<div class="card"><p style="margin:0 0 8px;font-size:12.5px;color:var(--text-dim);">จำนวนครั้งตรวจแยกตามประเภท</p>'+
       TYPE_ORDER.map(function(t){ return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px;"><span>'+ASSET_TYPES[t].icon+' '+ASSET_TYPES[t].label+'</span><span style="font-family:var(--mono);">'+byType[t]+'</span></div>'; }).join('')+
       '</div>'+
+      calSection+
       '<div class="btn-row" style="margin-top:12px;"><button class="btn" id="btnExportSummaryCsv">ส่งออก CSV (สำหรับ Audit)</button><button class="btn no-print" id="btnPrintSummary">🖨 พิมพ์รายงาน</button></div>';
     document.getElementById('btnExportSummaryCsv').onclick = function(){ exportRecordsCsv(filtered); };
     document.getElementById('btnPrintSummary').onclick = function(){ window.print(); };
@@ -1160,17 +1234,23 @@ async function renderCapaReport(body){
     '<div class="btn-row" style="margin-bottom:14px;"><button class="btn" id="btnExportCapaCsv">ส่งออก CSV</button><button class="btn no-print" id="btnPrintCapa">🖨 พิมพ์รายงาน</button></div>';
   capaItems.forEach(function(c, idx){
     var row = document.createElement('div'); row.className='card';
+    var effBadge = c.item.effectivenessResult==='effective' ? '<span class="badge closed">ติดตามแล้ว: มีประสิทธิผล</span>' :
+      c.item.effectivenessResult==='not_effective' ? '<span class="badge open">ติดตามแล้ว: ยังไม่มีประสิทธิผล</span>' : '';
     row.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'+
-        '<p style="margin:0;font-size:13px;font-weight:600;">'+esc(c.item.name)+'</p>'+
+        '<p style="margin:0;font-size:13px;font-weight:600;">'+esc(c.item.name)+(c.item.envAspect?' <span style="font-size:11px;">🌱</span>':'')+'</p>'+
         '<span class="badge '+(c.item.correctiveStatus==='closed'?'closed':'open')+'">'+(c.item.correctiveStatus==='closed'?'ปิดแล้ว':'ยังเปิดอยู่')+'</span>'+
       '</div>'+
       '<p style="margin:0 0 4px;font-size:11.5px;color:var(--text-dim);">'+ASSET_TYPES[c.asset.type].icon+' '+esc(c.asset.name)+' · '+fmtDate(c.record.date)+'</p>'+
+      (c.item.rootCause ? ('<p style="margin:0 0 4px;font-size:12px;">สาเหตุที่แท้จริง: '+esc(c.item.rootCause)+'</p>') : '')+
       '<p style="margin:0 0 4px;font-size:12px;">แก้ไข: '+esc(c.item.correctiveAction||'—')+'</p>'+
       '<p style="margin:0 0 8px;font-size:11.5px;color:var(--text-dim);">ผู้รับผิดชอบ: '+esc(c.item.correctiveOwner||'—')+' · กำหนด: '+fmtDate(c.item.correctiveDue)+'</p>'+
       (c.item.photo ? ('<img class="record-photo" src="'+c.item.photo+'" onclick="window.open(this.src)">') : '')+
       (c.item.correctiveStatus==='closed' ? ('<p style="margin:8px 0 0;font-size:11px;color:var(--green);">ปิดเมื่อ '+fmtDate(c.item.closedDate)+(c.item.closedNote?(' — '+esc(c.item.closedNote)):'')+'</p>') :
-      '<button class="btn btn-sm" data-close-capa="'+idx+'" style="margin-top:8px;">ทำเครื่องหมายว่าแก้ไขแล้ว</button>');
+      '<button class="btn btn-sm js-guest-hide" data-close-capa="'+idx+'" style="margin-top:8px;">ทำเครื่องหมายว่าแก้ไขแล้ว</button>')+
+      (c.item.correctiveStatus==='closed' ? ('<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+        (effBadge || '<button class="btn btn-sm js-guest-hide" data-check-eff="'+idx+'">ตรวจสอบประสิทธิผลการแก้ไข</button>')+
+      '</div>') : '');
     out.appendChild(row);
   });
   document.getElementById('btnExportCapaCsv').onclick = function(){ exportCapaCsv(capaItems); };
@@ -1181,11 +1261,19 @@ async function renderCapaReport(body){
       openCloseCapaModal(capaItems[idx]);
     });
   });
+  out.querySelectorAll('[data-check-eff]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var idx = Number(btn.getAttribute('data-check-eff'));
+      openEffectivenessModal(capaItems[idx]);
+    });
+  });
+  applyRoleUI();
 }
 function exportCapaCsv(capaItems){
-  var rows = [['วันที่ตรวจพบ','ประเภท','รหัส','ชื่อ','รายการที่ไม่ผ่าน','สิ่งที่ต้องแก้ไข','ผู้รับผิดชอบ','กำหนดแล้วเสร็จ','สถานะ','วันที่ปิด']];
+  var rows = [['วันที่ตรวจพบ','ประเภท','รหัส','ชื่อ','รายการที่ไม่ผ่าน','สาเหตุที่แท้จริง','สิ่งที่ต้องแก้ไข','ผู้รับผิดชอบ','กำหนดแล้วเสร็จ','สถานะ','วันที่ปิด','ผลตรวจสอบประสิทธิผล','วันที่ตรวจติดตาม']];
   capaItems.forEach(function(c){
-    rows.push([c.record.date, ASSET_TYPES[c.asset.type].label, c.asset.code, c.asset.name, c.item.name, c.item.correctiveAction||'', c.item.correctiveOwner||'', c.item.correctiveDue||'', c.item.correctiveStatus==='closed'?'ปิดแล้ว':'ยังเปิดอยู่', c.item.closedDate||'']);
+    var effLabel = c.item.effectivenessResult==='effective' ? 'มีประสิทธิผล' : c.item.effectivenessResult==='not_effective' ? 'ยังไม่มีประสิทธิผล' : '';
+    rows.push([c.record.date, ASSET_TYPES[c.asset.type].label, c.asset.code, c.asset.name, c.item.name, c.item.rootCause||'', c.item.correctiveAction||'', c.item.correctiveOwner||'', c.item.correctiveDue||'', c.item.correctiveStatus==='closed'?'ปิดแล้ว':'ยังเปิดอยู่', c.item.closedDate||'', effLabel, c.item.effectivenessCheckDate||'']);
   });
   var csv = rows.map(function(r){ return r.map(function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
@@ -1207,7 +1295,33 @@ function openCloseCapaModal(c){
       if(it){ it.correctiveStatus='closed'; it.closedDate=document.getElementById('capaCloseDate').value; it.closedNote=document.getElementById('capaCloseNote').value.trim(); }
       state.records[c.asset.id] = list; await saveRecords(c.asset.id);
     }
-    closeModal(); showToast('ปิดรายการข้อบกพร่องแล้ว', true); renderReportBody();
+    closeModal(); showToast('ปิดรายการข้อบกพร่องแล้ว กลับมาบันทึกผลติดตามประสิทธิผลได้ภายหลัง', true); renderReportBody();
+  };
+}
+function openEffectivenessModal(c){
+  openModal(
+    '<p class="modal-title">ตรวจสอบประสิทธิผลการแก้ไข</p>'+
+    '<p style="font-size:12.5px;color:var(--text-dim);margin:0 0 14px;">'+esc(c.item.name)+' — ตรวจว่าหลังแก้ไขแล้ว ปัญหาเกิดซ้ำหรือไม่</p>'+
+    '<div class="field"><label>วันที่ตรวจติดตาม</label><input type="date" id="effDate" value="'+todayStr()+'"></div>'+
+    '<div class="field"><label>ผลการตรวจติดตาม</label><select id="effResult"><option value="effective">มีประสิทธิผล — ไม่เกิดปัญหาซ้ำ</option><option value="not_effective">ยังไม่มีประสิทธิผล — เกิดปัญหาซ้ำ/ต้องแก้ไขเพิ่มเติม</option></select></div>'+
+    '<div class="field"><label>บันทึกเพิ่มเติม</label><textarea id="effNote" placeholder="รายละเอียดการติดตามผล"></textarea></div>'+
+    '<div class="btn-row"><button class="btn btn-ghost" id="effCancel">ยกเลิก</button><button class="btn btn-primary" id="effConfirm">บันทึกผลติดตาม</button></div>'
+  );
+  document.getElementById('effCancel').onclick = closeModal;
+  document.getElementById('effConfirm').onclick = async function(){
+    var list = await loadRecords(c.asset.id);
+    var rec = list.find(function(r){return r.id===c.record.id;});
+    if(rec){
+      var it = rec.results.find(function(r){return r.resultId===c.item.resultId;});
+      if(it){
+        it.effectivenessCheckDate = document.getElementById('effDate').value;
+        it.effectivenessResult = document.getElementById('effResult').value;
+        it.effectivenessNote = document.getElementById('effNote').value.trim();
+        if(it.effectivenessResult === 'not_effective'){ it.correctiveStatus = 'open'; }
+      }
+      state.records[c.asset.id] = list; await saveRecords(c.asset.id);
+    }
+    closeModal(); showToast('บันทึกผลการตรวจติดตามประสิทธิผลแล้ว', true); renderReportBody();
   };
 }
 async function renderMatrixReport(body){
@@ -1279,15 +1393,16 @@ function renderManageList(){
       '<p style="margin:0 0 2px;font-size:14px;font-weight:600;">'+ASSET_TYPES[a.type].icon+' '+esc(a.name)+'</p>'+
       '<p style="margin:0 0 10px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);">'+esc(a.code)+' · '+totalItems(a)+' รายการตรวจ · '+assetFreqLabel(a)+'</p>'+
       '<div class="btn-row">'+
-        '<button class="btn btn-sm" data-act="edit">แก้ไขเช็คลิสต์</button>'+
+        '<button class="btn btn-sm js-admin-only" data-act="edit">แก้ไขเช็คลิสต์</button>'+
         '<button class="btn btn-sm" data-act="qr">ดู QR</button>'+
-        '<button class="btn btn-sm btn-danger" data-act="del">ลบ</button>'+
+        '<button class="btn btn-sm btn-danger js-admin-only" data-act="del">ลบ</button>'+
       '</div>';
     card.querySelector('[data-act="edit"]').addEventListener('click', function(){ openAssetEditor(a.id); });
     card.querySelector('[data-act="qr"]').addEventListener('click', function(){ showQrSheet([a.id]); });
     card.querySelector('[data-act="del"]').addEventListener('click', function(){ deleteAsset(a.id); });
     wrap.appendChild(card);
   });
+  applyRoleUI();
 }
 function renderManage(){ renderMgrTypeTabs(); renderManageList(); }
 async function deleteAsset(id){
@@ -1375,10 +1490,27 @@ function openAssetEditor(assetId){
       TIMES_PER_YEAR_OPTIONS.map(function(n){ return '<option value="'+n+'"'+(n===(editState.timesPerYear||timesPerYearFromDays(editState.cycleDays))?' selected':'')+'>'+timesPerYearLabel(n)+'</option>'; }).join('')+
       '</select></div>'+
       '<div class="field"><label>เอกสารเลขที่ / Rev</label><div style="display:flex;gap:6px;"><input type="text" id="edDocNo" value="'+esc(editState.docNo||'')+'" style="flex:2;"><input type="text" id="edRevision" value="'+esc(editState.revision||'00')+'" style="flex:1;"></div></div></div>'+
+      '<div class="field-2col"><div class="field"><label>ผู้แก้ไข (ถ้ามีการเปลี่ยนแปลงครั้งนี้)</label><input type="text" id="edChangeBy" placeholder="ชื่อผู้แก้ไข/อนุมัติ"></div>'+
+      '<div class="field"><label>หมายเหตุการเปลี่ยนแปลง</label><input type="text" id="edChangeNote" placeholder="เช่น เพิ่มรายการตรวจ 2 ข้อ"></div></div>'+
+      '<div class="card" style="margin-bottom:14px;">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:'+(editState.isMeasuringInstrument?'12px':'0')+';">'+
+          '<input type="checkbox" id="edIsMeasuring" style="width:18px;height:18px;" '+(editState.isMeasuringInstrument?'checked':'')+'>'+
+          '<label for="edIsMeasuring" style="font-size:13px;margin:0;">เป็นเครื่องมือวัดที่ต้องสอบเทียบ (Calibration) — ISO 9001 ข้อ 7.1.5</label>'+
+        '</div>'+
+        '<div id="edCalFields" style="'+(editState.isMeasuringInstrument?'':'display:none;')+'">'+
+          '<div class="field-2col"><div class="field"><label>สอบเทียบล่าสุด</label><input type="date" id="edCalDate" value="'+esc(editState.calibrationDate||'')+'"></div>'+
+          '<div class="field"><label>ครบกำหนดสอบเทียบครั้งถัดไป</label><input type="date" id="edCalDue" value="'+esc(editState.calibrationDueDate||'')+'"></div></div>'+
+          '<div class="field"><label>เลขที่ใบรับรองการสอบเทียบ</label><input type="text" id="edCalCert" value="'+esc(editState.calibrationCert||'')+'" placeholder="เลขที่ใบ Certificate"></div>'+
+        '</div>'+
+      '</div>'+
+      '<button type="button" class="btn btn-ghost btn-sm" id="edViewHistory" style="margin-bottom:14px;">📜 ดูประวัติการแก้ไข ('+((editState.revisionHistory||[]).length)+')</button>'+
       '<div id="edCats"></div>'+
       '<button type="button" class="btn btn-sm" id="edAddCat" style="margin-bottom:16px;">+ เพิ่มหมวดหมู่</button>'+
       '<div class="btn-row"><button type="button" class="btn btn-ghost" id="edCancel">ปิด</button><button type="button" class="btn btn-primary" id="edSave">บันทึก</button></div>';
     openModal('<p class="modal-title">แก้ไข: '+esc(a.name)+'</p>'+html);
+    document.getElementById('edIsMeasuring').addEventListener('change', function(e){
+      document.getElementById('edCalFields').style.display = e.target.checked ? '' : 'none';
+    });
     var catsWrap = document.getElementById('edCats');
     function renderCats(){
       catsWrap.innerHTML = '';
@@ -1388,7 +1520,8 @@ function openAssetEditor(assetId){
           return '<div class="mini-item"><div style="flex:1;">'+
             '<input type="text" placeholder="ชื่อรายการตรวจ" data-c="'+ci+'" data-i="'+ii+'" data-f="name" value="'+esc(item.name)+'" style="margin-bottom:4px;">'+
             '<input type="text" placeholder="เกณฑ์/มาตรฐาน" data-c="'+ci+'" data-i="'+ii+'" data-f="crit" value="'+esc(item.crit)+'" style="margin-bottom:4px;">'+
-            '<input type="text" placeholder="วิธีตรวจสอบ (ไม่บังคับ)" data-c="'+ci+'" data-i="'+ii+'" data-f="method" value="'+esc(item.method||'')+'">'+
+            '<input type="text" placeholder="วิธีตรวจสอบ (ไม่บังคับ)" data-c="'+ci+'" data-i="'+ii+'" data-f="method" value="'+esc(item.method||'')+'" style="margin-bottom:6px;">'+
+            '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);"><input type="checkbox" data-envaspect data-c="'+ci+'" data-i="'+ii+'" '+(item.envAspect?'checked':'')+' style="width:15px;height:15px;">🌱 ประเด็นสิ่งแวดล้อม (ISO 14001)</label>'+
             '</div><button class="mini-x" data-delitem data-c="'+ci+'" data-i="'+ii+'">✕</button></div>';
         }).join('');
         block.innerHTML = '<div style="display:flex;gap:8px;margin-bottom:10px;"><input type="text" data-cat="'+ci+'" value="'+esc(cat.title)+'" placeholder="ชื่อหมวดหมู่" style="flex:1;padding:8px 10px;font-size:13px;font-weight:600;"><button class="mini-x" data-delcat data-c="'+ci+'">✕</button></div>'+
@@ -1397,12 +1530,14 @@ function openAssetEditor(assetId){
       });
       catsWrap.querySelectorAll('input[data-cat]').forEach(function(inp){ inp.addEventListener('input', function(){ editState.checklist[inp.dataset.cat].title = inp.value; }); });
       catsWrap.querySelectorAll('input[data-f]').forEach(function(inp){ inp.addEventListener('input', function(){ editState.checklist[inp.dataset.c].items[inp.dataset.i][inp.dataset.f] = inp.value; }); });
+      catsWrap.querySelectorAll('input[data-envaspect]').forEach(function(inp){ inp.addEventListener('change', function(){ editState.checklist[inp.dataset.c].items[inp.dataset.i].envAspect = inp.checked; }); });
       catsWrap.querySelectorAll('[data-delitem]').forEach(function(btn){ btn.addEventListener('click', function(){ editState.checklist[btn.dataset.c].items.splice(btn.dataset.i,1); renderCats(); }); });
       catsWrap.querySelectorAll('[data-delcat]').forEach(function(btn){ btn.addEventListener('click', function(){ editState.checklist.splice(btn.dataset.c,1); renderCats(); }); });
       catsWrap.querySelectorAll('[data-additem]').forEach(function(btn){ btn.addEventListener('click', function(){ editState.checklist[btn.dataset.additem].items.push({name:'',crit:'',method:''}); renderCats(); }); });
     }
     renderCats();
     document.getElementById('edAddCat').addEventListener('click', function(){ editState.checklist.push({title:'หมวดหมู่ใหม่', items:[{name:'',crit:'',method:''}]}); renderCats(); });
+    document.getElementById('edViewHistory').addEventListener('click', function(){ openRevisionHistoryModal(editState, assetId); });
     document.getElementById('edCancel').onclick = closeModal;
     document.getElementById('edSave').onclick = async function(){
       editState.name = document.getElementById('edName').value.trim() || a.name;
@@ -1412,12 +1547,36 @@ function openAssetEditor(assetId){
       editState.frequency = cycleDaysToFreq(editState.cycleDays);
       editState.docNo = document.getElementById('edDocNo').value.trim();
       editState.revision = document.getElementById('edRevision').value.trim();
+      var changeBy = document.getElementById('edChangeBy').value.trim();
+      editState.isMeasuringInstrument = document.getElementById('edIsMeasuring').checked;
+      editState.calibrationDate = document.getElementById('edCalDate').value;
+      editState.calibrationDueDate = document.getElementById('edCalDue').value;
+      editState.calibrationCert = document.getElementById('edCalCert').value.trim();
+      var changeNote = document.getElementById('edChangeNote').value.trim();
+      var contentChanged = checklistSignature(a.checklist) !== checklistSignature(editState.checklist);
+      var revisionChanged = a.revision !== editState.revision;
+      if(contentChanged || revisionChanged){
+        editState.revisionHistory = editState.revisionHistory || [];
+        editState.revisionHistory.push({
+          date: todayStr(), revision: editState.revision, changedBy: changeBy || 'ไม่ระบุ',
+          note: changeNote || (contentChanged ? 'แก้ไขรายการตรวจ' : 'เปลี่ยนเลข Revision')
+        });
+      }
       checkDocNoConflict(editState, assetId);
       var idx = state.assets.findIndex(function(x){return x.id===assetId;});
       state.assets[idx] = editState; await saveAssets();
       closeModal(); renderManageList(); renderDashboard(); showToast('บันทึกแล้ว', true);
     };
   }
+}
+function openRevisionHistoryModal(editState, assetId){
+  var hist = (editState.revisionHistory||[]).slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  var body = hist.length ? hist.map(function(h){
+    return '<div class="record-row"><div class="top"><span class="date">'+fmtDate(h.date)+' · Rev. '+esc(h.revision)+'</span></div>'+
+      '<div class="meta">โดย: '+esc(h.changedBy)+'</div><p style="margin:6px 0 0;font-size:12.5px;">'+esc(h.note)+'</p></div>';
+  }).join('') : '<div class="empty"><div class="icon">—</div><p>ยังไม่มีประวัติการแก้ไข</p></div>';
+  openModal('<p class="modal-title">ประวัติการแก้ไขเอกสาร</p>'+body+'<button class="btn" id="edHistBack" style="margin-top:14px;">กลับไปแก้ไข</button>');
+  document.getElementById('edHistBack').onclick = function(){ openAssetEditor(assetId); };
 }
 
 /* QR sheet */
@@ -1589,6 +1748,7 @@ document.getElementById('csvFileInput').addEventListener('change', function(e){
 document.getElementById('btnGoMachineManager').addEventListener('click', function(){
   window.location.href = 'machine_manager.html';
 });
+document.getElementById('btnRole').addEventListener('click', openRoleModal);
 function handleDeepLink(){
   var params = new URLSearchParams(window.location.search);
   var code = params.get('asset');
@@ -1605,6 +1765,7 @@ async function init(){
   await refreshManualSelect();
   await renderDashboard();
   fillSheetSettingsForm();
+  applyRoleUI();
   handleDeepLink();
 }
 init();

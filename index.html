@@ -174,8 +174,10 @@
   .attachform{display:grid;grid-template-columns:1fr 140px auto;gap:8px;align-items:end;margin-bottom:14px;}
 
   .lochist{list-style:none;margin:0;padding:0;}
-  .lochist li{padding:8px 0;border-bottom:1px solid var(--surface-3);font-size:12.5px;}
+  .lochist li{padding:8px 0;border-bottom:1px solid var(--surface-3);font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .lochist li .d{color:var(--text-faint);font-size:11px;}
+  .lochist li .txt{flex:1;}
+  .loc-del-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0;}
   .locform{display:grid;grid-template-columns:140px 1fr 1fr auto;gap:8px;margin-top:10px;align-items:end;}
 
   .qrbox{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 0;}
@@ -297,7 +299,7 @@
     <table class="data-table"><thead><tr><th></th><th>รหัส</th><th>ชื่ออะไหล่</th><th>รุ่น</th><th>หมวดหมู่</th><th>คงเหลือ</th><th>ขั้นต่ำ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>ที่จัดเก็บ</th><th>วันหมดอายุ</th><th></th></tr></thead><tbody id="partsCatalogBody"></tbody></table>
 
     <div class="section-title">ประวัติการเบิก-จ่ายอะไหล่ (ล่าสุด 100 รายการ)</div>
-    <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เครื่องจักร</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="partsTxBody"></tbody></table>
+    <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เครื่องจักร</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="partsTxBody"></tbody></table>
   </div>
 
   <div class="tabpage" id="page-tools">
@@ -478,7 +480,7 @@
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="vm_date"></div>
         <div class="field"><label>ประเภทงาน</label><select id="vm_type"><option value="pm">PM ป้องกัน</option><option value="cm">CM แก้ไข/ซ่อม</option><option value="insp">ตรวจสอบ</option></select></div>
-        <div class="field"><label>เวลาที่ใช้ไป (ชม.)</label><input type="number" id="vm_hours" min="0" step="0.5" placeholder="เช่น 1.5"></div>
+        <div class="field"><label>เวลาที่ใช้ไป (นาที)</label><input type="number" id="vm_minutes" min="0" step="1" placeholder="เช่น 90"></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="vm_cost" min="0"></div>
         <div class="field"><label>ช่างผู้แก้ไข/ผู้ดำเนินการ</label><input id="vm_tech"></div>
         <div class="field full"><label>ปัญหาที่พบ</label><input id="vm_problem" placeholder="อาการ/ปัญหาที่พบ..."></div>
@@ -509,7 +511,7 @@
     <div class="subpage" id="vehiclesub-parts">
       <div class="partsbar"><button class="btn btn-sm btn-primary js-admin-only" id="issueForVehicleBtn">📦 เบิกอะไหล่สำหรับยานพาหนะนี้</button></div>
       <div class="section-title" style="margin-top:0;">ประวัติการเบิก-จ่ายอะไหล่ของยานพาหนะนี้</div>
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="vehiclePartsTxBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="vehiclePartsTxBody"></tbody></table>
     </div>
 
     <div class="subpage" id="vehiclesub-files">
@@ -550,7 +552,7 @@
     </div>
 
     <div class="subpage" id="vehiclesub-incident">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="vehicleIncidentBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th><th></th></tr></thead><tbody id="vehicleIncidentBody"></tbody></table>
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="vi_date"></div>
@@ -717,7 +719,7 @@
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="crm_date"></div>
         <div class="field"><label>ประเภทงาน</label><select id="crm_type"><option value="pm">PM ป้องกัน</option><option value="cm">CM แก้ไข/ซ่อม</option><option value="insp">ตรวจสอบตามกฎหมาย</option></select></div>
-        <div class="field"><label>เวลาที่ใช้ไป (ชม.)</label><input type="number" id="crm_hours" min="0" step="0.5" placeholder="เช่น 1.5"></div>
+        <div class="field"><label>เวลาที่ใช้ไป (นาที)</label><input type="number" id="crm_minutes" min="0" step="1" placeholder="เช่น 90"></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="crm_cost" min="0"></div>
         <div class="field"><label>ช่างผู้แก้ไข/ผู้ดำเนินการ</label><input id="crm_tech"></div>
         <div class="field full"><label>ปัญหาที่พบ</label><input id="crm_problem" placeholder="อาการ/ปัญหาที่พบ..."></div>
@@ -748,7 +750,7 @@
     <div class="subpage" id="cranesub-parts">
       <div class="partsbar"><button class="btn btn-sm btn-primary js-admin-only" id="issueForCraneBtn">📦 เบิกอะไหล่สำหรับเครนนี้</button></div>
       <div class="section-title" style="margin-top:0;">ประวัติการเบิก-จ่ายอะไหล่ของเครนนี้</div>
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="cranePartsTxBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="cranePartsTxBody"></tbody></table>
     </div>
 
     <div class="subpage" id="cranesub-files">
@@ -789,7 +791,7 @@
     </div>
 
     <div class="subpage" id="cranesub-incident">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="craneIncidentBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th><th></th></tr></thead><tbody id="craneIncidentBody"></tbody></table>
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="cri_date"></div>
@@ -906,7 +908,7 @@
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="tm_date"></div>
         <div class="field"><label>ประเภทงาน</label><select id="tm_type"><option value="pm">PM ป้องกัน</option><option value="cm">CM แก้ไข/ซ่อม</option><option value="insp">ตรวจสอบ</option></select></div>
-        <div class="field"><label>เวลาที่ใช้ไป (ชม.)</label><input type="number" id="tm_hours" min="0" step="0.5" placeholder="เช่น 1.5"></div>
+        <div class="field"><label>เวลาที่ใช้ไป (นาที)</label><input type="number" id="tm_minutes" min="0" step="1" placeholder="เช่น 90"></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="tm_cost" min="0"></div>
         <div class="field"><label>ช่างผู้แก้ไข/ผู้ดำเนินการ</label><input id="tm_tech"></div>
         <div class="field full"><label>ปัญหาที่พบ</label><input id="tm_problem" placeholder="อาการ/ปัญหาที่พบ..."></div>
@@ -937,7 +939,7 @@
     <div class="subpage" id="toolsub-parts">
       <div class="partsbar"><button class="btn btn-sm btn-primary js-admin-only" id="issueForToolBtn">📦 เบิกอะไหล่สำหรับเครื่องมือนี้</button></div>
       <div class="section-title" style="margin-top:0;">ประวัติการเบิก-จ่ายอะไหล่ของเครื่องมือนี้</div>
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="toolPartsTxBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="toolPartsTxBody"></tbody></table>
     </div>
 
     <div class="subpage" id="toolsub-files">
@@ -978,7 +980,7 @@
     </div>
 
     <div class="subpage" id="toolsub-incident">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="toolIncidentBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th><th></th></tr></thead><tbody id="toolIncidentBody"></tbody></table>
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="ti_date"></div>
@@ -1173,7 +1175,7 @@
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="m_date"></div>
         <div class="field"><label>ประเภทงาน</label><select id="m_type"><option value="pm">PM ป้องกัน</option><option value="cm">CM แก้ไข/ซ่อม</option><option value="insp">ตรวจสอบ</option></select></div>
-        <div class="field"><label>เวลาที่ใช้ไป (ชม.)</label><input type="number" id="m_hours" min="0" step="0.5" placeholder="เช่น 1.5"></div>
+        <div class="field"><label>เวลาที่ใช้ไป (นาที)</label><input type="number" id="m_minutes" min="0" step="1" placeholder="เช่น 90"></div>
         <div class="field"><label>ค่าใช้จ่าย</label><input type="number" id="m_cost" min="0"></div>
         <div class="field"><label>ช่างผู้แก้ไข/ผู้ดำเนินการ</label><input id="m_tech"></div>
         <div class="field full"><label>ปัญหาที่พบ</label><input id="m_problem" placeholder="อาการ/ปัญหาที่พบ..."></div>
@@ -1207,7 +1209,7 @@
     <div class="subpage" id="sub-parts">
       <div class="partsbar"><button class="btn btn-sm btn-primary js-admin-only" id="issueForMachineBtn">📦 เบิกอะไหล่สำหรับเครื่องนี้</button></div>
       <div class="section-title" style="margin-top:0;">ประวัติการเบิก-จ่ายอะไหล่ของเครื่องนี้</div>
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th></tr></thead><tbody id="machinePartsTxBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ประเภท</th><th>อะไหล่</th><th>จำนวน</th><th>เลขที่เอกสาร</th><th>ผู้ดำเนินการ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="machinePartsTxBody"></tbody></table>
     </div>
 
     <div class="subpage" id="sub-files">
@@ -1248,7 +1250,7 @@
     </div>
 
     <div class="subpage" id="sub-incident">
-      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th></tr></thead><tbody id="machineIncidentBody"></tbody></table>
+      <table class="data-table"><thead><tr><th>วันที่</th><th>ความรุนแรง</th><th>รายละเอียดเหตุการณ์</th><th>มาตรการแก้ไข/ป้องกัน</th><th>ผู้รายงาน</th><th></th></tr></thead><tbody id="machineIncidentBody"></tbody></table>
       <div class="section-title" style="margin-top:20px;">เพิ่มบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</div>
       <div class="maint-add">
         <div class="field"><label>วันที่</label><input type="date" id="mi_date"></div>
@@ -2182,10 +2184,18 @@
     return escapeHtml(r.desc||'—');
   }
   function costCell(r){
-    return fmtMoney(r.cost) + (r.hoursSpent ? ' <span style="color:var(--text-faint);font-size:10.5px;">('+r.hoursSpent+' ชม.)</span>' : '');
+    return fmtMoney(r.cost) + (r.minutesSpent ? ' <span style="color:var(--text-faint);font-size:10.5px;">('+r.minutesSpent+' นาที)</span>' : '');
   }
   const INCIDENT_SEVERITY_LABEL = {near:'เกือบเกิดเหตุ', minor:'เล็กน้อย', major:'รุนแรง'};
   let machineIncidentCache = {};
+  async function deleteIncident(cache, prefix, assetId, incidentId, renderFn){
+    if(!confirm('ต้องการลบบันทึกอุบัติเหตุ/เหตุการณ์นี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    let list = await loadList(cache, prefix, assetId);
+    list = list.filter(x=>x.id!==incidentId);
+    await saveList(cache, prefix, assetId, list);
+    await renderFn(assetId);
+    toast('ลบบันทึกเหตุการณ์แล้ว');
+  }
   async function renderMachineIncidentTable(id){
     const list = await loadList(machineIncidentCache,'machineincident_', id);
     const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
@@ -2196,7 +2206,11 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${escapeHtml(r.action||'—')}</td>
         <td>${escapeHtml(r.reporter||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delinc="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+    $('machineIncidentBody').querySelectorAll('[data-delinc]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteIncident(machineIncidentCache,'machineincident_', id, btn.getAttribute('data-delinc'), renderMachineIncidentTable));
+    });
   }
   $('addMachineIncidentBtn').addEventListener('click', async ()=>{
     if(!currentDetailId) return;
@@ -2400,7 +2414,7 @@
   function renderPartsTxBody(filterMachineId, targetElId){
     const list = filterMachineId ? partsTx.filter(t=>t.machineId===filterMachineId) : partsTx.slice(0,100);
     const targetId = targetElId || (filterMachineId ? 'machinePartsTxBody' : 'partsTxBody');
-    const cols = filterMachineId ? 7 : 8;
+    const cols = filterMachineId ? 8 : 9;
     $(targetId).innerHTML = list.length ? list.map(t=>`
       <tr>
         <td>${fmtDate(t.date)}</td>
@@ -2411,7 +2425,23 @@
         <td>${escapeHtml(t.docRef||'—')}</td>
         <td>${escapeHtml(t.person||'—')}</td>
         <td>${escapeHtml(t.note||'—')}</td>
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-deltx="${t.id}" title="ลบรายการนี้">🗑</button></td>
       </tr>`).join('') : `<tr><td colspan="${cols}" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีประวัติการเบิก-จ่าย</td></tr>`;
+    $(targetId).querySelectorAll('[data-deltx]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deletePartTx(btn.getAttribute('data-deltx'), filterMachineId, targetId));
+    });
+  }
+  async function deletePartTx(txId, filterMachineId, targetId){
+    const tx = partsTx.find(t=>t.id===txId);
+    if(!tx) return;
+    if(!confirm('ต้องการลบรายการเบิก-จ่ายนี้หรือไม่? สต๊อกอะไหล่จะถูกปรับคืนกลับตามจำนวนที่เคยบันทึกไว้อัตโนมัติ')) return;
+    const part = partsCatalog.find(p=>p.id===tx.partId);
+    if(part){ part.qty = Math.max(0, (part.qty||0) - tx.qty); await savePartsCatalog(); }
+    partsTx = partsTx.filter(t=>t.id!==txId);
+    await savePartsTx();
+    toast('ลบรายการและปรับสต๊อกคืนแล้ว');
+    renderPartsTxBody(filterMachineId, targetId);
+    renderPartsPage(); renderLowStockAlerts();
   }
 
   async function renderPartsPage(){
@@ -2562,9 +2592,9 @@
     const loto = $('m_loto').checked;
     const wasteType = $('m_wastetype').value, wasteQty = $('m_wasteqty').value.trim(), wasteDisposal = $('m_wastedisposal').value.trim();
     const problem = $('m_problem').value.trim(), resolution = $('m_resolution').value.trim();
-    const hoursSpent = $('m_hours').value ? Number($('m_hours').value) : null;
+    const minutesSpent = $('m_minutes').value ? Number($('m_minutes').value) : null;
 
-    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, problem, resolution, hoursSpent, cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
+    const record = {id:'r_'+Date.now(), date, type:$('m_type').value, problem, resolution, minutesSpent, cost:$('m_cost').value?Number($('m_cost').value):null, tech:$('m_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(maintCache,'maint_', currentDetailId);
     list.push(record);
     await saveList(maintCache,'maint_', currentDetailId, list);
@@ -2582,7 +2612,7 @@
     const m = machines.find(x=>x.id===currentDetailId);
     if(m && (!m.lastMaint || date >= m.lastMaint)){ m.lastMaint = date; if(m.cycle) m.nextMaint = addDays(date, m.cycle); await saveMachines(); }
 
-    $('m_problem').value=''; $('m_resolution').value=''; $('m_hours').value=''; $('m_cost').value=''; $('m_tech').value=''; tempPartRows=[]; $('m_loto').checked=false; $('m_wastetype').value=''; $('m_wasteqty').value=''; $('m_wastedisposal').value='';
+    $('m_problem').value=''; $('m_resolution').value=''; $('m_minutes').value=''; $('m_cost').value=''; $('m_tech').value=''; tempPartRows=[]; $('m_loto').checked=false; $('m_wastetype').value=''; $('m_wasteqty').value=''; $('m_wastedisposal').value='';
     renderAll(); renderPartsPage(); renderLowStockAlerts();
     await renderMaintTable(currentDetailId);
     renderPartsTxBody(currentDetailId);
@@ -2629,12 +2659,26 @@
   }
 
   // ===== LOCATION HISTORY =====
+  async function deleteLocEntry(assetId, index, renderFn){
+    if(!confirm('ต้องการลบประวัติการย้ายตำแหน่งนี้หรือไม่?')) return;
+    const list = await loadList(locCache,'loc_', assetId);
+    list.splice(index, 1);
+    await saveList(locCache,'loc_', assetId, list);
+    await renderFn(assetId);
+    toast('ลบประวัติการย้ายตำแหน่งแล้ว');
+  }
   async function renderLoc(id){
     const m = machines.find(x=>x.id===id);
     $('locCurrent').textContent = m.location || '—';
     const list = await loadList(locCache,'loc_', id);
     const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
-    $('locHistList').innerHTML = sorted.length ? sorted.map(r=>`<li><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</li>`).join('') : `<li style="color:var(--text-faint);">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('locHistList').innerHTML = sorted.length ? sorted.map(r=>{
+      const idx = list.indexOf(r);
+      return `<li><span class="txt"><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</span><button type="button" class="loc-del-btn js-guest-hide" data-locdel="${idx}" title="ลบ">🗑</button></li>`;
+    }).join('') : `<li style="color:var(--text-faint);border-bottom:none;">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('locHistList').querySelectorAll('[data-locdel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteLocEntry(id, Number(btn.getAttribute('data-locdel')), renderLoc));
+    });
     $('l_date').value = todayStr();
   }
   $('addLocBtn').addEventListener('click', async ()=>{
@@ -3124,9 +3168,9 @@
     const loto = $('tm_loto').checked;
     const wasteType = $('tm_wastetype').value, wasteQty = $('tm_wasteqty').value.trim(), wasteDisposal = $('tm_wastedisposal').value.trim();
     const problem = $('tm_problem').value.trim(), resolution = $('tm_resolution').value.trim();
-    const hoursSpent = $('tm_hours').value ? Number($('tm_hours').value) : null;
+    const minutesSpent = $('tm_minutes').value ? Number($('tm_minutes').value) : null;
 
-    const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, problem, resolution, hoursSpent, cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
+    const record = {id:'r_'+Date.now(), date, type:$('tm_type').value, problem, resolution, minutesSpent, cost:$('tm_cost').value?Number($('tm_cost').value):null, tech:$('tm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(toolMaintCache,'toolmaint_', currentToolDetailId);
     list.push(record);
     await saveList(toolMaintCache,'toolmaint_', currentToolDetailId, list);
@@ -3143,7 +3187,7 @@
     const t = tools.find(x=>x.id===currentToolDetailId);
     if(t && (!t.lastMaint || date >= t.lastMaint)){ t.lastMaint = date; if(t.cycle) t.nextMaint = addDays(date, t.cycle); await saveTools(); }
 
-    $('tm_problem').value=''; $('tm_resolution').value=''; $('tm_hours').value=''; $('tm_cost').value=''; $('tm_tech').value=''; tempToolPartRows=[]; $('tm_loto').checked=false; $('tm_wastetype').value=''; $('tm_wasteqty').value=''; $('tm_wastedisposal').value='';
+    $('tm_problem').value=''; $('tm_resolution').value=''; $('tm_minutes').value=''; $('tm_cost').value=''; $('tm_tech').value=''; tempToolPartRows=[]; $('tm_loto').checked=false; $('tm_wastetype').value=''; $('tm_wasteqty').value=''; $('tm_wastedisposal').value='';
     renderToolsPage();
     await renderToolMaintTable(currentToolDetailId);
     await openToolDetail(currentToolDetailId);
@@ -3162,7 +3206,11 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${escapeHtml(r.action||'—')}</td>
         <td>${escapeHtml(r.reporter||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delinc="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+    $('toolIncidentBody').querySelectorAll('[data-delinc]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteIncident(toolIncidentCache,'toolincident_', id, btn.getAttribute('data-delinc'), renderToolIncidentTable));
+    });
   }
   $('addToolIncidentBtn').addEventListener('click', async ()=>{
     if(!currentToolDetailId) return;
@@ -3223,7 +3271,13 @@
     $('toolLocCurrent').textContent = (t && t.location) || '—';
     const list = await loadList(locCache,'loc_', id);
     const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
-    $('toolLocHistList').innerHTML = sorted.length ? sorted.map(r=>`<li><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</li>`).join('') : `<li style="color:var(--text-faint);">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('toolLocHistList').innerHTML = sorted.length ? sorted.map(r=>{
+      const idx = list.indexOf(r);
+      return `<li><span class="txt"><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</span><button type="button" class="loc-del-btn js-guest-hide" data-locdel="${idx}" title="ลบ">🗑</button></li>`;
+    }).join('') : `<li style="color:var(--text-faint);border-bottom:none;">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('toolLocHistList').querySelectorAll('[data-locdel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteLocEntry(id, Number(btn.getAttribute('data-locdel')), renderToolLoc));
+    });
     $('tl_date').value = todayStr();
   }
   $('addToolLocBtn').addEventListener('click', async ()=>{
@@ -3669,8 +3723,8 @@
     const loto = $('crm_loto').checked;
     const wasteType = $('crm_wastetype').value, wasteQty = $('crm_wasteqty').value.trim(), wasteDisposal = $('crm_wastedisposal').value.trim();
     const problem = $('crm_problem').value.trim(), resolution = $('crm_resolution').value.trim();
-    const hoursSpent = $('crm_hours').value ? Number($('crm_hours').value) : null;
-    const record = {id:'r_'+Date.now(), date, type:$('crm_type').value, problem, resolution, hoursSpent, cost:$('crm_cost').value?Number($('crm_cost').value):null, tech:$('crm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
+    const minutesSpent = $('crm_minutes').value ? Number($('crm_minutes').value) : null;
+    const record = {id:'r_'+Date.now(), date, type:$('crm_type').value, problem, resolution, minutesSpent, cost:$('crm_cost').value?Number($('crm_cost').value):null, tech:$('crm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(craneMaintCache,'cranemaint_', currentCraneDetailId);
     list.push(record);
     await saveList(craneMaintCache,'cranemaint_', currentCraneDetailId, list);
@@ -3687,7 +3741,7 @@
     const c = cranes.find(x=>x.id===currentCraneDetailId);
     if(c && (!c.lastMaint || date >= c.lastMaint)){ c.lastMaint = date; if(c.cycle) c.nextMaint = addDays(date, c.cycle); await saveCranes(); }
 
-    $('crm_problem').value=''; $('crm_resolution').value=''; $('crm_hours').value=''; $('crm_cost').value=''; $('crm_tech').value=''; tempCranePartRows=[]; $('crm_loto').checked=false; $('crm_wastetype').value=''; $('crm_wasteqty').value=''; $('crm_wastedisposal').value='';
+    $('crm_problem').value=''; $('crm_resolution').value=''; $('crm_minutes').value=''; $('crm_cost').value=''; $('crm_tech').value=''; tempCranePartRows=[]; $('crm_loto').checked=false; $('crm_wastetype').value=''; $('crm_wasteqty').value=''; $('crm_wastedisposal').value='';
     renderCranesPage();
     await renderCraneMaintTable(currentCraneDetailId);
     await openCraneDetail(currentCraneDetailId);
@@ -3760,7 +3814,13 @@
     $('craneLocCurrent').textContent = (c && c.location) || '—';
     const list = await loadList(locCache,'loc_', id);
     const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
-    $('craneLocHistList').innerHTML = sorted.length ? sorted.map(r=>`<li><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</li>`).join('') : `<li style="color:var(--text-faint);">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('craneLocHistList').innerHTML = sorted.length ? sorted.map(r=>{
+      const idx = list.indexOf(r);
+      return `<li><span class="txt"><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</span><button type="button" class="loc-del-btn js-guest-hide" data-locdel="${idx}" title="ลบ">🗑</button></li>`;
+    }).join('') : `<li style="color:var(--text-faint);border-bottom:none;">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('craneLocHistList').querySelectorAll('[data-locdel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteLocEntry(id, Number(btn.getAttribute('data-locdel')), renderCraneLoc));
+    });
     $('crl_date').value = todayStr();
   }
   $('addCraneLocBtn').addEventListener('click', async ()=>{
@@ -3790,7 +3850,11 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${escapeHtml(r.action||'—')}</td>
         <td>${escapeHtml(r.reporter||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delinc="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+    $('craneIncidentBody').querySelectorAll('[data-delinc]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteIncident(craneIncidentCache,'craneincident_', id, btn.getAttribute('data-delinc'), renderCraneIncidentTable));
+    });
   }
 
   $('addCraneIncidentBtn').addEventListener('click', async ()=>{
@@ -4244,9 +4308,9 @@
     const loto = $('vm_loto').checked;
     const wasteType = $('vm_wastetype').value, wasteQty = $('vm_wasteqty').value.trim(), wasteDisposal = $('vm_wastedisposal').value.trim();
     const problem = $('vm_problem').value.trim(), resolution = $('vm_resolution').value.trim();
-    const hoursSpent = $('vm_hours').value ? Number($('vm_hours').value) : null;
+    const minutesSpent = $('vm_minutes').value ? Number($('vm_minutes').value) : null;
 
-    const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, problem, resolution, hoursSpent, cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
+    const record = {id:'r_'+Date.now(), date, type:$('vm_type').value, problem, resolution, minutesSpent, cost:$('vm_cost').value?Number($('vm_cost').value):null, tech:$('vm_tech').value.trim(), partsUsed, loto, wasteType, wasteQty, wasteDisposal};
     const list = await loadList(vehicleMaintCache,'vehiclemaint_', currentVehicleDetailId);
     list.push(record);
     await saveList(vehicleMaintCache,'vehiclemaint_', currentVehicleDetailId, list);
@@ -4263,7 +4327,7 @@
     const v = vehicles.find(x=>x.id===currentVehicleDetailId);
     if(v && (!v.lastMaint || date >= v.lastMaint)){ v.lastMaint = date; if(v.cycle) v.nextMaint = addDays(date, v.cycle); await saveVehicles(); }
 
-    $('vm_problem').value=''; $('vm_resolution').value=''; $('vm_hours').value=''; $('vm_cost').value=''; $('vm_tech').value=''; tempVehiclePartRows=[]; $('vm_loto').checked=false; $('vm_wastetype').value=''; $('vm_wasteqty').value=''; $('vm_wastedisposal').value='';
+    $('vm_problem').value=''; $('vm_resolution').value=''; $('vm_minutes').value=''; $('vm_cost').value=''; $('vm_tech').value=''; tempVehiclePartRows=[]; $('vm_loto').checked=false; $('vm_wastetype').value=''; $('vm_wasteqty').value=''; $('vm_wastedisposal').value='';
     renderVehiclesPage();
     await renderVehicleMaintTable(currentVehicleDetailId);
     await openVehicleDetail(currentVehicleDetailId);
@@ -4282,7 +4346,11 @@
         <td>${escapeHtml(r.desc||'—')}</td>
         <td>${escapeHtml(r.action||'—')}</td>
         <td>${escapeHtml(r.reporter||'—')}</td>
-      </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-danger js-guest-hide" data-delinc="${r.id}" title="ลบรายการนี้">🗑</button></td>
+      </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:16px;">ยังไม่มีบันทึกอุบัติเหตุ/เหตุการณ์ผิดปกติ</td></tr>`;
+    $('vehicleIncidentBody').querySelectorAll('[data-delinc]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteIncident(vehicleIncidentCache,'vehicleincident_', id, btn.getAttribute('data-delinc'), renderVehicleIncidentTable));
+    });
   }
   $('addVehicleIncidentBtn').addEventListener('click', async ()=>{
     if(!currentVehicleDetailId) return;
@@ -4343,7 +4411,13 @@
     $('vehicleLocCurrent').textContent = (v && v.location) || '—';
     const list = await loadList(locCache,'loc_', id);
     const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
-    $('vehicleLocHistList').innerHTML = sorted.length ? sorted.map(r=>`<li><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</li>`).join('') : `<li style="color:var(--text-faint);">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('vehicleLocHistList').innerHTML = sorted.length ? sorted.map(r=>{
+      const idx = list.indexOf(r);
+      return `<li><span class="txt"><span class="d">${fmtDate(r.date)}</span> — ${escapeHtml(r.loc)} ${r.note?('· '+escapeHtml(r.note)):''}</span><button type="button" class="loc-del-btn js-guest-hide" data-locdel="${idx}" title="ลบ">🗑</button></li>`;
+    }).join('') : `<li style="color:var(--text-faint);border-bottom:none;">ยังไม่มีประวัติการย้ายตำแหน่ง</li>`;
+    $('vehicleLocHistList').querySelectorAll('[data-locdel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteLocEntry(id, Number(btn.getAttribute('data-locdel')), renderVehicleLoc));
+    });
     $('vl_date').value = todayStr();
   }
   $('addVehicleLocBtn').addEventListener('click', async ()=>{

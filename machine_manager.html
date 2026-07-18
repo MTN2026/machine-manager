@@ -1021,18 +1021,37 @@
         </div>
       </div>
       <div class="form-grid">
-        <div class="field"><label>ชื่ออะไหล่ <span class="req">*</span></label><input id="pc_name" required></div>
-        <div class="field"><label>รหัสอะไหล่</label><input id="pc_code"></div>
-        <div class="field"><label>รุ่นอะไหล่</label><input id="pc_model" placeholder="เช่น รุ่น/สเปกของอะไหล่"></div>
-        <div class="field"><label>หมวดหมู่ <span class="req">*</span></label><input id="pc_category" required list="partCatList"><datalist id="partCatList"></datalist></div>
-        <div class="field"><label>หน่วยนับ</label><input id="pc_unit" placeholder="เช่น ชิ้น, กล่อง, เมตร, ลิตร"></div>
-        <div class="field"><label>คงเหลือเริ่มต้น</label><input type="number" id="pc_qty" min="0" value="0"></div>
-        <div class="field"><label>จุดแจ้งเตือนขั้นต่ำ</label><input type="number" id="pc_min" min="0" value="0"></div>
+        <div class="field"><label>ชื่ออะไหล่ (ไทย) <span class="req">*</span></label><input id="pc_name" required></div>
+        <div class="field"><label>ชื่ออะไหล่ (อังกฤษ)</label><input id="pc_nameEn" placeholder="เช่น Bearing SKF 6204-2RS"></div>
+        <div class="field"><label>หมวดหลัก <span class="req">*</span></label><select id="pc_mainCat" required><option value="">— เลือกหมวดหลัก —</option></select></div>
+        <div class="field"><label>ประเภท <span class="req">*</span></label><select id="pc_subCat" required><option value="">— เลือกหมวดหลักก่อน —</option></select></div>
+        <div class="field">
+          <label>รหัสอะไหล่</label>
+          <div style="display:flex;gap:6px;">
+            <input id="pc_code" style="flex:1;" placeholder="เช่น ME-BRG-0001">
+            <button type="button" class="btn btn-sm" id="pc_genCode" title="สร้างรหัสอัตโนมัติจากหมวดที่เลือก">🔄 สร้างรหัส</button>
+          </div>
+        </div>
+        <div class="field"><label>รุ่น/สเปกอะไหล่</label><input id="pc_model" placeholder="เช่น 6204-2RS"></div>
+        <div class="field"><label>ยี่ห้อ</label><input id="pc_brand" placeholder="เช่น SKF, OMRON"></div>
+        <div class="field"><label>Part Number ผู้ผลิต</label><input id="pc_mfgpn" placeholder="รหัสอ้างอิงจากผู้ผลิต"></div>
+        <div class="field full"><label>ขนาด / Specification</label><input id="pc_spec" placeholder="เช่น 20x47x14 มม., 24VDC 8 Pin"></div>
+        <div class="field full"><label>เครื่องจักรที่ใช้งาน</label><input id="pc_usedin" list="pcUsedInList" placeholder="เช่น เครื่องขัดกระจก, ใช้งานทั่วไป"><datalist id="pcUsedInList"></datalist></div>
+        <div class="field"><label>หน่วยนับหลัก (ตัดสต๊อกจริง)</label><input id="pc_unit" placeholder="เช่น ชิ้น, ลูก, เมตร"></div>
+        <div class="field"><label>คงเหลือ (หน่วยหลัก)</label><input type="number" id="pc_qty" min="0" value="0"></div>
+        <div class="field"><label>หน่วยซื้อ (ถ้าต่างจากหน่วยหลัก)</label><input id="pc_purchaseUnit" placeholder="เช่น กล่อง, ม้วน, ห่อ"></div>
+        <div class="field"><label>อัตราแปลงหน่วย (1 หน่วยซื้อ = กี่หน่วยหลัก)</label><input type="number" id="pc_unitConv" min="0" step="0.01" placeholder="เช่น 100"></div>
+        <div class="field"><label>จุดแจ้งเตือนขั้นต่ำ (วิกฤต)</label><input type="number" id="pc_min" min="0" value="0"></div>
+        <div class="field"><label>จุดสั่งซื้อ (Reorder Point)</label><input type="number" id="pc_reorder" min="0" placeholder="สั่งซื้อเมื่อคงเหลือถึงจุดนี้"></div>
+        <div class="field"><label>จำนวนสูงสุด</label><input type="number" id="pc_max" min="0" placeholder="ไม่บังคับ"></div>
+        <div class="field"><label>Lead Time (วัน)</label><input type="number" id="pc_leadtime" min="0" placeholder="ระยะเวลารอของหลังสั่งซื้อ"></div>
         <div class="field"><label>ราคา/หน่วย</label><input type="number" id="pc_cost" min="0" step="0.01"></div>
         <div class="field"><label>ที่จัดเก็บ</label><input id="pc_location" placeholder="เช่น ชั้นวาง A3"></div>
         <div class="field"><label>เลขที่ล็อต/แบทช์</label><input id="pc_lot" placeholder="ถ้ามี"></div>
         <div class="field"><label>วันหมดอายุ</label><input type="date" id="pc_expiry"></div>
+        <div class="field"><label>สถานะ</label><select id="pc_status"><option value="ใช้งาน">ใช้งาน</option><option value="เลิกใช้">เลิกใช้</option><option value="รอตรวจสอบ">รอตรวจสอบ</option></select></div>
         <div class="field full"><label>ผู้จำหน่าย/ซัพพลายเออร์</label><input id="pc_supplier"></div>
+        <div class="field full"><label>หมายเหตุ</label><input id="pc_notes" placeholder="เช่น 1 ห่อ = 100 ชิ้น"></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn" data-close>ยกเลิก</button>
@@ -1502,6 +1521,23 @@
 (function(){
   const STATUS_LABEL = {run:'ใช้งานปกติ', maint:'ซ่อมบำรุง', down:'ชำรุด/เสีย', retired:'ปลดระวาง'};
   const MAINT_LABEL = {pm:'PM ป้องกัน', cm:'CM แก้ไข', insp:'ตรวจสอบ'};
+  var PART_CATEGORIES = {
+  ME: {label:'อะไหล่เครื่องกล', items:[{code:'BRG',label:'ลูกปืน / แบริ่ง'},{code:'BLT',label:'สายพาน'},{code:'CHN',label:'โซ่'},{code:'GER',label:'เฟือง'},{code:'SPK',label:'สโปรเก็ต'},{code:'PLY',label:'พูลเลย์'},{code:'CPL',label:'คัปปลิ้ง'},{code:'SHF',label:'เพลา'},{code:'BSH',label:'บูช'},{code:'SPR',label:'สปริง'},{code:'ROL',label:'ลูกกลิ้ง'},{code:'WHL',label:'ล้อ'},{code:'GRB',label:'เกียร์บ็อกซ์'},{code:'BRK',label:'เบรก / ผ้าเบรก'},{code:'CLT',label:'คลัตช์'},{code:'DMP',label:'ยางกันกระแทก / แดมเปอร์'},{code:'GDE',label:'รางนำ / ไกด์'},{code:'LNR',label:'ลิเนียร์แบริ่ง / Linear Guide'},{code:'SCR',label:'ลีดสกรู / บอลสกรู'},{code:'HDL',label:'มือจับ / บานพับ'}]},
+  FS: {label:'อุปกรณ์ยึดประกอบ', items:[{code:'BLT',label:'โบลต์'},{code:'NUT',label:'นอต'},{code:'SCR',label:'สกรู'},{code:'WSH',label:'แหวนรอง'},{code:'PIN',label:'สลัก / พิน'},{code:'RIV',label:'หมุดย้ำ'},{code:'ANC',label:'พุก / Anchor'},{code:'CLP',label:'แคลมป์'},{code:'COT',label:'สลักผ่า'},{code:'RET',label:'แหวนล็อก / Retaining Ring'},{code:'KEY',label:'ลิ่มเพลา'},{code:'TIE',label:'เคเบิลไทร์'}]},
+  EL: {label:'อะไหล่ไฟฟ้า', items:[{code:'MTR',label:'มอเตอร์ไฟฟ้า'},{code:'MCB',label:'เบรกเกอร์ย่อย'},{code:'MCC',label:'Molded Case Circuit Breaker'},{code:'RLY',label:'รีเลย์'},{code:'CNT',label:'คอนแทคเตอร์'},{code:'OLR',label:'โอเวอร์โหลดรีเลย์'},{code:'FUS',label:'ฟิวส์'},{code:'TRF',label:'หม้อแปลง'},{code:'PWS',label:'Power Supply'},{code:'INV',label:'อินเวอร์เตอร์'},{code:'SFD',label:'Soft Starter'},{code:'SWT',label:'สวิตช์'},{code:'PBS',label:'ปุ่มกด'},{code:'SEL',label:'Selector Switch'},{code:'EMS',label:'Emergency Stop'},{code:'LMP',label:'หลอดไฟ'},{code:'IND',label:'ไฟแสดงสถานะ'},{code:'SCK',label:'ปลั๊ก / เต้ารับ'},{code:'WIR',label:'สายไฟ'},{code:'CAB',label:'สายเคเบิล'},{code:'TRM',label:'เทอร์มินอล'},{code:'DCT',label:'รางเก็บสายไฟ'},{code:'ENC',label:'ตู้ไฟ / กล่องไฟ'},{code:'FAN',label:'พัดลมระบายอากาศตู้ไฟ'},{code:'CAP',label:'คาปาซิเตอร์'},{code:'RES',label:'ตัวต้านทาน'},{code:'SOL',label:'โซลินอยด์ไฟฟ้า'},{code:'BAT',label:'แบตเตอรี่'},{code:'UPS',label:'เครื่องสำรองไฟ'}]},
+  CT: {label:'ระบบควบคุมและอิเล็กทรอนิกส์', items:[{code:'PLC',label:'PLC'},{code:'HMI',label:'หน้าจอ HMI'},{code:'CPU',label:'CPU Module'},{code:'INP',label:'Input Module'},{code:'OUT',label:'Output Module'},{code:'COM',label:'Communication Module'},{code:'ENC',label:'Encoder'},{code:'CTR',label:'Controller'},{code:'DRV',label:'Servo Drive'},{code:'SRV',label:'Servo Motor'},{code:'PCB',label:'แผงวงจร'},{code:'DSP',label:'Display Module'},{code:'TMR',label:'Timer'},{code:'CNT',label:'Counter'},{code:'SSR',label:'Solid State Relay'},{code:'OPT',label:'อุปกรณ์สื่อสารใยแก้วนำแสง'},{code:'NET',label:'อุปกรณ์เครือข่าย'},{code:'CNV',label:'Signal Converter'}]},
+  IN: {label:'เซนเซอร์และเครื่องมือวัด', items:[{code:'PRX',label:'Proximity Sensor'},{code:'PHO',label:'Photoelectric Sensor'},{code:'LIM',label:'Limit Switch'},{code:'TMP',label:'Temperature Sensor'},{code:'PRS',label:'Pressure Sensor'},{code:'FLW',label:'Flow Sensor'},{code:'LVL',label:'Level Sensor'},{code:'LOD',label:'Load Cell'},{code:'VIB',label:'Vibration Sensor'},{code:'SPD',label:'Speed Sensor'},{code:'HUM',label:'Humidity Sensor'},{code:'PGM',label:'Pressure Gauge'},{code:'TGM',label:'Temperature Gauge'},{code:'FLM',label:'Flow Meter'},{code:'MTR',label:'Meter / Indicator'},{code:'TCQ',label:'Thermocouple'},{code:'RTD',label:'RTD Sensor'},{code:'TRN',label:'Transmitter'}]},
+  PN: {label:'ระบบนิวแมติก', items:[{code:'CYL',label:'กระบอกลม'},{code:'VAL',label:'วาล์วลม'},{code:'SOL',label:'โซลินอยด์วาล์ว'},{code:'FIT',label:'ข้อต่อลม'},{code:'TUB',label:'สายลม'},{code:'FRL',label:'ชุดกรองลม FRL'},{code:'REG',label:'เรกูเลเตอร์'},{code:'FLT',label:'ไส้กรองลม'},{code:'LUB',label:'ตัวจ่ายน้ำมันลม'},{code:'MAN',label:'แมนิโฟลด์'},{code:'SIL',label:'ตัวเก็บเสียง'},{code:'VAC',label:'Vacuum Generator'},{code:'CUP',label:'Vacuum Cup'},{code:'GAG',label:'เกจวัดแรงดันลม'},{code:'QEV',label:'Quick Exhaust Valve'},{code:'FCT',label:'Flow Control Valve'}]},
+  HY: {label:'ระบบไฮดรอลิก', items:[{code:'PMP',label:'ปั๊มไฮดรอลิก'},{code:'CYL',label:'กระบอกไฮดรอลิก'},{code:'VAL',label:'วาล์วไฮดรอลิก'},{code:'HOS',label:'สายไฮดรอลิก'},{code:'FIT',label:'ข้อต่อไฮดรอลิก'},{code:'FLT',label:'ไส้กรองน้ำมัน'},{code:'TNK',label:'ถังน้ำมัน'},{code:'ACC',label:'แอคคูมูเลเตอร์'},{code:'GAG',label:'เกจวัดแรงดัน'},{code:'CLD',label:'ออยล์คูลเลอร์'},{code:'MOT',label:'Hydraulic Motor'},{code:'MAN',label:'Manifold Block'},{code:'SEA',label:'ชุดซีลกระบอก'},{code:'OIL',label:'น้ำมันไฮดรอลิก'}]},
+  PP: {label:'ปั๊ม ท่อ และระบบของไหล', items:[{code:'PMP',label:'ปั๊ม'},{code:'MTR',label:'มอเตอร์ปั๊ม'},{code:'IMP',label:'ใบพัดปั๊ม'},{code:'SEA',label:'Mechanical Seal'},{code:'VAL',label:'วาล์ว'},{code:'CHK',label:'เช็กวาล์ว'},{code:'BLV',label:'บอลวาล์ว'},{code:'GTV',label:'เกตวาล์ว'},{code:'PIP',label:'ท่อ'},{code:'FIT',label:'ข้อต่อท่อ'},{code:'ELB',label:'ข้องอ'},{code:'TEE',label:'ข้อต่อสามทาง'},{code:'FLG',label:'หน้าแปลน'},{code:'HOS',label:'สายยาง'},{code:'CLP',label:'เข็มขัดรัดท่อ'},{code:'STR',label:'สเตรนเนอร์'},{code:'GSK',label:'ปะเก็นหน้าแปลน'}]},
+  SR: {label:'ซีล ยาง และวัสดุป้องกันการรั่ว', items:[{code:'ORG',label:'โอริง'},{code:'OSL',label:'ออยล์ซีล'},{code:'MSL',label:'Mechanical Seal'},{code:'GSK',label:'ปะเก็น'},{code:'RUB',label:'แผ่นยาง'},{code:'PCK',label:'Packing Seal'},{code:'VSL',label:'V-Seal'},{code:'USL',label:'U-Seal'},{code:'WPR',label:'Wiper Seal'},{code:'DIA',label:'ไดอะแฟรม'},{code:'TPE',label:'เทปพันเกลียว'},{code:'SLC',label:'ซิลิโคนซีลแลนต์'}]},
+  AC: {label:'ระบบทำความเย็นและปรับอากาศ', items:[{code:'CMP',label:'คอมเพรสเซอร์'},{code:'FAN',label:'พัดลม'},{code:'BWR',label:'Blower'},{code:'CND',label:'คอนเดนเซอร์'},{code:'EVP',label:'อีวาพอเรเตอร์'},{code:'FLT',label:'แผ่นกรองอากาศ'},{code:'THM',label:'เทอร์โมสตัท'},{code:'EXP',label:'Expansion Valve'},{code:'DRY',label:'Filter Drier'},{code:'REF',label:'น้ำยาแอร์'},{code:'COP',label:'ท่อทองแดง'},{code:'INS',label:'ฉนวนหุ้มท่อ'},{code:'CAP',label:'คาปาซิเตอร์แอร์'},{code:'PCB',label:'แผงควบคุมแอร์'},{code:'PMP',label:'ปั๊มน้ำทิ้ง'}]},
+  LC: {label:'วัสดุหล่อลื่นและสารเคมี', items:[{code:'GRS',label:'จาระบี'},{code:'OIL',label:'น้ำมันหล่อลื่น'},{code:'HYD',label:'น้ำมันไฮดรอลิก'},{code:'GER',label:'น้ำมันเกียร์'},{code:'CMP',label:'น้ำมันคอมเพรสเซอร์'},{code:'CLN',label:'น้ำยาทำความสะอาด'},{code:'RST',label:'น้ำยากำจัดสนิม'},{code:'PNT',label:'สี'},{code:'THN',label:'ทินเนอร์'},{code:'ADH',label:'กาว'},{code:'SLN',label:'ซิลิโคน'},{code:'LCK',label:'น้ำยาล็อกเกลียว'},{code:'CLT',label:'น้ำยาหล่อเย็น'},{code:'DST',label:'น้ำกลั่น'}]},
+  CS: {label:'วัสดุสิ้นเปลืองงานซ่อม', items:[{code:'TPE',label:'เทป'},{code:'ETP',label:'เทปพันสายไฟ'},{code:'RAG',label:'ผ้าเช็ดทำความสะอาด'},{code:'BRU',label:'แปรง'},{code:'SND',label:'กระดาษทราย'},{code:'DSC',label:'ใบตัด'},{code:'GRD',label:'ใบเจียร'},{code:'DRL',label:'ดอกสว่าน'},{code:'SAW',label:'ใบเลื่อย'},{code:'WEL',label:'ลวดเชื่อม'},{code:'GAS',label:'แก๊สงานเชื่อม'},{code:'TIP',label:'หัวเชื่อม / หัวตัด'},{code:'BLN',label:'หลอด / ท่อพลาสติกใช้งานทั่วไป'},{code:'CLT',label:'ผ้าเทป / ผ้ากรอง'},{code:'ZIP',label:'ถุงซิป'}]},
+  TL: {label:'เครื่องมือช่าง', items:[{code:'WRE',label:'ประแจ'},{code:'SCR',label:'ไขควง'},{code:'PLI',label:'คีม'},{code:'HAM',label:'ค้อน'},{code:'DRL',label:'สว่าน'},{code:'GRD',label:'เครื่องเจียร'},{code:'WLD',label:'เครื่องเชื่อม'},{code:'MTR',label:'มัลติมิเตอร์'},{code:'CLM',label:'แคลมป์มิเตอร์'},{code:'INS',label:'เครื่องวัดฉนวน'},{code:'CAL',label:'เวอร์เนียร์ / เครื่องมือวัด'},{code:'TOR',label:'ประแจปอนด์'},{code:'PUL',label:'ตัวดูดลูกปืน'},{code:'LDR',label:'บันได'},{code:'PWR',label:'เครื่องมือไฟฟ้า'}]},
+  SF: {label:'อุปกรณ์ความปลอดภัย', items:[{code:'GLV',label:'ถุงมือ'},{code:'GOG',label:'แว่นตานิรภัย'},{code:'HLM',label:'หมวกนิรภัย'},{code:'SHO',label:'รองเท้านิรภัย'},{code:'MSK',label:'หน้ากาก'},{code:'EAR',label:'อุปกรณ์ป้องกันเสียง'},{code:'HRN',label:'เข็มขัดนิรภัย'},{code:'VST',label:'เสื้อสะท้อนแสง'},{code:'FEX',label:'ถังดับเพลิง'},{code:'LCK',label:'อุปกรณ์ Lockout–Tagout'},{code:'SGN',label:'ป้ายความปลอดภัย'},{code:'FAK',label:'ชุดปฐมพยาบาล'}]},
+  MS: {label:'อะไหล่เฉพาะเครื่องจักร', items:[{code:'JIG',label:'Jig'},{code:'FIX',label:'Fixture'},{code:'BLD',label:'ใบมีด'},{code:'DYE',label:'แม่พิมพ์'},{code:'CHK',label:'หัวจับ'},{code:'GRD',label:'ชุดไกด์เฉพาะเครื่อง'},{code:'COV',label:'ฝาครอบ'},{code:'TBL',label:'โต๊ะ / แท่นเครื่อง'},{code:'HDP',label:'หัวขัด / หัวเจียร'},{code:'SPL',label:'Spindle'},{code:'CLM',label:'ชุดจับยึด'},{code:'CST',label:'อะไหล่สั่งผลิต'}]}
+  };
   const PRIORITY_LABEL = {critical:'วิกฤต', high:'สูง', medium:'ปานกลาง', low:'ต่ำ'};
   const PRIORITY_WEIGHT = {critical:0, high:1, medium:2, low:3};
   const DUE_SOON_DAYS = 7;
@@ -2252,7 +2288,13 @@
   async function loadPartsTx(){ try{ const r = await window.storage.get('parts_transactions', false); partsTx = r && r.value ? JSON.parse(r.value) : []; }catch(e){ partsTx = []; } }
   async function savePartsTx(){ try{ await window.storage.set('parts_transactions', JSON.stringify(partsTx), false); }catch(e){ toast('บันทึกประวัติเบิก-จ่ายไม่สำเร็จ'); } }
 
-  function isLowStock(p){ return p.qty <= p.min; }
+  function stockLevel(p){
+    if((p.qty||0) <= 0) return 'out';
+    if((p.qty||0) <= (p.min||0)) return 'low';
+    if(p.reorderPoint!=null && (p.qty||0) <= p.reorderPoint) return 'reorder';
+    return 'ok';
+  }
+  function isLowStock(p){ return stockLevel(p) !== 'ok'; }
   function daysUntilDate_(dateStr){ return daysBetween(todayStr(), dateStr); }
   function expiryStatus(p){
     if(!p.expiry) return null;
@@ -2303,14 +2345,19 @@
     return {ok};
   }
 
+  const STOCK_LEVEL_LABEL = {out:'หมดสต๊อก', low:'ต่ำกว่าขั้นต่ำ', reorder:'ถึงจุดสั่งซื้อ'};
+  const STOCK_LEVEL_PILL = {out:'red', low:'red', reorder:'amber'};
   function renderLowStockAlerts(){
     const low = partsCatalog.filter(isLowStock);
     $('apPartsCount').textContent = low.length ? low.length+' รายการ' : '';
-    $('alertPartsList').innerHTML = low.length ? low.map(p=>`
+    $('alertPartsList').innerHTML = low.length ? low.map(p=>{
+      const lvl = stockLevel(p);
+      return `
       <div class="ap-row" data-partid="${p.id}">
         <span>${escapeHtml(p.code||'-')} · ${escapeHtml(p.name)}</span>
-        <span class="pill ${p.qty<=0?'red':'amber'}">${p.qty<=0?'หมดสต๊อก':'ใกล้หมด'} · คงเหลือ ${p.qty} ${escapeHtml(p.unit||'')}</span>
-      </div>`).join('') : `<div class="ap-empty">ไม่มีอะไหล่ที่ใกล้หรือหมดสต๊อก</div>`;
+        <span class="pill ${STOCK_LEVEL_PILL[lvl]}">${STOCK_LEVEL_LABEL[lvl]} · คงเหลือ ${p.qty} ${escapeHtml(p.unit||'')}</span>
+      </div>`;
+    }).join('') : `<div class="ap-empty">ไม่มีอะไหล่ที่ใกล้หรือหมดสต๊อก</div>`;
 
     const expList = partsCatalog.map(p=>({p, ex:expiryStatus(p)})).filter(x=>x.ex);
     expList.sort((a,b)=>a.ex.days-b.ex.days);
@@ -2365,7 +2412,6 @@
     const sel = $('partsCatFilter'); const cur = sel.value;
     sel.innerHTML = '<option value="">หมวดหมู่: ทั้งหมด</option>' + cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     sel.value = cur;
-    $('partCatList').innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">`).join('');
   }
 
   function renderPartCatalogBody(){
@@ -2377,20 +2423,27 @@
     let list = partsCatalog.filter(p=>{
       if(cat && p.category!==cat) return false;
       if(lowOnly && !isLowStock(p)) return false;
-      if(q){ const hay=[p.name,p.code,p.model,p.category].join(' ').toLowerCase(); if(!hay.includes(q)) return false; }
+      if(q){ const hay=[p.name,p.nameEn,p.code,p.model,p.category,p.brand,p.mfgPartNumber,p.spec,p.usedInMachine].join(' ').toLowerCase(); if(!hay.includes(q)) return false; }
       return true;
     });
     $('partsCatalogBody').innerHTML = list.length ? list.map(p=>{
       const ex = expiryStatus(p);
       const expLabel = p.expiry ? (fmtDate(p.expiry) + (ex ? ` <span class="tag ${ex.state==='expired'?'low':'pm'}">${ex.state==='expired'?'หมดอายุแล้ว':'ใกล้หมดอายุ'}</span>` : '')) : '—';
+      const lvl = stockLevel(p);
+      const metaBits = [];
+      if(p.brand) metaBits.push(escapeHtml(p.brand));
+      if(p.spec) metaBits.push(escapeHtml(p.spec));
+      if(p.mfgPartNumber) metaBits.push('P/N: '+escapeHtml(p.mfgPartNumber));
+      if(p.usedInMachine) metaBits.push('ใช้กับ: '+escapeHtml(p.usedInMachine));
+      if(p.lot) metaBits.push('ล็อต: '+escapeHtml(p.lot));
       return `
       <tr>
         <td>${p.image?`<img class="thumb-sm" src="${p.image}">`:'🔩'}</td>
         <td>${escapeHtml(p.code||'—')}</td>
-        <td>${escapeHtml(p.name)}${p.lot?`<div class="hint">ล็อต: ${escapeHtml(p.lot)}</div>`:''}</td>
+        <td>${escapeHtml(p.name)}${p.nameEn?`<div class="hint">${escapeHtml(p.nameEn)}</div>`:''}${metaBits.length?`<div class="hint">${metaBits.join(' · ')}</div>`:''}</td>
         <td>${escapeHtml(p.model||'—')}</td>
         <td>${escapeHtml(p.category||'—')}</td>
-        <td>${p.qty}${isLowStock(p)?` <span class="tag low">${p.qty<=0?'หมดสต๊อก':'ใกล้หมด'}</span>`:''}</td>
+        <td>${p.qty}${lvl!=='ok'?` <span class="tag ${lvl==='reorder'?'pm':'low'}">${STOCK_LEVEL_LABEL[lvl]}</span>`:''}</td>
         <td>${p.min}</td>
         <td>${escapeHtml(p.unit||'—')}</td>
         <td>${fmtMoney(p.cost)}</td>
@@ -2458,21 +2511,74 @@
 
   // ---- part catalog form (add/edit) ----
   let tempPartCatImage = null;
+  function populatePartMainCatOptions(){
+    const sel = $('pc_mainCat');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— เลือกหมวดหลัก —</option>' +
+      Object.keys(PART_CATEGORIES).map(k=>`<option value="${k}">${k} — ${escapeHtml(PART_CATEGORIES[k].label)}</option>`).join('');
+    if(cur) sel.value = cur;
+  }
+  function populatePartSubCatOptions(mainCode, selectSubCode){
+    const sel = $('pc_subCat');
+    const main = PART_CATEGORIES[mainCode];
+    if(!main){ sel.innerHTML = '<option value="">— เลือกหมวดหลักก่อน —</option>'; return; }
+    sel.innerHTML = '<option value="">— เลือกประเภท —</option>' +
+      main.items.map(it=>`<option value="${it.code}">${it.code} — ${escapeHtml(it.label)}</option>`).join('');
+    if(selectSubCode) sel.value = selectSubCode;
+  }
+  $('pc_mainCat').addEventListener('change', ()=>{ populatePartSubCatOptions($('pc_mainCat').value); });
+  function suggestPartCode(){
+    const mainCode = $('pc_mainCat').value, subCode = $('pc_subCat').value;
+    if(!mainCode || !subCode){ toast('กรุณาเลือกหมวดหลักและประเภทก่อน'); return; }
+    const prefix = mainCode+'-'+subCode+'-';
+    let maxSeq = 0;
+    partsCatalog.forEach(p=>{
+      if(p.code && p.code.indexOf(prefix)===0){
+        const seq = parseInt(p.code.slice(prefix.length), 10);
+        if(!isNaN(seq) && seq>maxSeq) maxSeq = seq;
+      }
+    });
+    $('pc_code').value = prefix + String(maxSeq+1).padStart(4,'0');
+  }
+  $('pc_genCode').addEventListener('click', suggestPartCode);
+  function populatePartUsedInList(){
+    const names = new Set();
+    machines.forEach(m=>names.add(m.name));
+    if(typeof tools!=='undefined') tools.forEach(t=>names.add(t.name));
+    if(typeof cranes!=='undefined') cranes.forEach(c=>names.add(c.name));
+    if(typeof vehicles!=='undefined') vehicles.forEach(v=>names.add(v.name));
+    $('pcUsedInList').innerHTML = Array.from(names).map(n=>`<option value="${escapeHtml(n)}">`).join('');
+  }
   function openPartForm(part){
     $('partFormTitle').textContent = part ? 'แก้ไขอะไหล่' : 'เพิ่มอะไหล่ใหม่';
     $('pc_id').value = part ? part.id : '';
     $('pc_name').value = part ? part.name : '';
+    $('pc_nameEn').value = part ? part.nameEn||'' : '';
+    populatePartMainCatOptions();
+    $('pc_mainCat').value = part ? part.mainCatCode||'' : '';
+    populatePartSubCatOptions($('pc_mainCat').value, part ? part.subCatCode||'' : '');
+    populatePartUsedInList();
     $('pc_code').value = part ? part.code||'' : '';
     $('pc_model').value = part ? part.model||'' : '';
-    $('pc_category').value = part ? part.category||'' : '';
+    $('pc_brand').value = part ? part.brand||'' : '';
+    $('pc_mfgpn').value = part ? part.mfgPartNumber||'' : '';
+    $('pc_spec').value = part ? part.spec||'' : '';
+    $('pc_usedin').value = part ? part.usedInMachine||'' : '';
     $('pc_unit').value = part ? part.unit||'' : '';
     $('pc_qty').value = part ? part.qty : 0;
+    $('pc_purchaseUnit').value = part ? part.purchaseUnit||'' : '';
+    $('pc_unitConv').value = part ? part.unitConversion??'' : '';
     $('pc_min').value = part ? part.min : 0;
+    $('pc_reorder').value = part ? part.reorderPoint??'' : '';
+    $('pc_max').value = part ? part.maxQty??'' : '';
+    $('pc_leadtime').value = part ? part.leadTimeDays??'' : '';
     $('pc_cost').value = part ? part.cost??'' : '';
     $('pc_location').value = part ? part.location||'' : '';
     $('pc_lot').value = part ? part.lot||'' : '';
     $('pc_expiry').value = part ? part.expiry||'' : '';
     $('pc_supplier').value = part ? part.supplier||'' : '';
+    $('pc_status').value = part ? part.status||'ใช้งาน' : 'ใช้งาน';
+    $('pc_notes').value = part ? part.notes||'' : '';
     $('pc_photo').value = '';
     tempPartCatImage = null;
     if(part && part.image){ $('pc_photoPreview').src = part.image; $('pc_photoPreview').style.display=''; $('pc_photoPlaceholder').style.display='none'; }
@@ -2489,13 +2595,27 @@
     e.preventDefault();
     const id = $('pc_id').value || ('pc_'+Date.now());
     const name = $('pc_name').value.trim(); if(!name){ toast('กรุณากรอกชื่ออะไหล่'); return; }
+    const mainCode = $('pc_mainCat').value, subCode = $('pc_subCat').value;
+    if(!mainCode || !subCode){ toast('กรุณาเลือกหมวดหลักและประเภท'); return; }
+    const mainLabel = PART_CATEGORIES[mainCode] ? PART_CATEGORIES[mainCode].label : mainCode;
+    const subItem = PART_CATEGORIES[mainCode] ? PART_CATEGORIES[mainCode].items.find(i=>i.code===subCode) : null;
+    const subLabel = subItem ? subItem.label : subCode;
     const idx = partsCatalog.findIndex(p=>p.id===id);
     const data = {
-      id, name, code:$('pc_code').value.trim(), model:$('pc_model').value.trim(), category:$('pc_category').value.trim(), unit:$('pc_unit').value.trim(),
+      id, name, nameEn:$('pc_nameEn').value.trim(),
+      mainCatCode: mainCode, subCatCode: subCode, category: mainLabel+' - '+subLabel,
+      code:$('pc_code').value.trim(), model:$('pc_model').value.trim(), brand:$('pc_brand').value.trim(),
+      mfgPartNumber:$('pc_mfgpn').value.trim(), spec:$('pc_spec').value.trim(), usedInMachine:$('pc_usedin').value.trim(),
+      unit:$('pc_unit').value.trim(), purchaseUnit:$('pc_purchaseUnit').value.trim(),
+      unitConversion: $('pc_unitConv').value ? Number($('pc_unitConv').value) : null,
       qty: idx>=0 ? partsCatalog[idx].qty : (Number($('pc_qty').value)||0),
-      min: Number($('pc_min').value)||0, cost:$('pc_cost').value?Number($('pc_cost').value):null,
+      min: Number($('pc_min').value)||0,
+      reorderPoint: $('pc_reorder').value ? Number($('pc_reorder').value) : null,
+      maxQty: $('pc_max').value ? Number($('pc_max').value) : null,
+      leadTimeDays: $('pc_leadtime').value ? Number($('pc_leadtime').value) : null,
+      cost:$('pc_cost').value?Number($('pc_cost').value):null,
       location:$('pc_location').value.trim(), lot:$('pc_lot').value.trim(), expiry:$('pc_expiry').value,
-      supplier:$('pc_supplier').value.trim(),
+      supplier:$('pc_supplier').value.trim(), status:$('pc_status').value, notes:$('pc_notes').value.trim(),
       image: tempPartCatImage || (idx>=0?partsCatalog[idx].image:null)
     };
     if(idx>=0) partsCatalog[idx]=data; else partsCatalog.push(data);
@@ -2559,10 +2679,15 @@
     toast('เลือกอะไหล่ในฟอร์ม แล้วกดบันทึกเพื่อเบิกให้เครื่องนี้');
   });
 
+  const PARTS_CSV_HEADERS = ['รหัสอะไหล่','ชื่ออะไหล่ภาษาไทย','ชื่อภาษาอังกฤษ','รหัสหมวดหลัก','หมวดหลัก','รหัสประเภท','ประเภทอะไหล่','ยี่ห้อ','รุ่น','Part Number ผู้ผลิต','ขนาด / Specification','เครื่องจักรที่ใช้งาน','หน่วยนับหลัก','หน่วยซื้อ','อัตราแปลงหน่วย','จำนวนคงเหลือ','จำนวนขั้นต่ำ','จำนวนสูงสุด','จุดสั่งซื้อ','ตำแหน่งจัดเก็บ','ราคาต่อหน่วย','ผู้จำหน่าย','Lead Time (วัน)','สถานะ','หมายเหตุ','เลขที่ล็อต','วันหมดอายุ'];
   $('partsExportBtn').addEventListener('click', ()=>{
-    const headers = ['รหัส','ชื่ออะไหล่','รุ่น','หมวดหมู่','คงเหลือ','ขั้นต่ำ','หน่วย','ราคา/หน่วย','ที่จัดเก็บ','เลขที่ล็อต','วันหมดอายุ','ผู้จำหน่าย'];
-    const rows = partsCatalog.map(p=>[p.code,p.name,p.model,p.category,p.qty,p.min,p.unit,p.cost,p.location,p.lot,p.expiry,p.supplier]);
-    const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const rows = partsCatalog.map(p=>[
+      p.code, p.name, p.nameEn, p.mainCatCode, p.mainCatCode?(PART_CATEGORIES[p.mainCatCode]?PART_CATEGORIES[p.mainCatCode].label:''):'',
+      p.subCatCode, p.category, p.brand, p.model, p.mfgPartNumber, p.spec, p.usedInMachine,
+      p.unit, p.purchaseUnit, p.unitConversion, p.qty, p.min, p.maxQty, p.reorderPoint,
+      p.location, p.cost, p.supplier, p.leadTimeDays, p.status, p.notes, p.lot, p.expiry
+    ]);
+    const csv = '\uFEFF' + [PARTS_CSV_HEADERS, ...rows].map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href=url; a.download='parts_catalog.csv';
@@ -2580,10 +2705,18 @@
       const r = rows[i];
       const code = (r[0]||'').trim(); if(!code) continue;
       if(partsCatalog.find(p=>(p.code||'').toLowerCase()===code.toLowerCase())){ skipped++; continue; }
+      const mainCatCode = (r[3]||'').trim(), subCatCode = (r[5]||'').trim();
+      const mainLabel = PART_CATEGORIES[mainCatCode] ? PART_CATEGORIES[mainCatCode].label : (r[4]||'');
+      const subItem = PART_CATEGORIES[mainCatCode] ? PART_CATEGORIES[mainCatCode].items.find(it=>it.code===subCatCode) : null;
+      const subLabel = subItem ? subItem.label : (r[6]||'');
       partsCatalog.push({
-        id: 'pc_'+Date.now()+'_'+i, code, name: r[1]||code, model: r[2]||'', category: r[3]||'',
-        qty: r[4]?Number(r[4]):0, min: r[5]?Number(r[5]):0, unit: r[6]||'', cost: parseNumericInput(r[7]),
-        location: r[8]||'', lot: r[9]||'', expiry: parseDateInput(r[10]), supplier: r[11]||''
+        id: 'pc_'+Date.now()+'_'+i, code, name: r[1]||code, nameEn: r[2]||'',
+        mainCatCode, subCatCode, category: (mainLabel||subLabel) ? (mainLabel+(mainLabel&&subLabel?' - ':'')+subLabel) : (r[6]||''),
+        brand: r[7]||'', model: r[8]||'', mfgPartNumber: r[9]||'', spec: r[10]||'', usedInMachine: r[11]||'',
+        unit: r[12]||'', purchaseUnit: r[13]||'', unitConversion: r[14]?Number(r[14]):null,
+        qty: r[15]?Number(r[15]):0, min: r[16]?Number(r[16]):0, maxQty: r[17]?Number(r[17]):null, reorderPoint: r[18]?Number(r[18]):null,
+        location: r[19]||'', cost: parseNumericInput(r[20]), supplier: r[21]||'', leadTimeDays: r[22]?Number(r[22]):null,
+        status: r[23]||'ใช้งาน', notes: r[24]||'', lot: r[25]||'', expiry: parseDateInput(r[26])
       });
       imported++;
     }

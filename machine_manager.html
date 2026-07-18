@@ -293,7 +293,8 @@
       <select id="partsCatFilter"><option value="">หมวดหมู่: ทั้งหมด</option></select>
       <select id="partsLowFilter"><option value="">แสดง: ทั้งหมด</option><option value="low">เฉพาะที่ใกล้/หมดสต๊อก</option></select>
       <button class="btn btn-primary js-admin-only" id="addPartBtn">＋ เพิ่มอะไหล่ใหม่</button>
-      <button class="btn" id="partscsvImportBtn">⬆ นำเข้า CSV</button>
+      <button class="btn js-admin-only" id="partsImportBtn">⬆ นำเข้า CSV</button>
+      <input type="file" id="partsImportInput" accept=".csv" style="display:none;">
       <button class="btn" id="partsExportBtn">⬇ ส่งออก CSV</button>
     </div>
 
@@ -2567,6 +2568,29 @@
     const a = document.createElement('a'); a.href=url; a.download='parts_catalog.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     toast('ส่งออกข้อมูลอะไหล่เป็น CSV เรียบร้อย');
+  });
+  $('partsImportBtn').addEventListener('click', ()=>$('partsImportInput').click());
+  $('partsImportInput').addEventListener('change', async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const text = await file.text();
+    const rows = parseCsvText(text).filter(r=>r.length>1);
+    if(rows.length < 2){ toast('ไฟล์ CSV ไม่มีข้อมูล'); $('partsImportInput').value=''; return; }
+    let imported=0, skipped=0;
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      const code = (r[0]||'').trim(); if(!code) continue;
+      if(partsCatalog.find(p=>(p.code||'').toLowerCase()===code.toLowerCase())){ skipped++; continue; }
+      partsCatalog.push({
+        id: 'pc_'+Date.now()+'_'+i, code, name: r[1]||code, model: r[2]||'', category: r[3]||'',
+        qty: r[4]?Number(r[4]):0, min: r[5]?Number(r[5]):0, unit: r[6]||'', cost: parseNumericInput(r[7]),
+        location: r[8]||'', lot: r[9]||'', expiry: parseDateInput(r[10]), supplier: r[11]||''
+      });
+      imported++;
+    }
+    await savePartsCatalog();
+    renderPartsPage(); renderLowStockAlerts();
+    $('partsImportInput').value='';
+    toast(`นำเข้าสำเร็จ ${imported} รายการ (ข้าม ${skipped} รายการซ้ำ)`);
   });
 
   // ---- maintenance "parts used" picker now reads the global catalog ----

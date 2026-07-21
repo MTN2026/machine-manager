@@ -1813,17 +1813,25 @@ document.getElementById('btnShowSheetGuide').addEventListener('click', function(
   var code = "function doPost(e) {\n"+
 "  var body = JSON.parse(e.postData.contents);\n"+
 "  var ss = SpreadsheetApp.getActiveSpreadsheet();\n\n"+
-"  var summary = ss.getSheetByName('\u0e2a\u0e23\u0e38\u0e1b\u0e1c\u0e25\u0e15\u0e23\u0e27\u0e08') || ss.insertSheet('\u0e2a\u0e23\u0e38\u0e1b\u0e1c\u0e25\u0e15\u0e23\u0e27\u0e08');\n"+
-"  if (summary.getLastRow() === 0) {\n"+
-"    summary.appendRow(['\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e40\u0e21\u0e37\u0e48\u0e2d','\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17','\u0e23\u0e2b\u0e31\u0e2a','\u0e0a\u0e37\u0e48\u0e2d','\u0e41\u0e1c\u0e19\u0e01','\u0e23\u0e2d\u0e1a\u0e15\u0e23\u0e27\u0e08','\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e15\u0e23\u0e27\u0e08','\u0e01\u0e30/\u0e40\u0e27\u0e25\u0e32','\u0e1c\u0e39\u0e49\u0e15\u0e23\u0e27\u0e08','\u0e1c\u0e39\u0e49\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34','\u0e08\u0e33\u0e19\u0e27\u0e19\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23','\u0e08\u0e33\u0e19\u0e27\u0e19\u0e44\u0e21\u0e48\u0e1c\u0e48\u0e32\u0e19','\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48','Rev','\u0e2a\u0e23\u0e38\u0e1b']);\n"+
-"  }\n"+
-"  summary.appendRow([new Date(), body.assetType, body.assetCode, body.assetName, body.department||'', body.freqLabel, body.date, body.shift||'', body.inspector, body.approver||'', body.totalCount, body.failCount, body.docNo||'', body.revision||'', body.overall||'']);\n\n"+
-"  var detail = ss.getSheetByName('\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e15\u0e23\u0e27\u0e08') || ss.insertSheet('\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e15\u0e23\u0e27\u0e08');\n"+
-"  if (detail.getLastRow() === 0) {\n"+
-"    detail.appendRow(['\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e40\u0e21\u0e37\u0e48\u0e2d','\u0e23\u0e2b\u0e31\u0e2a','\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e15\u0e23\u0e27\u0e08','\u0e2b\u0e21\u0e27\u0e14\u0e2b\u0e21\u0e39\u0e48','\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e15\u0e23\u0e27\u0e08','\u0e1c\u0e25\u0e15\u0e23\u0e27\u0e08','\u0e2b\u0e21\u0e32\u0e22\u0e40\u0e2b\u0e15\u0e38','\u0e01\u0e32\u0e23\u0e41\u0e01\u0e49\u0e44\u0e02','\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a']);\n"+
-"  }\n"+
-"  (body.results||[]).forEach(function(item){\n"+
-"    detail.appendRow([new Date(), body.assetCode, body.date, item.category, item.name, item.result||'', item.note||'', item.correctiveAction||'', item.correctiveOwner||'']);\n"+
+"  // แต่ละเครื่อง/อุปกรณ์มีชีตของตัวเอง แยกกันตามรหัส (ไม่ปนกับเครื่องอื่น)\n"+
+"  var sheetName = (body.assetCode || 'ไม่ระบุรหัส').toString().substring(0, 90);\n"+
+"  var sheet = ss.getSheetByName(sheetName);\n"+
+"  if (!sheet) {\n"+
+"    sheet = ss.insertSheet(sheetName);\n"+
+"    sheet.appendRow(['ชื่อเครื่อง', body.assetName || '']);\n"+
+"    sheet.appendRow(['ประเภท', body.assetType || '']);\n"+
+"    sheet.appendRow(['แผนก/สถานที่', body.department || '']);\n"+
+"    sheet.appendRow(['']);\n"+
+"    sheet.appendRow(['วันที่ตรวจ','ความถี่','ผู้ตรวจ','ผู้อนุมัติ','เอกสารเลขที่','Rev','หมวดหมู่','รายการตรวจ','เกณฑ์/มาตรฐาน','ผลตรวจ','หมายเหตุ','สาเหตุที่แท้จริง','สิ่งที่ต้องแก้ไข','ผู้รับผิดชอบ','กำหนดแล้วเสร็จ']);\n"+
+"  }\n\n"+
+"  (body.results || []).forEach(function(item) {\n"+
+"    sheet.appendRow([\n"+
+"      body.date, body.freqLabel, body.inspector, body.approver || '',\n"+
+"      body.docNo || '', body.revision || '',\n"+
+"      item.category, item.name, item.crit || '',\n"+
+"      item.result || '', item.note || '', item.rootCause || '',\n"+
+"      item.correctiveAction || '', item.correctiveOwner || '', item.correctiveDue || ''\n"+
+"    ]);\n"+
 "  });\n\n"+
 "  return ContentService.createTextOutput(JSON.stringify({status:'ok'})).setMimeType(ContentService.MimeType.JSON);\n"+
 "}\n\n"+
@@ -1833,10 +1841,11 @@ document.getElementById('btnShowSheetGuide').addEventListener('click', function(
   openModal(
     '<p class="modal-title">วิธีเชื่อมต่อ Google Sheet</p>'+
     '<div style="font-size:12px;color:var(--text-dim);line-height:1.7;margin-bottom:12px;">'+
+    '<p style="margin:0 0 8px;background:var(--blue-dim);color:var(--blue);padding:8px 10px;border-radius:6px;">📋 แต่ละเครื่องจักร/อุปกรณ์จะมีแท็บ (ชีต) ของตัวเองแยกกันในไฟล์เดียวกัน ตั้งชื่อแท็บตามรหัสเครื่อง เช่น "MCH-001" ไม่ปนกับเครื่องอื่น</p>'+
     '<p style="margin:0 0 8px;"><b style="color:var(--text);">1.</b> เปิด Google Sheet ที่ต้องการเก็บข้อมูล</p>'+
     '<p style="margin:0 0 8px;"><b style="color:var(--text);">2.</b> เมนู ส่วนขยาย (Extensions) → Apps Script</p>'+
     '<p style="margin:0 0 8px;"><b style="color:var(--text);">3.</b> ลบโค้ดเดิมทั้งหมด แล้ววางโค้ดด้านล่างนี้แทน</p>'+
-    '<p style="margin:0 0 8px;"><b style="color:var(--text);">4.</b> กด Deploy → New deployment → เลือกประเภท Web app</p>'+
+    '<p style="margin:0 0 8px;"><b style="color:var(--text);">4.</b> กด Deploy → New deployment → เลือกประเภท Web app <span style="color:var(--text-faint);">(ถ้าเคย Deploy ไว้แล้ว ให้เลือก Manage deployments → แก้ไข (ไอคอนดินสอ) → New version แทน เพื่อให้ได้ URL เดิม)</span></p>'+
     '<p style="margin:0 0 8px;"><b style="color:var(--text);">5.</b> Execute as: Me / Who has access: Anyone แล้วกด Deploy</p>'+
     '<p style="margin:0;"><b style="color:var(--text);">6.</b> คัดลอก Web app URL มาวางในช่อง แล้วกดบันทึกและเปิดใช้งาน</p>'+
     '</div>'+

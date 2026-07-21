@@ -297,8 +297,8 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
         </div>
       </div>
       <div class="field">
-        <label for="fApprover">ผู้ตรวจทาน/อนุมัติรับทราบ</label>
-        <input type="text" id="fApprover" placeholder="ชื่อหัวหน้างาน/ผู้อนุมัติ">
+        <label for="fApprover">หัวหน้าจุด/ผู้รับผิดชอบ (อนุมัติรับทราบ)</label>
+        <input type="text" id="fApprover" placeholder="ชื่อหัวหน้าจุด/ผู้รับผิดชอบ">
       </div>
       <div class="field-2col">
         <div class="field">
@@ -325,7 +325,7 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
       </div>
 
       <div class="field full">
-        <label>ลายเซ็นผู้ตรวจเช็ค (เซ็นหลังตรวจครบทุกรายการแล้ว)</label>
+        <label>ลายเซ็นหัวหน้าจุด/ผู้รับผิดชอบ (เซ็นหลังตรวจครบทุกรายการแล้ว)</label>
         <div class="sig-wrap">
           <canvas id="sigCanvas" class="sig-canvas"></canvas>
           <p id="sigPlaceholder" class="sig-placeholder">แตะ/ลากนิ้วหรือเมาส์เพื่อเซ็นชื่อตรงนี้</p>
@@ -1261,8 +1261,10 @@ document.getElementById('btnSubmitRecord').addEventListener('click', async funct
   var a = getAsset(state.currentAsset); if(!a) return;
   var inspector = document.getElementById('fInspector').value.trim();
   if(!inspector){ showToast('กรุณากรอกชื่อผู้ตรวจเช็ค'); return; }
+  var approver = document.getElementById('fApprover').value.trim();
+  if(!approver){ showToast('กรุณากรอกชื่อหัวหน้าจุด/ผู้รับผิดชอบก่อนเซ็นชื่อ'); return; }
   var signature = getSignatureDataUrl();
-  if(!signature){ showToast('กรุณาลงลายเซ็นก่อนบันทึกผลตรวจเช็ค'); return; }
+  if(!signature){ showToast('กรุณาให้หัวหน้าจุด/ผู้รับผิดชอบลงลายเซ็นก่อนบันทึกผลตรวจเช็ค'); return; }
   var total = totalItems(a);
   var checkedCount = Object.keys(state.currentChecklist).filter(function(k){return state.currentChecklist[k].result;}).length;
   if(checkedCount < total){
@@ -1287,7 +1289,7 @@ document.getElementById('btnSubmitRecord').addEventListener('click', async funct
     id: uid(), assetId: a.id, freq: document.getElementById('fFreq').value,
     date: document.getElementById('fDate').value || todayStr(),
     shift: document.getElementById('fShift').value.trim(),
-    inspector: inspector, approver: document.getElementById('fApprover').value.trim(),
+    inspector: inspector, approver: approver,
     startTime: document.getElementById('fStartTime').value, endTime: document.getElementById('fEndTime').value,
     durationMinutes: getDurationMinutes(), signature: signature,
     docNo: a.docNo||'', revision: a.revision||'00',
@@ -1368,7 +1370,7 @@ function openDetail(r){
     '<p style="margin:0 0 4px;font-size:13px;">'+ASSET_TYPES[a.type].icon+' '+esc(a.name)+' ('+esc(a.code)+')</p>'+
     '<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">เอกสารเลขที่ '+esc(r.docNo||a.docNo||'-')+' · Rev. '+esc(r.revision||a.revision||'00')+'</p>'+
     '<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">ผู้ตรวจ: '+esc(r.inspector)+(r.shift?(' · กะ: '+esc(r.shift)):'')+'</p>'+
-    (r.approver?'<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">ผู้อนุมัติรับทราบ: '+esc(r.approver)+'</p>':'')+
+    (r.approver?'<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">หัวหน้าจุด/ผู้รับผิดชอบ: '+esc(r.approver)+'</p>':'')+
     ((r.startTime||r.endTime)?'<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">เวลาที่ใช้: '+esc(r.startTime||'—')+' - '+esc(r.endTime||'—')+(r.durationMinutes!=null?(' (รวม '+r.durationMinutes+' นาที)'):'')+'</p>':'')+
     '<p style="margin:0;font-size:12.5px;color:var(--text-dim);">ผลรวม: ไม่ผ่าน '+r.failCount+' / '+r.totalCount+' รายการ</p>'+
     '</div>';
@@ -1389,7 +1391,7 @@ function openDetail(r){
       '</div>';
   });
   if(r.overall) html += '<div class="card" style="margin-top:14px;"><p style="margin:0 0 4px;font-size:12px;color:var(--text-dim);">สรุป/ข้อเสนอแนะ</p><p style="margin:0;font-size:13px;">'+esc(r.overall)+'</p></div>';
-  if(r.signature) html += '<div class="card" style="margin-top:14px;"><p style="margin:0 0 8px;font-size:12px;color:var(--text-dim);">ลายเซ็นผู้ตรวจเช็ค</p><img src="'+r.signature+'" style="max-width:280px;width:100%;background:#fff;border-radius:8px;border:1px solid var(--border);"></div>';
+  if(r.signature) html += '<div class="card" style="margin-top:14px;"><p style="margin:0 0 8px;font-size:12px;color:var(--text-dim);">ลายเซ็นหัวหน้าจุด/ผู้รับผิดชอบ</p><img src="'+r.signature+'" style="max-width:280px;width:100%;background:#fff;border-radius:8px;border:1px solid var(--border);"></div>';
   body.innerHTML = html;
   showScreen('detail');
 }

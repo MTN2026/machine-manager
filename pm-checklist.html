@@ -381,7 +381,16 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
         <p style="font-size:11px;color:var(--text-faint);margin:8px 0 0;">ใส่ URL ของเว็บนี้ที่อัปโหลดขึ้น GitHub Pages จริง เพื่อให้ QR ที่พิมพ์ออกมาสแกนด้วยกล้องมือถือทั่วไปแล้วเปิดหน้าตรวจเช็คของเครื่องนั้นได้เลย โดยไม่ต้องเปิดแอปนี้ก่อน</p>
       </div>
       <button class="btn" id="btnPrintAll">ดู/พิมพ์ QR ทุกรายการ</button>
-      <div class="divider-text">เชื่อมต่อ Google Sheet</div>
+      <div class="divider-text">ซิงก์ข้อมูลข้ามอุปกรณ์</div>
+      <div class="card">
+        <p style="margin:0 0 10px;font-size:12px;color:var(--text-dim);">สำคัญมาก: ถ้าไม่ตั้งค่านี้ ข้อมูลรายการ/เช็คลิสต์ที่เพิ่มในเครื่องนี้จะ<b style="color:#f2a49c;">มองไม่เห็นจากอุปกรณ์อื่น</b> (เช่น สแกน QR ด้วยมือถือแล้วเห็น "ไม่พบรายการ") เพราะข้อมูลเก็บแยกเครื่องกัน ต้องตั้งค่านี้เพื่อให้ทุกอุปกรณ์ซิงก์ผ่าน Google Sheet กลางชุดเดียวกัน</p>
+        <div class="field"><label for="cloudSyncUrl">Web app URL — <b>ใช้ URL เดียวกับที่ตั้งค่าไว้ในเว็บ Machine Manager</b> (ปุ่ม 🔄 ซิงก์ Google Sheet)</label><input type="text" id="cloudSyncUrl" placeholder="https://script.google.com/macros/s/xxxx/exec"></div>
+        <div class="btn-row">
+          <button class="btn btn-sm btn-primary js-admin-only" id="btnSaveCloudSync">บันทึกและซิงก์ทันที</button>
+        </div>
+        <p id="cloudSyncStatus" style="font-size:11.5px;color:var(--text-faint);margin:8px 0 0;"></p>
+      </div>
+      <div class="divider-text">เชื่อมต่อ Google Sheet (บันทึกผลตรวจสำหรับ Audit)</div>
       <div class="card">
         <p style="margin:0 0 10px;font-size:12px;color:var(--text-dim);">ส่งข้อมูลทุกครั้งที่บันทึกผลตรวจเช็ค ไปเก็บใน Google Sheet เพื่อวิเคราะห์และเก็บเป็นหลักฐาน Audit</p>
         <div class="field"><label for="sheetUrl">Web app URL จาก Google Apps Script</label><input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/xxxx/exec"></div>
@@ -434,6 +443,129 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
 
 <div class="toast" id="toast"></div>
 
+<script>
+(function(){
+  // ---- ตั้งค่าการเชื่อมต่อคลาวด์ (ใช้ Google Apps Script Web App เดียวกับที่ตั้งค่าไว้ในเว็บ Machine Manager) ----
+  // เก็บแยกจาก window.storage โดยตรงใน localStorage คนละคีย์ เพราะต้องอ่านค่านี้
+  // ให้ได้ "ก่อน" ที่จะสร้างตัวเชื่อมต่อ window.storage เอง (ไม่งั้นจะวนเป็นไก่กับไข่)
+  const PM_CLOUD_CFG_KEY = 'pm_cloud_config';
+  function readPmCloudCfg(){ try{ return JSON.parse(localStorage.getItem(PM_CLOUD_CFG_KEY) || '{}'); }catch(e){ return {}; } }
+  function writePmCloudCfg(cfg){ try{ localStorage.setItem(PM_CLOUD_CFG_KEY, JSON.stringify(cfg||{})); }catch(e){} }
+  window.__pmCloudCfg = { read: readPmCloudCfg, write: writePmCloudCfg };
+
+  // Storage polyfill: เมื่อเปิดไฟล์นี้แบบสแตนด์อโลน (เช่น อัปโหลดขึ้น GitHub Pages)
+  // นอกสภาพแวดล้อม Claude.ai จะไม่มี window.storage ให้ใช้งานมาก่อน — โค้ดนี้จึง
+  // สร้าง window.storage จำลองขึ้นมาเอง โดยใช้ localStorage เป็นแคชในเครื่อง (เร็ว)
+  // และเมื่อมีการตั้งค่า URL ซิงก์คลาวด์ไว้ (ใช้ backend ตัวเดียวกับ Machine Manager
+  // ได้เลย เพราะเป็น generic KV store) ก็จะซิงก์ข้อมูลขึ้น Google Sheet กลาง เพื่อให้
+  // ทุกอุปกรณ์ที่เปิดหน้านี้ (เช่น สแกน QR ด้วยมือถือ) เห็นข้อมูลชุดเดียวกันเสมอ
+  if (typeof window.storage === 'undefined') {
+    window.storage = (function(){
+      const NS = 'pm_data';
+      const OUTBOX = 'pm_outbox';
+      function readAll(){ try{ return JSON.parse(localStorage.getItem(NS) || '{}'); }catch(e){ return {}; } }
+      function writeAll(obj){ localStorage.setItem(NS, JSON.stringify(obj)); }
+      function readOutbox(){ try{ return JSON.parse(localStorage.getItem(OUTBOX) || '[]'); }catch(e){ return []; } }
+      function writeOutbox(arr){ localStorage.setItem(OUTBOX, JSON.stringify(arr)); }
+      function queue(op){ const q = readOutbox(); q.push(op); writeOutbox(q); }
+
+      function cloudReady(){ const c = readPmCloudCfg(); return !!(c.url); }
+
+      // หมายเหตุ: Google Apps Script Web App เวลาตอบ request แบบ GET มักถูกเบราว์เซอร์
+      // บล็อกด้วย CORB จึงยิงทุกคำสั่งผ่าน POST เหมือนกันหมด ทั้งอ่านและเขียน
+      async function cloudGet(action, params){ return cloudPost(Object.assign({action}, params || {})); }
+      async function cloudPost(body){
+        const c = readPmCloudCfg();
+        const res = await fetch(c.url, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(Object.assign({token: c.token || ''}, body))
+        });
+        if(!res.ok) throw new Error('cloud_http_' + res.status);
+        const j = await res.json();
+        if(j && j.error) throw new Error('cloud_error_' + j.error);
+        return j;
+      }
+
+      let flushing = false;
+      async function flushOutbox(){
+        if(flushing || !cloudReady()) return;
+        flushing = true;
+        try{
+          let q = readOutbox();
+          if(!q.length) return;
+          const remaining = [];
+          for(const op of q){
+            try{
+              if(op.type === 'set') await cloudPost({action:'set', key:op.key, value:op.value, shared: op.shared ? 1 : 0});
+              else if(op.type === 'delete') await cloudPost({action:'delete', key:op.key, shared: op.shared ? 1 : 0});
+            }catch(e){ remaining.push(op); }
+          }
+          writeOutbox(remaining);
+        } finally { flushing = false; }
+      }
+      window.addEventListener('online', flushOutbox);
+
+      return {
+        async get(key, shared){
+          const all = readAll();
+          return (key in all) ? {key, value: all[key], shared: !!shared} : null;
+        },
+        async set(key, value, shared){
+          const all = readAll(); all[key] = value; writeAll(all);
+          if(cloudReady()){
+            try{ await cloudPost({action:'set', key, value, shared: shared ? 1 : 0}); }
+            catch(e){ queue({type:'set', key, value, shared: !!shared}); }
+          }
+          return {key, value: all[key], shared: !!shared};
+        },
+        async delete(key, shared){
+          const all = readAll(); const existed = key in all; delete all[key]; writeAll(all);
+          if(cloudReady()){
+            try{ await cloudPost({action:'delete', key, shared: shared ? 1 : 0}); }
+            catch(e){ queue({type:'delete', key, shared: !!shared}); }
+          }
+          return {key, deleted: existed, shared: !!shared};
+        },
+        async list(prefix){
+          const all = readAll();
+          const keys = Object.keys(all).filter(k => !prefix || k.startsWith(prefix));
+          return {keys, prefix, shared: false};
+        },
+        // ดึงข้อมูลทั้งชุดจากคลาวด์มาทับแคชในเครื่อง — ใช้ตอนเปิดแอป และรีเฟรชเป็นระยะ
+        // เพื่อให้ทุกอุปกรณ์ (รวมถึงที่สแกน QR ด้วยมือถือเครื่องอื่น) เห็นข้อมูลชุดเดียวกัน
+        async pullAll(){
+          if(!cloudReady()) return false;
+          try{
+            const r = await cloudGet('export', {});
+            if(r && r.data){
+              const all = readAll();
+              Object.keys(r.data).forEach(k => {
+                if(k.indexOf('pmsys:') === 0) all[k] = r.data[k].value;
+              });
+              writeAll(all);
+              return true;
+            }
+          }catch(e){ return false; }
+          return false;
+        },
+        // ส่งข้อมูลทั้งหมดที่มีอยู่ในเครื่องนี้ขึ้นคลาวด์ครั้งเดียว (ใช้ตอนเปิดใช้ซิงก์
+        // ครั้งแรกบนอุปกรณ์ที่มีข้อมูล pmsys:* อยู่ก่อนแล้ว)
+        async pushAll(){
+          if(!cloudReady()) return false;
+          const all = readAll();
+          const entries = Object.keys(all).filter(k => k.indexOf('pmsys:') === 0).map(k => ({key:k, value: all[k], shared:true}));
+          if(!entries.length) return true;
+          try{ await cloudPost({action:'bulk_set', entries}); return true; }
+          catch(e){ return false; }
+        },
+        isCloudConfigured: cloudReady,
+        flushOutbox
+      };
+    })();
+  }
+})();
+</script>
 <script>
 (function(){
 
@@ -1636,7 +1768,14 @@ function showQrSheet(ids){
     wrap.appendChild(card);
     setTimeout(function(){
       if(window.QRCode){
-        var qrContent = state.settings.siteUrl ? (state.settings.siteUrl+'?asset='+encodeURIComponent(a.id)) : ('PMQR|'+a.id);
+        var qrContent;
+        if(state.settings.siteUrl){
+          qrContent = state.settings.siteUrl+'?asset='+encodeURIComponent(a.id);
+          var cloudCfg = (window.__pmCloudCfg && window.__pmCloudCfg.read()) || {};
+          if(cloudCfg.url) qrContent += '&sync='+encodeURIComponent(cloudCfg.url);
+        }else{
+          qrContent = 'PMQR|'+a.id;
+        }
         new QRCode(document.getElementById(renderId), {text: qrContent, width:150, height:150, colorDark:'#111111', colorLight:'#ffffff'});
       }
     }, 0);
@@ -1814,14 +1953,82 @@ function handleDeepLink(){
 }
 
 /* init */
-async function init(){
-  await loadAssets();
-  await loadSettings();
+function updateCloudSyncStatus(msg){ var el = document.getElementById('cloudSyncStatus'); if(el) el.textContent = msg; }
+function fillCloudSyncForm(){
+  var cfg = (window.__pmCloudCfg && window.__pmCloudCfg.read()) || {};
+  var el = document.getElementById('cloudSyncUrl');
+  if(el) el.value = cfg.url || '';
+  updateCloudSyncStatus(cfg.url ? '' : 'ยังไม่ได้ตั้งค่า — ข้อมูลจะเห็นเฉพาะในเครื่องนี้เท่านั้น');
+}
+document.getElementById('btnSaveCloudSync').addEventListener('click', async function(){
+  var url = document.getElementById('cloudSyncUrl').value.trim();
+  if(!url){ showToast('กรุณาใส่ Web app URL ก่อน'); return; }
+  window.__pmCloudCfg.write({url: url});
+  updateCloudSyncStatus('กำลังซิงก์ข้อมูลขึ้นคลาวด์...');
+  showToast('บันทึก URL แล้ว กำลังซิงก์...', true);
+  var pushed = await window.storage.pushAll();
+  if(pushed){
+    updateCloudSyncStatus('ซิงก์สำเร็จ ✓ อุปกรณ์อื่นจะเห็นข้อมูลชุดนี้ด้วยแล้ว');
+    showToast('ซิงก์ข้อมูลขึ้นคลาวด์สำเร็จ', true);
+  }else{
+    updateCloudSyncStatus('ซิงก์ไม่สำเร็จ ตรวจสอบ URL อีกครั้ง');
+    showToast('ซิงก์ไม่สำเร็จ ตรวจสอบ URL');
+  }
+});
+
+async function refreshLocalRenders(){
   await refreshManualSelect();
   await renderDashboard();
   fillSheetSettingsForm();
   applyRoleUI();
+}
+
+function bootstrapCloudSyncFromLink(){
+  // ถ้าเปิดหน้านี้ผ่าน QR ที่มี &sync=... แนบมาด้วย (เจนจากเครื่องที่ตั้งค่าซิงก์ไว้แล้ว)
+  // ให้ตั้งค่าซิงก์คลาวด์ให้อัตโนมัติบนอุปกรณ์นี้ทันที โดยไม่ต้องให้ผู้ใช้ไปตั้งเองในเมนู
+  // (แก้ปัญหา "ไก่กับไข่" — อุปกรณ์ใหม่ที่ไม่เคยตั้งค่ามาก่อนจะได้ดึงข้อมูลจากคลาวด์ได้ทันที)
+  try{
+    var params = new URLSearchParams(window.location.search);
+    var syncUrl = params.get('sync');
+    if(syncUrl && window.__pmCloudCfg){
+      var cur = window.__pmCloudCfg.read();
+      if(cur.url !== syncUrl) window.__pmCloudCfg.write({url: syncUrl});
+    }
+  }catch(e){}
+}
+async function init(){
+  bootstrapCloudSyncFromLink();
+  await Promise.all([loadAssets(), loadSettings()]);
+  await refreshLocalRenders();
+  fillCloudSyncForm();
   handleDeepLink();
+
+  if(window.storage.isCloudConfigured && window.storage.isCloudConfigured()){
+    updateCloudSyncStatus('กำลังตรวจสอบข้อมูลล่าสุดจากคลาวด์...');
+    window.storage.pullAll().then(async function(ok){
+      if(ok){
+        await Promise.all([loadAssets(), loadSettings()]);
+        await refreshLocalRenders();
+        handleDeepLink(); // เผื่อรายการที่ลิงก์มาหาไม่มีอยู่ในเครื่องนี้ แต่มีในคลาวด์
+        updateCloudSyncStatus('ซิงก์ข้อมูลล่าสุดแล้ว ✓');
+      }else{
+        updateCloudSyncStatus('ดึงข้อมูลจากคลาวด์ไม่สำเร็จ กำลังใช้ข้อมูลที่แคชไว้ในเครื่องนี้แทน');
+      }
+    }).catch(function(){ updateCloudSyncStatus('ดึงข้อมูลจากคลาวด์ไม่สำเร็จ'); });
+
+    // รีเฟรชเป็นระยะ + ทุกครั้งที่กลับมาเปิดแท็บนี้ใหม่ (ไม่เรียก handleDeepLink ซ้ำ
+    // เพื่อไม่ให้ป๊อปอัพเด้งขึ้นมาเองระหว่างที่กำลังใช้งานหน้าจออื่นอยู่)
+    var backgroundRefresh = function(){
+      if(!(window.storage.isCloudConfigured && window.storage.isCloudConfigured())) return;
+      window.storage.pullAll().then(async function(ok){
+        if(!ok) return;
+        await Promise.all([loadAssets(), loadSettings()]);
+        await refreshLocalRenders();
+      }).catch(function(){});
+    };
+    setInterval(backgroundRefresh, 25000);
+    document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') backgroundRefresh(); });
+  }
 }
 init();
 

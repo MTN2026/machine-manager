@@ -375,6 +375,11 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
       <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
       <p style="font-size:11px;color:var(--text-faint);margin:8px 0 0;">ใช้ไฟล์ CSV ที่ส่งออกจากปุ่ม "ส่งออก CSV" ในเว็บ Machine Manager ของแท็บที่ตรงกัน (เครื่องจักร/เครื่องมือ/เครน/ยานพาหนะ) — รายการที่มีรหัสซ้ำกับที่มีอยู่แล้วจะถูกข้าม ไม่ทับข้อมูลเช็คลิสต์ที่ปรับแต่งไว้</p>
       <div class="divider-text">พิมพ์ป้าย QR</div>
+      <div class="card">
+        <div class="field"><label for="siteUrl">URL เว็บไซต์นี้ (สำหรับสร้าง QR ให้สแกนแล้วเปิดตรวจเช็คได้ทันที)</label><input type="text" id="siteUrl" placeholder="https://mtn2026.github.io/machine-manager/pm-checklist.html"></div>
+        <button class="btn btn-sm js-admin-only" id="btnSaveSiteUrl">บันทึก URL</button>
+        <p style="font-size:11px;color:var(--text-faint);margin:8px 0 0;">ใส่ URL ของเว็บนี้ที่อัปโหลดขึ้น GitHub Pages จริง เพื่อให้ QR ที่พิมพ์ออกมาสแกนด้วยกล้องมือถือทั่วไปแล้วเปิดหน้าตรวจเช็คของเครื่องนั้นได้เลย โดยไม่ต้องเปิดแอปนี้ก่อน</p>
+      </div>
       <button class="btn" id="btnPrintAll">ดู/พิมพ์ QR ทุกรายการ</button>
       <div class="divider-text">เชื่อมต่อ Google Sheet</div>
       <div class="card">
@@ -558,7 +563,7 @@ vehicle: {docNo:'FM-QA-PM-V01', revision:'00', categories:[
 };
 
 var state = {
-  assets: [], records: {}, settings: {sheetUrl:'', sheetEnabled:false},
+  assets: [], records: {}, settings: {sheetUrl:'', sheetEnabled:false, siteUrl:'https://mtn2026.github.io/machine-manager/pm-checklist.html'},
   currentType: 'all', currentAsset: null, currentChecklist: {},
   historyAsset: null, historyFreqFilter: 'all', stream: null,
   reportTab: 'summary', mgrType: 'machine', currentRole: 'guest'
@@ -640,8 +645,9 @@ async function saveRecords(assetId){
   catch(e){ showToast('บันทึกผลตรวจไม่สำเร็จ — อาจเกินขนาดพื้นที่จัดเก็บต่อรายการ (5MB) ลองลบรูปเก่าบางส่วน'); }
 }
 async function loadSettings(){
-  try{ var r = await window.storage.get('pmsys:settings', true); state.settings = r ? JSON.parse(r.value) : {sheetUrl:'',sheetEnabled:false}; }
-  catch(e){ state.settings = {sheetUrl:'',sheetEnabled:false}; }
+  var defaults = {sheetUrl:'', sheetEnabled:false, siteUrl:'https://mtn2026.github.io/machine-manager/pm-checklist.html'};
+  try{ var r = await window.storage.get('pmsys:settings', true); state.settings = r ? Object.assign({}, defaults, JSON.parse(r.value)) : defaults; }
+  catch(e){ state.settings = defaults; }
 }
 async function saveSettings(){
   try{ await window.storage.set('pmsys:settings', JSON.stringify(state.settings), true); }
@@ -852,7 +858,13 @@ function tickScan(){
   requestAnimationFrame(tickScan);
 }
 function handleScanResult(data){
-  var m = data.indexOf('PMQR|') === 0 ? data.slice(5) : data;
+  var m = data;
+  if(data.indexOf('PMQR|') === 0){
+    m = data.slice(5);
+  }else{
+    var match = data.match(/[?&]asset=([^&]+)/);
+    if(match) m = decodeURIComponent(match[1]);
+  }
   var asset = getAsset(m);
   stopCamera();
   if(asset){ showToast('สแกนสำเร็จ: '+asset.code, true); startInspection(asset.id); }
@@ -1622,7 +1634,12 @@ function showQrSheet(ids){
     var renderId = 'qrr-'+id.replace(/[^a-zA-Z0-9]/g,'');
     card.innerHTML = '<div id="'+renderId+'"></div><p class="qname">'+esc(a.code)+'</p><p class="qmeta">'+ASSET_TYPES[a.type].label+' · '+esc(a.name)+'</p>';
     wrap.appendChild(card);
-    setTimeout(function(){ if(window.QRCode){ new QRCode(document.getElementById(renderId), {text:'PMQR|'+a.id, width:150, height:150, colorDark:'#111111', colorLight:'#ffffff'}); } }, 0);
+    setTimeout(function(){
+      if(window.QRCode){
+        var qrContent = state.settings.siteUrl ? (state.settings.siteUrl+'?asset='+encodeURIComponent(a.id)) : ('PMQR|'+a.id);
+        new QRCode(document.getElementById(renderId), {text: qrContent, width:150, height:150, colorDark:'#111111', colorLight:'#ffffff'});
+      }
+    }, 0);
   });
 }
 
@@ -1630,7 +1647,14 @@ function showQrSheet(ids){
 function fillSheetSettingsForm(){
   document.getElementById('sheetUrl').value = state.settings.sheetUrl||'';
   document.getElementById('sheetEnabled').checked = !!state.settings.sheetEnabled;
+  document.getElementById('siteUrl').value = state.settings.siteUrl||'';
 }
+document.getElementById('btnSaveSiteUrl').addEventListener('click', async function(){
+  var url = document.getElementById('siteUrl').value.trim().replace(/\/$/, '');
+  state.settings.siteUrl = url;
+  await saveSettings();
+  showToast('บันทึก URL แล้ว — QR ที่พิมพ์ครั้งถัดไปจะใช้ URL นี้', true);
+});
 document.getElementById('btnSaveSheetSettings').addEventListener('click', async function(){
   var url = document.getElementById('sheetUrl').value.trim(), enabled = document.getElementById('sheetEnabled').checked;
   if(enabled && !url){ showToast('กรุณาใส่ Web app URL ก่อนเปิดใช้งาน'); return; }

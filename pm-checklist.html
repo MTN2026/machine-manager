@@ -124,6 +124,9 @@ p.page-sub{font-size:12.5px;color:var(--text-dim);margin:0 0 18px;}
 .photo-thumb .rm{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:11px;display:flex;align-items:center;justify-content:center;}
 .record-photo{width:100%;max-width:280px;border-radius:8px;border:1px solid var(--border);margin-top:8px;display:block;cursor:pointer;}
 .summary-bar{position:sticky;bottom:58px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin:16px 0;font-size:12px;}
+.sig-wrap{position:relative;width:100%;height:160px;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;touch-action:none;}
+.sig-canvas{width:100%;height:100%;display:block;cursor:crosshair;}
+.sig-placeholder{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#bbb;font-size:13px;pointer-events:none;margin:0;}
 .summary-bar .fails{color:#f2a49c;font-family:var(--mono);}
 .record-row{background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:8px;}
 .record-row .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
@@ -297,6 +300,17 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
         <label for="fApprover">ผู้ตรวจทาน/อนุมัติรับทราบ</label>
         <input type="text" id="fApprover" placeholder="ชื่อหัวหน้างาน/ผู้อนุมัติ">
       </div>
+      <div class="field-2col">
+        <div class="field">
+          <label for="fStartTime">เวลาเริ่มทำ</label>
+          <input type="time" id="fStartTime">
+        </div>
+        <div class="field">
+          <label for="fEndTime">เวลาเสร็จสิ้น</label>
+          <input type="time" id="fEndTime">
+        </div>
+      </div>
+      <p id="durationDisplay" style="font-size:12.5px;color:var(--text-dim);margin:-8px 0 16px;font-family:var(--mono);">เวลารวม: —</p>
 
       <div id="checklistContainer"></div>
 
@@ -308,6 +322,15 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
       <div class="field">
         <label for="fOverall">สรุปสภาพโดยรวม / ข้อเสนอแนะ</label>
         <textarea id="fOverall" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+      </div>
+
+      <div class="field full">
+        <label>ลายเซ็นผู้ตรวจเช็ค (เซ็นหลังตรวจครบทุกรายการแล้ว)</label>
+        <div class="sig-wrap">
+          <canvas id="sigCanvas" class="sig-canvas"></canvas>
+          <p id="sigPlaceholder" class="sig-placeholder">แตะ/ลากนิ้วหรือเมาส์เพื่อเซ็นชื่อตรงนี้</p>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnClearSig" style="margin-top:8px;">🗑 เซ็นใหม่</button>
       </div>
 
       <button class="btn btn-primary js-guest-hide" id="btnSubmitRecord">
@@ -1017,6 +1040,10 @@ async function startInspection(assetId){
   document.getElementById('fApprover').value = '';
   document.getElementById('fOverall').value = '';
   document.getElementById('fFreq').value = a.frequency || 'monthly';
+  document.getElementById('fStartTime').value = '';
+  document.getElementById('fEndTime').value = '';
+  updateDurationDisplay();
+  clearSignature();
 
   var container = document.getElementById('checklistContainer');
   container.innerHTML = '';
@@ -1106,7 +1133,88 @@ async function startInspection(assetId){
 
   updateSummary(a);
   showScreen('inspect');
+  initSignaturePad();
 }
+
+/* signature pad */
+var sigCtx = null, sigDrawing = false, sigHasContent = false;
+function initSignaturePad(){
+  var canvas = document.getElementById('sigCanvas');
+  var rect = canvas.getBoundingClientRect();
+  if(rect.width===0 || rect.height===0) return;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  sigCtx = canvas.getContext('2d');
+  sigCtx.scale(dpr, dpr);
+  sigCtx.lineWidth = 2.2;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+  sigCtx.strokeStyle = '#1a1a1a';
+  sigHasContent = false;
+  document.getElementById('sigPlaceholder').style.display = '';
+}
+function getSigPos(e, canvas){
+  var rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+function sigPointerDown(e){
+  if(!sigCtx) initSignaturePad();
+  if(!sigCtx) return;
+  sigDrawing = true;
+  var pos = getSigPos(e, e.target);
+  sigCtx.beginPath();
+  sigCtx.moveTo(pos.x, pos.y);
+  document.getElementById('sigPlaceholder').style.display = 'none';
+  e.preventDefault();
+}
+function sigPointerMove(e){
+  if(!sigDrawing || !sigCtx) return;
+  var pos = getSigPos(e, e.target);
+  sigCtx.lineTo(pos.x, pos.y);
+  sigCtx.stroke();
+  sigHasContent = true;
+  e.preventDefault();
+}
+function sigPointerUp(){ sigDrawing = false; }
+function clearSignature(){
+  var canvas = document.getElementById('sigCanvas');
+  if(sigCtx) sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+  sigHasContent = false;
+  document.getElementById('sigPlaceholder').style.display = '';
+}
+function getSignatureDataUrl(){
+  if(!sigHasContent) return '';
+  return document.getElementById('sigCanvas').toDataURL('image/png');
+}
+document.getElementById('btnClearSig').addEventListener('click', clearSignature);
+(function setupSigCanvasEvents(){
+  var canvas = document.getElementById('sigCanvas');
+  canvas.addEventListener('pointerdown', sigPointerDown);
+  canvas.addEventListener('pointermove', sigPointerMove);
+  window.addEventListener('pointerup', sigPointerUp);
+})();
+
+/* start/end time + duration */
+function updateDurationDisplay(){
+  var s = document.getElementById('fStartTime').value, e = document.getElementById('fEndTime').value;
+  var out = document.getElementById('durationDisplay');
+  if(!s || !e){ out.textContent = 'เวลารวม: —'; return; }
+  var sm = timeToMinutes(s), em = timeToMinutes(e);
+  var diff = em - sm;
+  if(diff < 0) diff += 24*60; // ข้ามเที่ยงคืน
+  out.textContent = 'เวลารวม: '+diff+' นาที';
+}
+function timeToMinutes(t){ var p = t.split(':'); return Number(p[0])*60 + Number(p[1]); }
+function getDurationMinutes(){
+  var s = document.getElementById('fStartTime').value, e = document.getElementById('fEndTime').value;
+  if(!s || !e) return null;
+  var diff = timeToMinutes(e) - timeToMinutes(s);
+  if(diff < 0) diff += 24*60;
+  return diff;
+}
+document.getElementById('fStartTime').addEventListener('input', updateDurationDisplay);
+document.getElementById('fEndTime').addEventListener('input', updateDurationDisplay);
 function compressImage(file, maxDim, quality){
   return new Promise(function(resolve, reject){
     var reader = new FileReader();
@@ -1153,6 +1261,8 @@ document.getElementById('btnSubmitRecord').addEventListener('click', async funct
   var a = getAsset(state.currentAsset); if(!a) return;
   var inspector = document.getElementById('fInspector').value.trim();
   if(!inspector){ showToast('กรุณากรอกชื่อผู้ตรวจเช็ค'); return; }
+  var signature = getSignatureDataUrl();
+  if(!signature){ showToast('กรุณาลงลายเซ็นก่อนบันทึกผลตรวจเช็ค'); return; }
   var total = totalItems(a);
   var checkedCount = Object.keys(state.currentChecklist).filter(function(k){return state.currentChecklist[k].result;}).length;
   if(checkedCount < total){
@@ -1178,6 +1288,8 @@ document.getElementById('btnSubmitRecord').addEventListener('click', async funct
     date: document.getElementById('fDate').value || todayStr(),
     shift: document.getElementById('fShift').value.trim(),
     inspector: inspector, approver: document.getElementById('fApprover').value.trim(),
+    startTime: document.getElementById('fStartTime').value, endTime: document.getElementById('fEndTime').value,
+    durationMinutes: getDurationMinutes(), signature: signature,
     docNo: a.docNo||'', revision: a.revision||'00',
     overall: document.getElementById('fOverall').value.trim(),
     results: results, failCount: failCount, totalCount: total, createdAt: new Date().toISOString()
@@ -1257,6 +1369,7 @@ function openDetail(r){
     '<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">เอกสารเลขที่ '+esc(r.docNo||a.docNo||'-')+' · Rev. '+esc(r.revision||a.revision||'00')+'</p>'+
     '<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">ผู้ตรวจ: '+esc(r.inspector)+(r.shift?(' · กะ: '+esc(r.shift)):'')+'</p>'+
     (r.approver?'<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">ผู้อนุมัติรับทราบ: '+esc(r.approver)+'</p>':'')+
+    ((r.startTime||r.endTime)?'<p style="margin:0 0 4px;font-size:12.5px;color:var(--text-dim);">เวลาที่ใช้: '+esc(r.startTime||'—')+' - '+esc(r.endTime||'—')+(r.durationMinutes!=null?(' (รวม '+r.durationMinutes+' นาที)'):'')+'</p>':'')+
     '<p style="margin:0;font-size:12.5px;color:var(--text-dim);">ผลรวม: ไม่ผ่าน '+r.failCount+' / '+r.totalCount+' รายการ</p>'+
     '</div>';
   var lastCat = '';
@@ -1276,6 +1389,7 @@ function openDetail(r){
       '</div>';
   });
   if(r.overall) html += '<div class="card" style="margin-top:14px;"><p style="margin:0 0 4px;font-size:12px;color:var(--text-dim);">สรุป/ข้อเสนอแนะ</p><p style="margin:0;font-size:13px;">'+esc(r.overall)+'</p></div>';
+  if(r.signature) html += '<div class="card" style="margin-top:14px;"><p style="margin:0 0 8px;font-size:12px;color:var(--text-dim);">ลายเซ็นผู้ตรวจเช็ค</p><img src="'+r.signature+'" style="max-width:280px;width:100%;background:#fff;border-radius:8px;border:1px solid var(--border);"></div>';
   body.innerHTML = html;
   showScreen('detail');
 }
@@ -1372,9 +1486,9 @@ document.getElementById('btnExportAssetsCsv').addEventListener('click', function
   exportAssetsSummaryCsv();
 });
 function exportRecordsCsv(filtered){
-  var rows = [['วันที่','ประเภท','รหัส','ชื่อ','ความถี่','ผู้ตรวจ','ผู้อนุมัติ','จำนวนรายการ','ไม่ผ่าน','เอกสารเลขที่','Rev']];
+  var rows = [['วันที่','ประเภท','รหัส','ชื่อ','ความถี่','ผู้ตรวจ','ผู้อนุมัติ','เวลาเริ่ม','เวลาเสร็จ','เวลารวม(นาที)','จำนวนรายการ','ไม่ผ่าน','เอกสารเลขที่','Rev']];
   filtered.forEach(function(x){
-    rows.push([x.record.date, ASSET_TYPES[x.asset.type].label, x.asset.code, x.asset.name, FREQ_LABEL[x.record.freq], x.record.inspector, x.record.approver||'', x.record.totalCount, x.record.failCount, x.record.docNo||'', x.record.revision||'']);
+    rows.push([x.record.date, ASSET_TYPES[x.asset.type].label, x.asset.code, x.asset.name, FREQ_LABEL[x.record.freq], x.record.inspector, x.record.approver||'', x.record.startTime||'', x.record.endTime||'', x.record.durationMinutes!=null?x.record.durationMinutes:'', x.record.totalCount, x.record.failCount, x.record.docNo||'', x.record.revision||'']);
   });
   var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c==null?'':c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
@@ -1802,6 +1916,7 @@ function buildSheetPayload(asset, record){
   return { assetType: ASSET_TYPES[asset.type].label, assetCode: asset.code, assetName: asset.name, department: asset.department||'',
     freq: record.freq, freqLabel: FREQ_LABEL[record.freq]||record.freq, date: record.date, shift: record.shift||'',
     inspector: record.inspector, approver: record.approver||'', overall: record.overall||'', failCount: record.failCount, totalCount: record.totalCount,
+    startTime: record.startTime||'', endTime: record.endTime||'', durationMinutes: record.durationMinutes!=null?record.durationMinutes:'',
     docNo: record.docNo||'', revision: record.revision||'', results: record.results, recordId: record.id };
 }
 async function syncRecordToSheet(asset, record){
@@ -1822,11 +1937,12 @@ document.getElementById('btnShowSheetGuide').addEventListener('click', function(
 "    sheet.appendRow(['ประเภท', body.assetType || '']);\n"+
 "    sheet.appendRow(['แผนก/สถานที่', body.department || '']);\n"+
 "    sheet.appendRow(['']);\n"+
-"    sheet.appendRow(['วันที่ตรวจ','ความถี่','ผู้ตรวจ','ผู้อนุมัติ','เอกสารเลขที่','Rev','หมวดหมู่','รายการตรวจ','เกณฑ์/มาตรฐาน','ผลตรวจ','หมายเหตุ','สาเหตุที่แท้จริง','สิ่งที่ต้องแก้ไข','ผู้รับผิดชอบ','กำหนดแล้วเสร็จ']);\n"+
+"    sheet.appendRow(['วันที่ตรวจ','ความถี่','ผู้ตรวจ','ผู้อนุมัติ','เวลาเริ่ม','เวลาเสร็จ','เวลารวม(นาที)','เอกสารเลขที่','Rev','หมวดหมู่','รายการตรวจ','เกณฑ์/มาตรฐาน','ผลตรวจ','หมายเหตุ','สาเหตุที่แท้จริง','สิ่งที่ต้องแก้ไข','ผู้รับผิดชอบ','กำหนดแล้วเสร็จ']);\n"+
 "  }\n\n"+
 "  (body.results || []).forEach(function(item) {\n"+
 "    sheet.appendRow([\n"+
 "      body.date, body.freqLabel, body.inspector, body.approver || '',\n"+
+"      body.startTime || '', body.endTime || '', body.durationMinutes,\n"+
 "      body.docNo || '', body.revision || '',\n"+
 "      item.category, item.name, item.crit || '',\n"+
 "      item.result || '', item.note || '', item.rootCause || '',\n"+

@@ -385,6 +385,7 @@ table.plain td{padding:7px 6px;border-bottom:1px solid var(--border-soft);vertic
       <div class="card">
         <p style="margin:0 0 10px;font-size:12px;color:var(--text-dim);">สำคัญมาก: ถ้าไม่ตั้งค่านี้ ข้อมูลรายการ/เช็คลิสต์ที่เพิ่มในเครื่องนี้จะ<b style="color:#f2a49c;">มองไม่เห็นจากอุปกรณ์อื่น</b> (เช่น สแกน QR ด้วยมือถือแล้วเห็น "ไม่พบรายการ") เพราะข้อมูลเก็บแยกเครื่องกัน ต้องตั้งค่านี้เพื่อให้ทุกอุปกรณ์ซิงก์ผ่าน Google Sheet กลางชุดเดียวกัน</p>
         <div class="field"><label for="cloudSyncUrl">Web app URL — <b>ใช้ URL เดียวกับที่ตั้งค่าไว้ในเว็บ Machine Manager</b> (ปุ่ม 🔄 ซิงก์ Google Sheet)</label><input type="text" id="cloudSyncUrl" placeholder="https://script.google.com/macros/s/xxxx/exec"></div>
+        <div class="field"><label for="cloudSyncToken">รหัสลับ (SYNC_TOKEN) — <b>ใช้รหัสเดียวกับที่ตั้งค่าไว้ในเว็บ Machine Manager</b></label><input type="text" id="cloudSyncToken" placeholder="เช่น maintenancedepartment2026"></div>
         <div class="btn-row">
           <button class="btn btn-sm btn-primary js-admin-only" id="btnSaveCloudSync">บันทึกและซิงก์ทันที</button>
         </div>
@@ -1773,6 +1774,7 @@ function showQrSheet(ids){
           qrContent = state.settings.siteUrl+'?asset='+encodeURIComponent(a.id);
           var cloudCfg = (window.__pmCloudCfg && window.__pmCloudCfg.read()) || {};
           if(cloudCfg.url) qrContent += '&sync='+encodeURIComponent(cloudCfg.url);
+          if(cloudCfg.token) qrContent += '&synctoken='+encodeURIComponent(cloudCfg.token);
         }else{
           qrContent = 'PMQR|'+a.id;
         }
@@ -1958,12 +1960,15 @@ function fillCloudSyncForm(){
   var cfg = (window.__pmCloudCfg && window.__pmCloudCfg.read()) || {};
   var el = document.getElementById('cloudSyncUrl');
   if(el) el.value = cfg.url || '';
+  var tokEl = document.getElementById('cloudSyncToken');
+  if(tokEl) tokEl.value = cfg.token || '';
   updateCloudSyncStatus(cfg.url ? '' : 'ยังไม่ได้ตั้งค่า — ข้อมูลจะเห็นเฉพาะในเครื่องนี้เท่านั้น');
 }
 document.getElementById('btnSaveCloudSync').addEventListener('click', async function(){
   var url = document.getElementById('cloudSyncUrl').value.trim();
+  var token = document.getElementById('cloudSyncToken').value.trim();
   if(!url){ showToast('กรุณาใส่ Web app URL ก่อน'); return; }
-  window.__pmCloudCfg.write({url: url});
+  window.__pmCloudCfg.write({url: url, token: token});
   updateCloudSyncStatus('กำลังซิงก์ข้อมูลขึ้นคลาวด์...');
   showToast('บันทึก URL แล้ว กำลังซิงก์...', true);
   var pushed = await window.storage.pushAll();
@@ -1971,8 +1976,8 @@ document.getElementById('btnSaveCloudSync').addEventListener('click', async func
     updateCloudSyncStatus('ซิงก์สำเร็จ ✓ อุปกรณ์อื่นจะเห็นข้อมูลชุดนี้ด้วยแล้ว');
     showToast('ซิงก์ข้อมูลขึ้นคลาวด์สำเร็จ', true);
   }else{
-    updateCloudSyncStatus('ซิงก์ไม่สำเร็จ ตรวจสอบ URL อีกครั้ง');
-    showToast('ซิงก์ไม่สำเร็จ ตรวจสอบ URL');
+    updateCloudSyncStatus('ซิงก์ไม่สำเร็จ ตรวจสอบ URL และรหัสลับ (SYNC_TOKEN) อีกครั้ง');
+    showToast('ซิงก์ไม่สำเร็จ ตรวจสอบ URL/รหัสลับ');
   }
 });
 
@@ -1984,15 +1989,18 @@ async function refreshLocalRenders(){
 }
 
 function bootstrapCloudSyncFromLink(){
-  // ถ้าเปิดหน้านี้ผ่าน QR ที่มี &sync=... แนบมาด้วย (เจนจากเครื่องที่ตั้งค่าซิงก์ไว้แล้ว)
+  // ถ้าเปิดหน้านี้ผ่าน QR ที่มี &sync=... (และ &synctoken=... ถ้ามี) แนบมาด้วย
   // ให้ตั้งค่าซิงก์คลาวด์ให้อัตโนมัติบนอุปกรณ์นี้ทันที โดยไม่ต้องให้ผู้ใช้ไปตั้งเองในเมนู
   // (แก้ปัญหา "ไก่กับไข่" — อุปกรณ์ใหม่ที่ไม่เคยตั้งค่ามาก่อนจะได้ดึงข้อมูลจากคลาวด์ได้ทันที)
   try{
     var params = new URLSearchParams(window.location.search);
     var syncUrl = params.get('sync');
+    var syncToken = params.get('synctoken');
     if(syncUrl && window.__pmCloudCfg){
       var cur = window.__pmCloudCfg.read();
-      if(cur.url !== syncUrl) window.__pmCloudCfg.write({url: syncUrl});
+      if(cur.url !== syncUrl || (syncToken && cur.token !== syncToken)){
+        window.__pmCloudCfg.write({url: syncUrl, token: syncToken || cur.token || ''});
+      }
     }
   }catch(e){}
 }

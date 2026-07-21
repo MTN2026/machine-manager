@@ -1698,9 +1698,9 @@
     try{
       const res = await window.storage.list('photo_', false);
       if(res && res.keys){
-        for(const k of res.keys){
+        await Promise.all(res.keys.map(async k=>{
           try{ const r = await window.storage.get(k, false); if(r) photoCache[k.replace('photo_','')] = r.value; }catch(e){}
-        }
+        }));
       }
     }catch(e){}
   }
@@ -4943,28 +4943,44 @@
   $('sortBy').addEventListener('change', renderGrid);
 
   // ===== INIT =====
+  function showInitialLoadingState(){
+    try{
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">กำลังโหลดข้อมูล...</div>`;
+      $('partsCatalogBody').innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:16px;">กำลังโหลดข้อมูล...</td></tr>`;
+    }catch(e){}
+  }
   (async function init(){
     $('lastUpdated').textContent = 'MACHINE ASSET REGISTRY · ' + new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+    showInitialLoadingState();
     await loadRole();
     loadSyncSettings();
-    // ถ้าตั้งค่าคลาวด์ไว้แล้ว ดึงข้อมูลชุดล่าสุดมาก่อน จึงค่อยโหลดเข้าตัวแปรในแอป
-    // เพื่อให้ทุกอุปกรณ์เริ่มต้นด้วยข้อมูลชุดเดียวกันเสมอ
-    if(window.storage.isCloudConfigured && window.storage.isCloudConfigured()){
-      const ok = await window.storage.pullAll();
-      if(!ok) toast('ดึงข้อมูลจากคลาวด์ไม่สำเร็จ กำลังใช้ข้อมูลที่แคชไว้ในเครื่องนี้แทน');
-      if(window.storage.flushOutbox) window.storage.flushOutbox();
-    }
-    await loadMachines();
-    await loadAllPhotos();
-    await loadPartsCatalog();
-    await loadPartsTx();
-    await loadTools();
-    await loadCranes();
-    await loadVehicles();
+
+    // โหลดข้อมูลที่แคชไว้ในเครื่องนี้ก่อน (ขนานกันทุกก้อน แทนที่จะรอทีละอย่าง) เพื่อให้ขึ้นหน้าจอได้เร็วที่สุด
+    await Promise.all([
+      loadMachines(), loadAllPhotos(), loadPartsCatalog(), loadPartsTx(),
+      loadTools(), loadCranes(), loadVehicles()
+    ]);
     renderAll();
     renderToolsPage();
     renderCranesPage();
     renderVehiclesPage();
+
+    // จากนั้นค่อยซิงก์กับคลาวด์เบื้องหลัง (ไม่บล็อกการแสดงผลครั้งแรก) แล้วรีเฟรชหน้าจออีกครั้งถ้ามีข้อมูลใหม่กว่า
+    // เพื่อให้ทุกอุปกรณ์ยังคงลงเอยด้วยข้อมูลชุดเดียวกันเสมอ โดยไม่ต้องรอคลาวด์ก่อนเห็นข้อมูลใดๆ เลย
+    if(window.storage.isCloudConfigured && window.storage.isCloudConfigured()){
+      window.storage.pullAll().then(async ok=>{
+        if(!ok){ toast('ดึงข้อมูลจากคลาวด์ไม่สำเร็จ กำลังใช้ข้อมูลที่แคชไว้ในเครื่องนี้แทน'); return; }
+        if(window.storage.flushOutbox) window.storage.flushOutbox();
+        await Promise.all([
+          loadMachines(), loadAllPhotos(), loadPartsCatalog(), loadPartsTx(),
+          loadTools(), loadCranes(), loadVehicles()
+        ]);
+        renderAll();
+        renderToolsPage();
+        renderCranesPage();
+        renderVehiclesPage();
+      }).catch(()=>{ toast('ดึงข้อมูลจากคลาวด์ไม่สำเร็จ กำลังใช้ข้อมูลที่แคชไว้ในเครื่องนี้แทน'); });
+    }
 
     // รีเฟรชข้อมูลจากคลาวด์เป็นระยะ + ทุกครั้งที่กลับมาเปิดแท็บ/แอปนี้ใหม่
     // เพื่อให้เห็นการแก้ไขจากอุปกรณ์อื่นโดยไม่ต้องรีโหลดหน้าเอง
